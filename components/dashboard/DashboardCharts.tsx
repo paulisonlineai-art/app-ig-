@@ -1,0 +1,70 @@
+'use client'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts'
+
+export default function DashboardCharts({ audienceStats, reels }: { audienceStats: any[]; reels: any[] }) {
+  const reachData = audienceStats.map(s => ({
+    date: new Date(s.date).toLocaleDateString('es', { month: 'short', day: 'numeric' }),
+    Alcance: s.reach,
+    Impresiones: s.impressions,
+  }))
+
+  // Daily interactions from reels (group by date)
+  const byDate: Record<string, { likes: number; saves: number; comments: number }> = {}
+  for (const r of reels) {
+    const d = new Date(r.timestamp).toLocaleDateString('es', { month: 'short', day: 'numeric' })
+    if (!byDate[d]) byDate[d] = { likes: 0, saves: 0, comments: 0 }
+    byDate[d].likes += r.likes || 0
+    byDate[d].saves += r.saves || 0
+    byDate[d].comments += r.comments || 0
+  }
+  const interactData = Object.entries(byDate).map(([date, v]) => ({ date, ...v }))
+
+  const tooltipStyle = { background: '#fff', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div className="card" style={{ padding: 20 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Alcance & Visibilidad</div>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+          {[{ color: '#7c3aed', label: 'Alcance' }, { color: '#a78bfa', label: 'Impresiones' }].map(l => (
+            <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-muted)' }}>
+              <div style={{ width: 8, height: 2, background: l.color, borderRadius: 2 }} />
+              {l.label}
+            </div>
+          ))}
+        </div>
+        <ResponsiveContainer width="100%" height={160}>
+          <LineChart data={reachData}>
+            <XAxis dataKey="date" tick={{ fill: '#9999b3', fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+            <YAxis hide />
+            <Tooltip contentStyle={tooltipStyle} />
+            <Line type="monotone" dataKey="Alcance" stroke="#7c3aed" dot={false} strokeWidth={2} />
+            <Line type="monotone" dataKey="Impresiones" stroke="#a78bfa" dot={false} strokeWidth={1.5} strokeDasharray="4 4" />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="card" style={{ padding: 20 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Interacciones</div>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+          {[{ color: '#7c3aed', label: 'Me gusta' }, { color: '#10b981', label: 'Guardados' }, { color: '#f59e0b', label: 'Comentarios' }].map(l => (
+            <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-muted)' }}>
+              <div style={{ width: 8, height: 8, background: l.color, borderRadius: 2 }} />
+              {l.label}
+            </div>
+          ))}
+        </div>
+        <ResponsiveContainer width="100%" height={160}>
+          <BarChart data={interactData}>
+            <XAxis dataKey="date" tick={{ fill: '#9999b3', fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+            <YAxis hide />
+            <Tooltip contentStyle={tooltipStyle} />
+            <Bar dataKey="likes" stackId="a" fill="#7c3aed" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="saves" stackId="a" fill="#10b981" />
+            <Bar dataKey="comments" stackId="a" fill="#f59e0b" radius={[3, 3, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
+}

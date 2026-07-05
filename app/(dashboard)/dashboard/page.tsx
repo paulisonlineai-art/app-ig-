@@ -1,0 +1,188 @@
+import { cookies } from 'next/headers'
+import { createServerSupabase } from '@/lib/supabase'
+import { formatNumber, formatCurrency } from '@/lib/utils'
+import SyncButton from '@/components/dashboard/SyncButton'
+import DashboardCharts from '@/components/dashboard/DashboardCharts'
+
+function PctChange({ val, prev }: { val: number; prev: number }) {
+  if (!prev) return null
+  const pct = ((val - prev) / prev) * 100
+  const up = pct >= 0
+  return (
+    <span style={{ fontSize: 12, fontWeight: 600, color: up ? 'var(--success)' : 'var(--danger)', display: 'flex', alignItems: 'center', gap: 3, marginTop: 4 }}>
+      <span>{up ? '↑' : '↓'}</span>
+      {Math.abs(pct).toFixed(1)}% vs anterior
+    </span>
+  )
+}
+
+export default async function DashboardPage() {
+  const cookieStore = await cookies()
+  const accountId = cookieStore.get('ig_account_id')?.value!
+
+  const db = createServerSupabase()
+  const d30 = new Date(Date.now() - 30 * 864e5).toISOString()
+  const d60 = new Date(Date.now() - 60 * 864e5).toISOString()
+
+  const [
+    { data: reels30 },
+    { data: reelsPrev },
+    { data: stories30 },
+    { data: sales30 },
+    { data: topSaleReels },
+    { data: audienceStats },
+  ] = await Promise.all([
+    db.from('reels').select('views,likes,comments,shares,saves,timestamp').eq('account_id', accountId).gte('timestamp', d30),
+    db.from('reels').select('views,comments').eq('account_id', accountId).gte('timestamp', d60).lt('timestamp', d30),
+    db.from('stories').select('replies').eq('account_id', accountId).gte('timestamp', d30),
+    db.from('sales').select('amount,cash_collected,closed_at,reel_id,reels(caption,thumbnail_url)').eq('account_id', accountId).order('closed_at', { ascending: false }).limit(50),
+    db.from('reels').select('id,caption,thumbnail_url,views,multiplier').eq('account_id', accountId).order('multiplier', { ascending: false }).limit(5),
+    db.from('audience_stats').select('date,reach,impressions').eq('account_id', accountId).order('date', { ascending: true }).limit(60),
+  ])
+
+  const r = reels30 || []
+  const rp = reelsPrev || []
+
+  const views30 = r.reduce((s: number, x: any) => s + x.views, 0)
+  const viewsPrev = rp.reduce((s: number, x: any) => s + x.views, 0)
+  const comments30 = r.reduce((s: number, x: any) => s + x.comments, 0)
+  const commentsPrev = rp.reduce((s: number, x: any) => s + x.comments, 0)
+  const conversations30 = r.reduce((s: number, x: any) => s + x.comments + x.shares, 0)
+  const conversationsPrev = rp.reduce((s: number, x: any) => s + x.comments, 0)
+  const storyReplies = (stories30 || []).reduce((s: number, x: any) => s + x.replies, 0)
+
+  const allSales = sales30 || []
+  const totalRevenue = allSales.reduce((s: number, x: any) => s + x.amount, 0)
+  const totalCash = allSales.reduce((s: number, x: any) => s + x.cash_collected, 0)
+
+  // Group sales by reel for "top fuentes de facturación"
+  const byReel: Record<string, { caption: string; thumbnail: string; amount: number; count: number }> = {}
+  for (const s of allSales) {
+    if (!s.reel_id) continue
+    const key = s.reel_id
+    if (!byReel[key]) byReel[key] = { caption: (s as any).reels?.caption || '', thumbnail: (s as any).reels?.thumbnail_url || '', amount: 0, count: 0 }
+    byReel[key].amount += s.amount
+    byReel[key].count++
+  }
+  const topSources = Object.values(byReel).sort((a, b) => b.amount - a.amount).slice(0, 5)
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 2, letterSpacing: '-0.03em' }}>Dashboard</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Resumen global de tu marca personal.</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <select style={{ fontSize: 13, padding: '7px 12px', borderRadius: 8 }}>
+            <option>Últimos 30 días</option>
+            <option>Últimos 90 días</option>
+            <option>Este mes</option>
+          </select>
+          <SyncButton />
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20 }}>
+        {/* Left column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Top stats row */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+            {[
+              { label: 'VISTAS TOTALES', value: formatNumber(views30), prev: viewsPrev, curr: views30, icon: '👁' },
+              { label: 'CONVERSACIONES GENERADAS', value: formatNumber(conversations30), prev: conversationsPrev, curr: conversations30, icon: '💬' },
+              { label: 'COMENTARIOS', value: formatNumber(comments30), prev: commentsPrev, curr: comments30, icon: '🗨' },
+              { label: 'RESPUESTAS A HISTORIAS', value: formatNumber(storyReplies), icon: '↩' },
+            ].map(s => (
+              <div key={s.label} className="metric-card">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <span style={{ fontSize: 18 }}>{s.icon}</span>
+                </div>
+                <div className="stat-label">{s.label}</div>
+                <div className="stat-value">{s.value}</div>
+                {s.prev !== undefined && <PctChange val={s.curr!} prev={s.prev} />}
+              </div>
+            ))}
+          </div>
+
+          {/* Charts */}
+          {(audienceStats?.length || 0) > 0 && (
+            <DashboardCharts audienceStats={audienceStats || []} reels={r} />
+          )}
+
+          {/* Top fuentes de facturación */}
+          {topSources.length > 0 && (
+            <div className="card" style={{ padding: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <h2 style={{ fontSize: 14, fontWeight: 700 }}>Top fuentes de facturación</h2>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>PERIODO SELECCIONADO</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {topSources.map((src, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', width: 16 }}>{i + 1}</span>
+                    {src.thumbnail && <img src={src.thumbnail} style={{ width: 36, height: 52, borderRadius: 6, objectFit: 'cover' }} alt="" />}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {src.caption?.slice(0, 60) || 'Sin título'}
+                      </div>
+                      <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 2 }}>
+                        <div style={{ height: '100%', background: 'var(--accent)', borderRadius: 2, width: `${Math.min(100, (src.amount / topSources[0].amount) * 100)}%` }} />
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--accent)' }}>{formatCurrency(src.amount)}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{src.count} venta{src.count > 1 ? 's' : ''}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right column — revenue + quick stats */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="card" style={{ padding: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span className="stat-label">FACTURACIÓN</span>
+              <span style={{ fontSize: 16 }}>$</span>
+            </div>
+            <div style={{ fontSize: 30, fontWeight: 900, color: 'var(--accent)', letterSpacing: '-0.04em' }}>
+              {formatCurrency(totalRevenue)}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>últimos 30 días</div>
+          </div>
+
+          <div className="card" style={{ padding: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span className="stat-label">EFECTIVO RECOLECTADO</span>
+              <span style={{ fontSize: 16 }}>$</span>
+            </div>
+            <div style={{ fontSize: 30, fontWeight: 900, color: 'var(--success)', letterSpacing: '-0.04em' }}>
+              {formatCurrency(totalCash)}
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: 20 }}>
+            <span className="stat-label" style={{ display: 'block', marginBottom: 8 }}>RESUMEN RÁPIDO</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                { label: 'Reels este período', value: r.length },
+                { label: 'Likes totales', value: formatNumber(r.reduce((s: number, x: any) => s + x.likes, 0)) },
+                { label: 'Guardados totales', value: formatNumber(r.reduce((s: number, x: any) => s + x.saves, 0)) },
+                { label: 'Ventas registradas', value: allSales.length },
+              ].map(item => (
+                <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 8, borderBottom: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{item.label}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700 }}>{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

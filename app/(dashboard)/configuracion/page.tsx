@@ -1,0 +1,61 @@
+import { cookies } from 'next/headers'
+import { createServerSupabase } from '@/lib/supabase'
+
+export default async function ConfiguracionPage() {
+  const cookieStore = await cookies()
+  const accountId = cookieStore.get('ig_account_id')?.value!
+  const db = createServerSupabase()
+  const { data: account } = await db.from('ig_accounts').select('*').eq('id', accountId).single()
+
+  return (
+    <div style={{ maxWidth: 600 }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 2 }}>Settings</h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Configuración de tu cuenta Moka</p>
+      </div>
+
+      <div className="card" style={{ padding: 24, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Cuenta de Instagram conectada</h2>
+        {account ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            {account.profile_picture_url && <img src={account.profile_picture_url} style={{ width: 52, height: 52, borderRadius: '50%' }} alt="" />}
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 16 }}>@{account.username}</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>{account.followers_count?.toLocaleString()} seguidores</div>
+              <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 4 }}>
+                Token expira: {account.token_expires_at ? new Date(account.token_expires_at).toLocaleDateString('es') : '—'}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p style={{ color: 'var(--text-muted)' }}>No hay cuenta conectada</p>
+        )}
+        <a href="/auth" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 16, fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>
+          → Reconectar Instagram
+        </a>
+      </div>
+
+      <div className="card" style={{ padding: 24 }}>
+        <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Variables de entorno requeridas</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
+          {[
+            { key: 'NEXT_PUBLIC_SUPABASE_URL', label: 'Supabase URL' },
+            { key: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', label: 'Supabase Anon Key' },
+            { key: 'SUPABASE_SERVICE_ROLE_KEY', label: 'Supabase Service Role' },
+            { key: 'META_APP_ID', label: 'Meta App ID' },
+            { key: 'META_APP_SECRET', label: 'Meta App Secret' },
+            { key: 'ANTHROPIC_API_KEY', label: 'Anthropic API Key' },
+          ].map(v => {
+            const set = !!(process.env[v.key] || process.env[`NEXT_PUBLIC_${v.key.replace('NEXT_PUBLIC_', '')}`])
+            return (
+              <div key={v.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{v.key}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--success)' }}>✓</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
