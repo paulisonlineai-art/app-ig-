@@ -4,9 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLin
 export default function BenchmarkChart({ reel, avgs }: { reel: any; avgs: any }) {
   const data = [
     { name: 'Likes', actual: reel.like_rate, bench: avgs.avg_like_rate },
-    { name: 'Saves', actual: reel.save_rate, bench: avgs.avg_save_rate },
     { name: 'Comments', actual: reel.comment_rate, bench: avgs.avg_comment_rate },
-    { name: 'Shares', actual: reel.share_rate, bench: avgs.avg_share_rate },
   ]
 
   return (

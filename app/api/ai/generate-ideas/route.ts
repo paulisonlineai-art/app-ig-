@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   const db = createServerSupabase()
   const [{ data: reels }, { data: brand }, { data: competitors }] = await Promise.all([
-    db.from('reels').select('caption,views,multiplier,save_rate,like_rate,comment_rate,hook,timestamp').eq('account_id', accountId).order('multiplier', { ascending: false }).limit(25),
+    db.from('reels').select('caption,views,multiplier,like_rate,comment_rate,hook,timestamp').eq('account_id', accountId).order('multiplier', { ascending: false }).limit(25),
     db.from('brand_dna').select('content').eq('account_id', accountId).single(),
     db.from('competitors').select('ig_username, competitor_reels(caption,views,likes,hook)').eq('account_id', accountId),
   ])
@@ -21,7 +21,6 @@ export async function POST(req: NextRequest) {
     caption: r.caption?.slice(0, 60),
     views: r.views,
     multiplier: r.multiplier,
-    save_rate: r.save_rate,
     like_rate: r.like_rate,
     hook: r.hook,
     date: new Date(r.timestamp).toLocaleDateString('es'),

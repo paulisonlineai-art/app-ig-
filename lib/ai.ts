@@ -20,16 +20,13 @@ Analizá este Reel con todos los datos disponibles:
 **MÉTRICAS DEL REEL:**
 - Views: ${reel.views.toLocaleString()}
 - Likes: ${reel.likes.toLocaleString()} (${reel.like_rate.toFixed(2)}% tasa)
-- Guardados: ${reel.saves.toLocaleString()} (${reel.save_rate.toFixed(2)}% tasa)
 - Comentarios: ${reel.comments.toLocaleString()} (${reel.comment_rate.toFixed(2)}% tasa)
-- Compartidos: ${reel.shares.toLocaleString()} (${reel.share_rate.toFixed(2)}% tasa)
 - Multiplicador vs promedio: ${reel.multiplier.toFixed(2)}x
 ${reel.words_per_minute ? `- Palabras por minuto: ${reel.words_per_minute}` : ''}
 
 **PROMEDIOS DE LA CUENTA:**
 - Views promedio: ${accountAverages.avg_views.toLocaleString()}
 - Tasa like promedio: ${accountAverages.avg_like_rate.toFixed(2)}%
-- Tasa guardados promedio: ${accountAverages.avg_save_rate.toFixed(2)}%
 - Tasa comentarios promedio: ${accountAverages.avg_comment_rate.toFixed(2)}%
 - WPM óptimo: ${accountAverages.avg_wpm}
 
@@ -51,7 +48,7 @@ Analizá:
 Sé específico, data-driven y accionable. Máximo 400 palabras.`
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-haiku-4-5',
     max_tokens: 1024,
     messages: [{ role: 'user', content: prompt }],
   })
@@ -68,7 +65,7 @@ export async function transcribeAndStructure(transcript: string): Promise<{
   const wordCount = transcript.split(' ').length
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-haiku-4-5',
     max_tokens: 1024,
     messages: [{
       role: 'user',
@@ -124,7 +121,7 @@ export async function generateContentIdeas(params: {
   objective: string
 }): Promise<string> {
   const topReelsSummary = params.myTopReels.slice(0, 5).map(r =>
-    `- "${r.caption?.slice(0, 80)}..." | ${r.multiplier.toFixed(1)}x promedio | Save rate: ${r.save_rate.toFixed(2)}% | Hook: ${r.hook}`
+    `- "${r.caption?.slice(0, 80)}..." | ${r.multiplier.toFixed(1)}x promedio | Like rate: ${r.like_rate.toFixed(2)}% | Hook: ${r.hook}`
   ).join('\n')
 
   const message = await client.messages.create({
@@ -171,7 +168,6 @@ export async function chatWithMoka(params: {
     caption: r.caption?.slice(0, 60),
     views: r.views,
     multiplier: r.multiplier,
-    save_rate: r.save_rate,
     like_rate: r.like_rate,
     comment_rate: r.comment_rate,
     hook: r.hook,

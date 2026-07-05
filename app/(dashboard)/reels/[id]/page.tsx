@@ -101,8 +101,8 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
             {[
               { label: 'Me gusta', value: formatNumber(reel.likes), rate: reel.like_rate, benchmark: avgs.avg_like_rate, icon: '♥' },
-              { label: 'Guardados', value: formatNumber(reel.saves), rate: reel.save_rate, benchmark: avgs.avg_save_rate, icon: '🔖' },
-              { label: 'Compartidos', value: formatNumber(reel.shares), rate: reel.share_rate, benchmark: avgs.avg_share_rate, icon: '↗' },
+              { label: 'Guardados', value: '—', rate: null, benchmark: null, icon: '🔖' },
+              { label: 'Compartidos', value: '—', rate: null, benchmark: null, icon: '↗' },
               { label: 'Comentarios', value: formatNumber(reel.comments), rate: reel.comment_rate, benchmark: avgs.avg_comment_rate, icon: '💬' },
               { label: 'Ventas', value: totalSales > 0 ? formatCurrency(totalSales) : '—', rate: null, benchmark: null, icon: '$' },
             ].map(m => (
@@ -171,9 +171,7 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 16 }}>VS BENCHMARK 90D</div>
           {[
             { label: 'Me gusta', actual: reel.likes, benchmark: avgs.avg_like_rate * reel.views / 100, rate: reel.like_rate, bRate: avgs.avg_like_rate, color: '#7c3aed' },
-            { label: 'Guardados', actual: reel.saves, benchmark: avgs.avg_save_rate * reel.views / 100, rate: reel.save_rate, bRate: avgs.avg_save_rate, color: '#10b981' },
             { label: 'Comentarios', actual: reel.comments, benchmark: avgs.avg_comment_rate * reel.views / 100, rate: reel.comment_rate, bRate: avgs.avg_comment_rate, color: '#f59e0b' },
-            { label: 'Compartidos', actual: reel.shares, benchmark: avgs.avg_share_rate * reel.views / 100, rate: reel.share_rate, bRate: avgs.avg_share_rate, color: '#3b82f6' },
           ].map(m => {
             const pct = m.bRate > 0 ? ((m.rate - m.bRate) / m.bRate) * 100 : 0
             const up = pct >= 0
@@ -200,7 +198,7 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
           <p style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 12 }}>Proporciones con denominador real</p>
           {[
             { label: 'Interacciones / Views', value: `${((reel.likes + reel.comments + reel.shares + reel.saves) / Math.max(reel.views, 1) * 100).toFixed(2)}%`, sub: `${formatNumber(reel.likes + reel.comments + reel.shares + reel.saves)} de ${formatNumber(reel.views)}`, note: 'engagement bruto' },
-            { label: 'Saves / Views', value: `${reel.save_rate.toFixed(2)}%`, sub: `${formatNumber(reel.saves)} de ${formatNumber(reel.views)}`, note: 'guardados sobre reproducciones' },
+            { label: 'Saves / Views', value: '—', sub: 'Instagram no expone este dato públicamente', note: 'guardados sobre reproducciones' },
             { label: 'Likes / Views', value: `${reel.like_rate.toFixed(2)}%`, sub: `${formatNumber(reel.likes)} de ${formatNumber(reel.views)}`, note: 'likes sobre reproducciones' },
             { label: 'Comments / Views', value: `${reel.comment_rate.toFixed(2)}%`, sub: `${formatNumber(reel.comments)} de ${formatNumber(reel.views)}`, note: 'comentarios sobre reproducciones' },
           ].map(r => (

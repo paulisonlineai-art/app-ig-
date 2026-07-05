@@ -171,7 +171,7 @@ export default async function DashboardPage() {
               {[
                 { label: 'Reels este período', value: r.length },
                 { label: 'Likes totales', value: formatNumber(r.reduce((s: number, x: any) => s + x.likes, 0)) },
-                { label: 'Guardados totales', value: formatNumber(r.reduce((s: number, x: any) => s + x.saves, 0)) },
+                { label: 'Guardados totales', value: '—' },
                 { label: 'Ventas registradas', value: allSales.length },
               ].map(item => (
                 <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 8, borderBottom: '1px solid var(--border)' }}>

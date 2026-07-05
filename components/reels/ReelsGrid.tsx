@@ -119,8 +119,8 @@ export default function ReelsGrid({ reels, averages, totalLikes, totalSaves, tot
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6, fontSize: 12, fontWeight: 600 }}>
                     <span>👁 {formatNumber(reel.views)}</span>
                     <span style={{ color: 'var(--text-muted)' }}>♥ {formatNumber(reel.likes)}</span>
-                    <span style={{ color: 'var(--text-muted)' }}>🔖 {formatNumber(reel.saves)}</span>
-                    <span style={{ color: 'var(--text-muted)' }}>↗ {formatNumber(reel.shares)}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>🔖 —</span>
+                    <span style={{ color: 'var(--text-muted)' }}>↗ —</span>
                   </div>
                   {reel.is_trial && (
                     <span style={{ fontSize: 10, background: 'var(--accent-light)', color: 'var(--accent)', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>Trial Reel</span>
@@ -144,7 +144,7 @@ export default function ReelsGrid({ reels, averages, totalLikes, totalSaves, tot
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
               { label: 'Likes totales', value: formatNumber(totalLikes), color: '#7c3aed' },
-              { label: 'Guardados totales', value: formatNumber(totalSaves), color: '#10b981' },
+              { label: 'Guardados totales', value: '—', color: '#10b981' },
               { label: 'Views totales', value: formatNumber(totalViews), color: '#f59e0b' },
             ].map(s => (
               <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 8, borderBottom: '1px solid var(--border)' }}>
@@ -162,7 +162,7 @@ export default function ReelsGrid({ reels, averages, totalLikes, totalSaves, tot
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 12 }}>TUS PROMEDIOS</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              { label: 'Save rate', value: `${averages.avg_save_rate.toFixed(2)}%` },
+              { label: 'Save rate', value: '—' },
               { label: 'Like rate', value: `${averages.avg_like_rate.toFixed(2)}%` },
               { label: 'Comment rate', value: `${averages.avg_comment_rate.toFixed(2)}%` },
               { label: 'WPM óptimo', value: averages.avg_wpm ? `${Math.round(averages.avg_wpm)} wpm` : '—' },

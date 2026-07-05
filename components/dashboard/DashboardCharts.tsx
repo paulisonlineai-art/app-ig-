@@ -8,13 +8,13 @@ export default function DashboardCharts({ audienceStats, reels }: { audienceStat
     Impresiones: s.impressions,
   }))
 
-  // Daily interactions from reels (group by date)
-  const byDate: Record<string, { likes: number; saves: number; comments: number }> = {}
+  // Daily interactions from reels (group by date). Saves excluded — Instagram
+  // never exposes that count publicly, so scraped data can't include it.
+  const byDate: Record<string, { likes: number; comments: number }> = {}
   for (const r of reels) {
     const d = new Date(r.timestamp).toLocaleDateString('es', { month: 'short', day: 'numeric' })
-    if (!byDate[d]) byDate[d] = { likes: 0, saves: 0, comments: 0 }
+    if (!byDate[d]) byDate[d] = { likes: 0, comments: 0 }
     byDate[d].likes += r.likes || 0
-    byDate[d].saves += r.saves || 0
     byDate[d].comments += r.comments || 0
   }
   const interactData = Object.entries(byDate).map(([date, v]) => ({ date, ...v }))
@@ -47,7 +47,7 @@ export default function DashboardCharts({ audienceStats, reels }: { audienceStat
       <div className="card" style={{ padding: 20 }}>
         <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Interacciones</div>
         <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-          {[{ color: '#7c3aed', label: 'Me gusta' }, { color: '#10b981', label: 'Guardados' }, { color: '#f59e0b', label: 'Comentarios' }].map(l => (
+          {[{ color: '#7c3aed', label: 'Me gusta' }, { color: '#f59e0b', label: 'Comentarios' }].map(l => (
             <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-muted)' }}>
               <div style={{ width: 8, height: 8, background: l.color, borderRadius: 2 }} />
               {l.label}
@@ -60,7 +60,6 @@ export default function DashboardCharts({ audienceStats, reels }: { audienceStat
             <YAxis hide />
             <Tooltip contentStyle={tooltipStyle} />
             <Bar dataKey="likes" stackId="a" fill="#7c3aed" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="saves" stackId="a" fill="#10b981" />
             <Bar dataKey="comments" stackId="a" fill="#f59e0b" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
