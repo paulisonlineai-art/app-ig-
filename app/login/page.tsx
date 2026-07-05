@@ -1,6 +1,17 @@
 'use client'
 import { createAuthBrowserClient } from '@/lib/supabase-browser'
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+
+function LoginError({ onError }: { onError: (msg: string) => void }) {
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    const err = searchParams.get('error')
+    const detail = searchParams.get('detail')
+    if (err) onError(detail ? `${err}: ${detail}` : err)
+  }, [searchParams, onError])
+  return null
+}
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
@@ -21,6 +32,9 @@ export default function LoginPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <Suspense fallback={null}>
+        <LoginError onError={setError} />
+      </Suspense>
       <div style={{ width: '100%', maxWidth: 420, textAlign: 'center' }}>
 
         <div style={{ fontSize: 48, marginBottom: 16 }}>🎯</div>

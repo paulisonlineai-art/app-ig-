@@ -25,25 +25,28 @@ export async function GET(req: NextRequest) {
     )
 
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      // Check if user already has an IG account connected
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const db = (await import('@/lib/supabase')).createServerSupabase()
-        const { data: account } = await db
-          .from('ig_accounts')
-          .select('id')
-          .eq('user_id', user.id)
-          .single()
-
-        if (account) {
-          cookieStore.set('ig_account_id', account.id, { path: '/', maxAge: 60 * 60 * 24 * 365 })
-          return NextResponse.redirect(`${origin}/dashboard`)
-        }
-      }
-      return NextResponse.redirect(`${origin}/connect`)
+    if (error) {
+      console.error('exchangeCodeForSession failed:', error.message)
+      return NextResponse.redirect(`${origin}/login?error=auth_failed&detail=${encodeURIComponent(error.message)}`)
     }
+
+    // Check if user already has an IG account connected
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const db = (await import('@/lib/supabase')).createServerSupabase()
+      const { data: account } = await db
+        .from('ig_accounts')
+        .select('id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (account) {
+        cookieStore.set('ig_account_id', account.id, { path: '/', maxAge: 60 * 60 * 24 * 365 })
+        return NextResponse.redirect(`${origin}/dashboard`)
+      }
+    }
+    return NextResponse.redirect(`${origin}/connect`)
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth_failed`)
+  return NextResponse.redirect(`${origin}/login?error=auth_failed&detail=no_code`)
 }
