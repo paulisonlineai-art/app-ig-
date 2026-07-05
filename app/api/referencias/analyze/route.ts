@@ -16,11 +16,12 @@ export async function POST(req: NextRequest) {
   const db = createServerSupabase()
 
   const [{ data: ref }, { data: brand }] = await Promise.all([
-    db.from('reference_videos').select('*').eq('id', refId).single(),
+    db.from('reference_videos').select('*').eq('id', refId).eq('account_id', accountId).single(),
     db.from('brand_dna').select('content, fields').eq('account_id', accountId).single(),
   ])
 
-  if (!ref?.transcript) return NextResponse.json({ error: 'Sin transcripción disponible' }, { status: 400 })
+  if (!ref) return NextResponse.json({ error: 'Referencia no encontrada' }, { status: 404 })
+  if (!ref.transcript) return NextResponse.json({ error: 'Sin transcripción disponible' }, { status: 400 })
 
   const brandContext = brand?.content || (brand?.fields ? JSON.stringify(brand.fields) : 'No configurado')
 
@@ -71,13 +72,13 @@ Devolvé un JSON con esta estructura exacta (sin markdown, solo JSON válido):
       structure,
       hook: structure.hook || null,
       status: 'analyzed',
-    }).eq('id', refId)
+    }).eq('id', refId).eq('account_id', accountId)
 
-    const { data: updatedRef } = await db.from('reference_videos').select('*').eq('id', refId).single()
+    const { data: updatedRef } = await db.from('reference_videos').select('*').eq('id', refId).eq('account_id', accountId).single()
 
     return NextResponse.json({ ref: updatedRef })
   } catch (e: any) {
-    await db.from('reference_videos').update({ status: 'error', error_message: e.message }).eq('id', refId)
+    await db.from('reference_videos').update({ status: 'error', error_message: e.message }).eq('id', refId).eq('account_id', accountId)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }

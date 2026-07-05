@@ -25,7 +25,7 @@ const NAV_BOTTOM = [
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
   const accountId = cookieStore.get('ig_account_id')?.value
-  if (!accountId) redirect('/auth')
+  if (!accountId) redirect('/connect')
 
   const db = createServerSupabase()
   const [{ data: account }, { data: reels30d }] = await Promise.all([

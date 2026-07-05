@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   const averages = calcAverages(allReels || [])
   const analysis = await analyzeReel(reel, averages)
 
-  await db.from('reels').update({ ai_analysis: analysis }).eq('id', reelId)
+  await db.from('reels').update({ ai_analysis: analysis }).eq('id', reelId).eq('account_id', accountId)
 
   return NextResponse.json({ analysis })
 }

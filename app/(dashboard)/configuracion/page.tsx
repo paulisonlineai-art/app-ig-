@@ -30,7 +30,7 @@ export default async function ConfiguracionPage() {
         ) : (
           <p style={{ color: 'var(--text-muted)' }}>No hay cuenta conectada</p>
         )}
-        <a href="/auth" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 16, fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>
+        <a href="/connect" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 16, fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>
           → Reconectar Instagram
         </a>
       </div>
@@ -42,15 +42,17 @@ export default async function ConfiguracionPage() {
             { key: 'NEXT_PUBLIC_SUPABASE_URL', label: 'Supabase URL' },
             { key: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', label: 'Supabase Anon Key' },
             { key: 'SUPABASE_SERVICE_ROLE_KEY', label: 'Supabase Service Role' },
-            { key: 'META_APP_ID', label: 'Meta App ID' },
-            { key: 'META_APP_SECRET', label: 'Meta App Secret' },
+            { key: 'APIFY_API_TOKEN', label: 'Apify API Token' },
             { key: 'ANTHROPIC_API_KEY', label: 'Anthropic API Key' },
+            { key: 'GOOGLE_CLIENT_ID', label: 'Google Client ID' },
+            { key: 'GOOGLE_CLIENT_SECRET', label: 'Google Client Secret' },
+            { key: 'CRON_SECRET', label: 'Cron Secret' },
           ].map(v => {
-            const set = !!(process.env[v.key] || process.env[`NEXT_PUBLIC_${v.key.replace('NEXT_PUBLIC_', '')}`])
+            const set = !!process.env[v.key]
             return (
               <div key={v.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
                 <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{v.key}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--success)' }}>✓</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: set ? 'var(--success)' : 'var(--danger)' }}>{set ? '✓' : '✗ falta'}</span>
               </div>
             )
           })}

@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   const db = createServerSupabase()
 
   const [{ data: ref }, { data: brand }] = await Promise.all([
-    db.from('reference_videos').select('*').eq('id', refId).single(),
+    db.from('reference_videos').select('*').eq('id', refId).eq('account_id', accountId).single(),
     db.from('brand_dna').select('content, fields').eq('account_id', accountId).single(),
   ])
 
@@ -70,7 +70,7 @@ Solo devolvé el guión, sin explicaciones adicionales.`
 
     const adaptation = (response.content[0] as any).text
 
-    await db.from('reference_videos').update({ adaptation, last_adapted_angle: angle || null }).eq('id', refId)
+    await db.from('reference_videos').update({ adaptation, last_adapted_angle: angle || null }).eq('id', refId).eq('account_id', accountId)
 
     return NextResponse.json({ adaptation })
   } catch (e: any) {
