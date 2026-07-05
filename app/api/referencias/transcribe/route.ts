@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createServerSupabase } from '@/lib/supabase'
-import { exec } from 'child_process'
-import { promisify } from 'util'
-import { join, dirname, resolve } from 'path'
-import { readFile, unlink } from 'fs/promises'
-import { existsSync } from 'fs'
+import OpenAI from 'openai'
+import { toFile } from 'openai/uploads'
 
-const execAsync = promisify(exec)
-const UPLOADS_DIR = resolve('/tmp/moka-uploads')
+const BUCKET = 'reference-videos'
+// Whisper's hard limit is 25MB per file — there's no ffmpeg available here
+// to shrink a video down to just its audio track, so oversized uploads must
+// be rejected with a clear message instead of silently failing.
+const MAX_WHISPER_BYTES = 25 * 1024 * 1024
 
 export const maxDuration = 300
 
@@ -17,51 +17,36 @@ export async function POST(req: NextRequest) {
   const accountId = cookieStore.get('ig_account_id')?.value
   if (!accountId) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
-  const { refId, filePath } = await req.json()
-  if (!refId || !filePath) return NextResponse.json({ error: 'Parámetros faltantes' }, { status: 400 })
-
-  // Resolve to the real path and verify it can't escape the uploads dir
-  // (e.g. via "../" segments) — a prefix-only check would let a crafted
-  // filePath traverse outside it.
-  const resolvedPath = resolve(filePath)
-  if (resolvedPath !== filePath || (resolvedPath !== UPLOADS_DIR && !resolvedPath.startsWith(UPLOADS_DIR + '/'))) {
-    return NextResponse.json({ error: 'Ruta inválida' }, { status: 400 })
-  }
+  const { refId } = await req.json()
+  if (!refId) return NextResponse.json({ error: 'Parámetros faltantes' }, { status: 400 })
 
   const db = createServerSupabase()
 
-  // Verify this reference video actually belongs to the requesting account
-  // before running any (expensive) processing on it.
-  const { data: ref } = await db.from('reference_videos').select('id').eq('id', refId).eq('account_id', accountId).single()
-  if (!ref) return NextResponse.json({ error: 'Referencia no encontrada' }, { status: 404 })
+  const { data: ref } = await db
+    .from('reference_videos')
+    .select('id, file_path, filename')
+    .eq('id', refId)
+    .eq('account_id', accountId)
+    .single()
 
-  const audioPath = filePath.replace(/\.[^.]+$/, '.wav')
+  if (!ref?.file_path) return NextResponse.json({ error: 'Referencia no encontrada' }, { status: 404 })
 
   try {
-    // Extract audio with ffmpeg
-    await execAsync(
-      `/opt/homebrew/bin/ffmpeg -y -i "${filePath}" -ar 16000 -ac 1 -vn "${audioPath}"`,
-      { timeout: 120000 }
-    )
+    const { data: fileBlob, error: downloadErr } = await db.storage.from(BUCKET).download(ref.file_path)
+    if (downloadErr || !fileBlob) throw new Error(downloadErr?.message || 'No se pudo descargar el video')
 
-    // Transcribe with Whisper
-    const outputDir = dirname(audioPath)
-    const { stdout } = await execAsync(
-      `python3 -m whisper "${audioPath}" --model medium --language Spanish --output_format txt --output_dir "${outputDir}"`,
-      { timeout: 240000 }
-    )
-
-    const txtPath = audioPath.replace('.wav', '.txt')
-    let transcript = ''
-    if (existsSync(txtPath)) {
-      transcript = (await readFile(txtPath, 'utf8')).trim()
-      await unlink(txtPath).catch(() => {})
+    if (fileBlob.size > MAX_WHISPER_BYTES) {
+      throw new Error(`El video pesa ${(fileBlob.size / 1024 / 1024).toFixed(0)}MB — el límite para transcribir es 25MB. Subí un video más corto o comprimido.`)
     }
 
-    // Clean up audio file
-    await unlink(audioPath).catch(() => {})
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+    const transcription = await openai.audio.transcriptions.create({
+      file: await toFile(fileBlob, ref.filename || 'video.mp4'),
+      model: 'whisper-1',
+      language: 'es',
+    })
 
-    // Count words and estimate duration/WPM
+    const transcript = transcription.text.trim()
     const wordCount = transcript.split(/\s+/).filter(Boolean).length
 
     await db.from('reference_videos').update({

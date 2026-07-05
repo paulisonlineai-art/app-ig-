@@ -1,6 +1,9 @@
 'use client'
 import { useState, useRef } from 'react'
+import { createAuthBrowserClient } from '@/lib/supabase-browser'
 import ReferenceCard from './ReferenceCard'
+
+const BUCKET = 'reference-videos'
 
 export default function ReferenciasClient({ references, accountId, brandDNA }: {
   references: any[]
@@ -10,40 +13,51 @@ export default function ReferenciasClient({ references, accountId, brandDNA }: {
   const [refs, setRefs] = useState(references)
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState('')
+  const [error, setError] = useState('')
   const [dragOver, setDragOver] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const handleFile = async (file: File) => {
     if (!file) return
+    setError('')
     if (!file.type.startsWith('video/') && !file.name.endsWith('.mp4') && !file.name.endsWith('.mov')) {
-      alert('Solo se aceptan archivos de video (MP4, MOV)')
+      setError('Solo se aceptan archivos de video (MP4, MOV)')
       return
     }
-    if (file.size > 500 * 1024 * 1024) {
-      alert('El video no puede superar 500MB')
+    if (file.size > 200 * 1024 * 1024) {
+      setError('El video no puede superar 200MB')
       return
     }
 
     setUploading(true)
     setProgress('📤 Subiendo video...')
 
-    const fd = new FormData()
-    fd.append('video', file)
-
     try {
-      const res = await fetch('/api/referencias/upload', { method: 'POST', body: fd })
+      const res = await fetch('/api/referencias/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, fileSize: file.size }),
+      })
       const data = await res.json()
-      if (data.error) { alert(data.error); return }
+      if (data.error) { setError(data.error); return }
+
+      // Upload the video bytes straight to Supabase Storage — never through
+      // a Vercel function, which caps request bodies well below video size.
+      const supabase = createAuthBrowserClient()
+      const { error: uploadError } = await supabase.storage
+        .from(BUCKET)
+        .uploadToSignedUrl(data.filePath, data.token, file)
+      if (uploadError) { setError(uploadError.message); return }
 
       setProgress('🎙 Transcribiendo audio con Whisper...')
 
       const transcribeRes = await fetch('/api/referencias/transcribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refId: data.refId, filePath: data.filePath }),
+        body: JSON.stringify({ refId: data.refId }),
       })
       const transcribeData = await transcribeRes.json()
-      if (transcribeData.error) { alert(transcribeData.error); return }
+      if (transcribeData.error) { setError(transcribeData.error); return }
 
       setProgress('🤖 Analizando estructura con Moka AI...')
 
@@ -53,12 +67,12 @@ export default function ReferenciasClient({ references, accountId, brandDNA }: {
         body: JSON.stringify({ refId: data.refId }),
       })
       const analyzed = await analyzeRes.json()
-      if (analyzed.error) { alert(analyzed.error); return }
+      if (analyzed.error) { setError(analyzed.error); return }
 
       setRefs(prev => [analyzed.ref, ...prev])
       setProgress('')
-    } catch (e) {
-      alert('Error al procesar el video')
+    } catch (e: any) {
+      setError(e.message || 'Error al procesar el video')
       setProgress('')
     } finally {
       setUploading(false)
@@ -113,7 +127,7 @@ export default function ReferenciasClient({ references, accountId, brandDNA }: {
             <div style={{ fontSize: 48, marginBottom: 12 }}>🎬</div>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Subí un video de referencia</div>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4 }}>
-              Arrastrá o hacé clic — MP4, MOV hasta 500MB
+              Arrastrá o hacé clic — MP4, MOV hasta 200MB (idealmente menos de 25MB para transcribir)
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>
               Moka transcribe, analiza estructura y genera tu versión adaptada
@@ -121,6 +135,12 @@ export default function ReferenciasClient({ references, accountId, brandDNA }: {
           </div>
         )}
       </div>
+
+      {error && (
+        <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: 'var(--danger)', marginBottom: 20 }}>
+          {error}
+        </div>
+      )}
 
       {/* References list */}
       {refs.length === 0 && !uploading ? (
