@@ -145,17 +145,24 @@ export async function detectTrialReelCodes(username: string, limit = 50): Promis
   )
 }
 
-// Scrape reels for a competitor (public, no session needed)
+// Scrape reels for a competitor (public, no session needed). Apify only
+// ever returns a profile's most recent posts — there's no way to ask it
+// for "the most viral reel ever" without scraping the account's entire
+// history (a lot more Apify credits). Instead we scrape a wider recent
+// pool and keep the top performers by views within that pool, so tracked
+// reels are "most viral among what they've posted lately" rather than
+// strictly the newest ones.
 export async function scrapeCompetitorReels(username: string, limit = 20): Promise<ApifyReel[]> {
+  const poolSize = Math.max(limit * 3, 50)
   const run = await client.actor('apify/instagram-scraper').call({
     directUrls: [`https://www.instagram.com/${username}/`],
     resultsType: 'posts',
-    resultsLimit: limit,
+    resultsLimit: poolSize,
   }, { waitSecs: 120 })
 
   const { items } = await client.dataset(run.defaultDatasetId).listItems()
 
-  return (items as any[])
+  const reels = (items as any[])
     .filter(item => item.type === 'Video' || item.videoViewCount > 0)
     .map(item => ({
       id: item.id || item.shortCode,
@@ -173,4 +180,8 @@ export async function scrapeCompetitorReels(username: string, limit = 20): Promi
       isSponsored: item.isSponsored || false,
       type: item.type || 'Reel',
     }))
+
+  return reels
+    .sort((a, b) => (b.videoViewCount || b.videoPlayCount || 0) - (a.videoViewCount || a.videoPlayCount || 0))
+    .slice(0, limit)
 }
