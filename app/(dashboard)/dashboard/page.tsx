@@ -1,8 +1,9 @@
 import { cookies } from 'next/headers'
 import { createServerSupabase } from '@/lib/supabase'
-import { formatNumber, formatCurrency } from '@/lib/utils'
+import { formatNumber, formatCurrency, getRangeBounds, DATE_RANGE_OPTIONS } from '@/lib/utils'
 import SyncButton from '@/components/dashboard/SyncButton'
 import DashboardCharts from '@/components/dashboard/DashboardCharts'
+import DateRangeSelect from '@/components/dashboard/DateRangeSelect'
 
 function PctChange({ val, prev }: { val: number; prev: number }) {
   if (!prev) return null
@@ -16,13 +17,32 @@ function PctChange({ val, prev }: { val: number; prev: number }) {
   )
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const cookieStore = await cookies()
   const accountId = cookieStore.get('ig_account_id')?.value!
+  const range = (await searchParams).range || '30d'
+  const { start, end, prevStart, prevEnd } = getRangeBounds(range)
+  const rangeLabel = DATE_RANGE_OPTIONS.find(o => o.value === range)?.label || 'Últimos 30 días'
 
   const db = createServerSupabase()
-  const d30 = new Date(Date.now() - 30 * 864e5).toISOString()
-  const d60 = new Date(Date.now() - 60 * 864e5).toISOString()
+
+  let reelsQuery = db.from('reels').select('views,likes,comments,shares,saves,timestamp').eq('account_id', accountId)
+  if (start) reelsQuery = reelsQuery.gte('timestamp', start.toISOString())
+  if (end) reelsQuery = reelsQuery.lt('timestamp', end.toISOString())
+
+  let storiesQuery = db.from('stories').select('replies').eq('account_id', accountId)
+  if (start) storiesQuery = storiesQuery.gte('timestamp', start.toISOString())
+  if (end) storiesQuery = storiesQuery.lt('timestamp', end.toISOString())
+
+  let salesQuery = db.from('sales').select('amount,cash_collected,closed_at,reel_id,reels(caption,thumbnail_url)').eq('account_id', accountId).order('closed_at', { ascending: false })
+  if (start) salesQuery = salesQuery.gte('closed_at', start.toISOString().split('T')[0])
+  if (end) salesQuery = salesQuery.lt('closed_at', end.toISOString().split('T')[0])
+
+  // "vs período anterior" has no meaning for "todo el tiempo" — skip it there.
+  let reelsPrevQuery = prevStart
+    ? db.from('reels').select('views,comments').eq('account_id', accountId).gte('timestamp', prevStart.toISOString())
+    : null
+  if (reelsPrevQuery && prevEnd) reelsPrevQuery = reelsPrevQuery.lt('timestamp', prevEnd.toISOString())
 
   const [
     { data: reels30 },
@@ -32,10 +52,10 @@ export default async function DashboardPage() {
     { data: topSaleReels },
     { data: audienceStats },
   ] = await Promise.all([
-    db.from('reels').select('views,likes,comments,shares,saves,timestamp').eq('account_id', accountId).gte('timestamp', d30),
-    db.from('reels').select('views,comments').eq('account_id', accountId).gte('timestamp', d60).lt('timestamp', d30),
-    db.from('stories').select('replies').eq('account_id', accountId).gte('timestamp', d30),
-    db.from('sales').select('amount,cash_collected,closed_at,reel_id,reels(caption,thumbnail_url)').eq('account_id', accountId).order('closed_at', { ascending: false }).limit(50),
+    reelsQuery,
+    reelsPrevQuery || Promise.resolve({ data: [] as any[] }),
+    storiesQuery,
+    salesQuery.limit(200),
     db.from('reels').select('id,caption,thumbnail_url,views,multiplier').eq('account_id', accountId).order('multiplier', { ascending: false }).limit(5),
     db.from('audience_stats').select('date,reach,impressions').eq('account_id', accountId).order('date', { ascending: true }).limit(60),
   ])
@@ -74,11 +94,7 @@ export default async function DashboardPage() {
           <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Resumen global de tu marca personal.</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <select style={{ fontSize: 13, padding: '7px 12px', borderRadius: 8 }}>
-            <option>Últimos 30 días</option>
-            <option>Últimos 90 días</option>
-            <option>Este mes</option>
-          </select>
+          <DateRangeSelect current={range} />
           <SyncButton />
         </div>
       </div>
@@ -116,7 +132,7 @@ export default async function DashboardPage() {
             <div className="card" style={{ padding: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                 <h2 style={{ fontSize: 14, fontWeight: 700 }}>Top fuentes de facturación</h2>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>PERIODO SELECCIONADO</span>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{rangeLabel.toUpperCase()}</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {topSources.map((src, i) => (
@@ -152,7 +168,7 @@ export default async function DashboardPage() {
             <div style={{ fontSize: 30, fontWeight: 900, color: 'var(--accent)', letterSpacing: '-0.04em' }}>
               {formatCurrency(totalRevenue)}
             </div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>últimos 30 días</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{rangeLabel.toLowerCase()}</div>
           </div>
 
           <div className="card" style={{ padding: 20 }}>
