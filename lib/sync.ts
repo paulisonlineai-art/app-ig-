@@ -2,7 +2,7 @@ import { createServerSupabase } from '@/lib/supabase'
 import { scrapeInstagramProfile, detectTrialReelCodes } from '@/lib/apify'
 import { calcMultiplier, calcRate } from '@/lib/utils'
 
-export async function syncAccountReels(accountId: string): Promise<{ synced: number; message?: string; trialDetectionError?: string }> {
+export async function syncAccountReels(accountId: string): Promise<{ synced: number; message?: string; trialDetectionError?: string; trialCodesFound?: number }> {
   const db = createServerSupabase()
   const { data: account } = await db.from('ig_accounts').select('*').eq('id', accountId).single()
   if (!account) throw new Error('Cuenta no encontrada')
@@ -37,7 +37,7 @@ export async function syncAccountReels(accountId: string): Promise<{ synced: num
     }).eq('id', accountId)
   }
 
-  if (!reels.length) return { synced: 0, message: 'No se encontraron reels', trialDetectionError }
+  if (!reels.length) return { synced: 0, message: 'No se encontraron reels', trialDetectionError, trialCodesFound: trialCodes.size }
 
   // Calculate averages for multiplier
   const avgViews = reels.reduce((s, r) => s + r.videoViewCount, 0) / reels.length
@@ -87,5 +87,5 @@ export async function syncAccountReels(accountId: string): Promise<{ synced: num
     )
   }
 
-  return { synced: reels.length, trialDetectionError }
+  return { synced: reels.length, trialDetectionError, trialCodesFound: trialCodes.size }
 }

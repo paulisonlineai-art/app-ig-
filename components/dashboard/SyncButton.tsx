@@ -13,8 +13,13 @@ export default function SyncButton() {
       const data = await res.json()
       if (data.error) setMsg(`Error: ${data.error}`)
       else {
-        setMsg(data.trialDetectionError ? `✓ ${data.synced} reels (trial reels: ${data.trialDetectionError})` : `✓ ${data.synced} reels`)
-        setTimeout(() => { setMsg(''); window.location.reload() }, data.trialDetectionError ? 6000 : 2000)
+        // Always show the trial-detection diagnostic and don't auto-reload —
+        // this is the only place you can see whether detection actually ran
+        // and how many trial reels it found, before the page refreshes it away.
+        const trialInfo = data.trialDetectionError
+          ? `trial reels: falló — ${data.trialDetectionError}`
+          : `trial reels detectados: ${data.trialCodesFound ?? 0}`
+        setMsg(`✓ ${data.synced} reels — ${trialInfo}`)
       }
     } catch { setMsg('Error') }
     finally { setLoading(false) }
@@ -22,7 +27,14 @@ export default function SyncButton() {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      {msg && <span style={{ fontSize: 12, color: 'var(--success)', fontWeight: 600 }}>{msg}</span>}
+      {msg && (
+        <>
+          <span style={{ fontSize: 12, color: 'var(--success)', fontWeight: 600 }}>{msg}</span>
+          <button onClick={() => window.location.reload()} className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 8px' }}>
+            ↻ Actualizar página
+          </button>
+        </>
+      )}
       <button
         onClick={sync}
         disabled={loading}
