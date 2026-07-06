@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   const accountId = req.cookies.get('ig_account_id')?.value
   if (!accountId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-  const { competitorId } = await req.json()
+  const { competitorId, expandBy } = await req.json()
   const db = createServerSupabase()
 
   const { data: competitor } = await db
@@ -19,11 +19,20 @@ export async function POST(req: NextRequest) {
   if (!competitor) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   try {
+    // A plain re-sync should never shrink what's already tracked (the top-N-
+    // by-views logic could otherwise drop reels if view counts shifted), and
+    // "track more" (expandBy) grows the pool past whatever's tracked today.
+    const { count: currentCount } = await db
+      .from('competitor_reels')
+      .select('*', { count: 'exact', head: true })
+      .eq('competitor_id', competitorId)
+    const limit = Math.max(currentCount || 0, 20) + (expandBy || 0)
+
     // Competitors are public accounts you have no OAuth access to — Apify's
     // public scraper is the right tool here, unlike the old Business
     // Discovery Graph API call which required a token this app never has.
     const [reels, profile] = await Promise.all([
-      scrapeCompetitorReels(competitor.ig_username, 20),
+      scrapeCompetitorReels(competitor.ig_username, limit),
       scrapeInstagramUser(competitor.ig_username).catch(() => null),
     ])
 

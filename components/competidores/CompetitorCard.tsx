@@ -9,14 +9,14 @@ export default function CompetitorCard({ competitor }: { competitor: any }) {
   const [error, setError] = useState('')
   const [showReels, setShowReels] = useState(false)
 
-  const sync = async () => {
+  const sync = async (expandBy?: number) => {
     setSyncing(true)
     setError('')
     try {
       const res = await fetch('/api/competitors/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ competitorId: competitor.id }),
+        body: JSON.stringify({ competitorId: competitor.id, expandBy }),
       })
       const data = await res.json()
       if (!res.ok || data.error) {
@@ -72,23 +72,43 @@ export default function CompetitorCard({ competitor }: { competitor: any }) {
         )}
       </div>
 
-      <button
-        onClick={sync}
-        disabled={syncing}
-        style={{
-          width: '100%',
-          background: syncing ? 'var(--border)' : 'var(--accent)',
-          color: 'white',
-          border: 'none',
-          padding: '10px',
-          borderRadius: 8,
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: syncing ? 'not-allowed' : 'pointer',
-        }}
-      >
-        {syncing ? '⏳ Sincronizando...' : '🔄 Sincronizar reels'}
-      </button>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button
+          onClick={() => sync()}
+          disabled={syncing}
+          style={{
+            flex: 1,
+            background: syncing ? 'var(--border)' : 'var(--accent)',
+            color: 'white',
+            border: 'none',
+            padding: '10px',
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: syncing ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {syncing ? '⏳ Sincronizando...' : '🔄 Sincronizar reels'}
+        </button>
+        <button
+          onClick={() => sync(20)}
+          disabled={syncing}
+          title="Trae 20 reels virales más, sin perder los que ya trackeaste"
+          style={{
+            flex: 1,
+            background: 'var(--surface-2)',
+            color: 'var(--text)',
+            border: '1px solid var(--border)',
+            padding: '10px',
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: syncing ? 'not-allowed' : 'pointer',
+          }}
+        >
+          ➕ Trackear más reels
+        </button>
+      </div>
 
       {error && <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 8 }}>{error}</p>}
 
