@@ -28,7 +28,7 @@ export default function SyncButton() {
       } else {
         const trialInfo = data.trialDetectionError
           ? `trial reels: falló — ${data.trialDetectionError}`
-          : `trial reels detectados: ${data.trialCodesFound ?? 0}`
+          : `trial reels detectados: ${data.trialCodesFound ?? 0}, marcados en tus reels: ${data.trialCodesMatched ?? 0}`
         sessionStorage.setItem(STORAGE_KEY, `✓ ${data.synced} reels — ${trialInfo}`)
         window.location.reload()
       }

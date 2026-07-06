@@ -2,7 +2,7 @@ import { createServerSupabase } from '@/lib/supabase'
 import { scrapeInstagramProfile, detectTrialReelCodes } from '@/lib/apify'
 import { calcMultiplier, calcRate } from '@/lib/utils'
 
-export async function syncAccountReels(accountId: string): Promise<{ synced: number; message?: string; trialDetectionError?: string; trialCodesFound?: number }> {
+export async function syncAccountReels(accountId: string): Promise<{ synced: number; message?: string; trialDetectionError?: string; trialCodesFound?: number; trialCodesMatched?: number }> {
   const db = createServerSupabase()
   const { data: account } = await db.from('ig_accounts').select('*').eq('id', accountId).single()
   if (!account) throw new Error('Cuenta no encontrada')
@@ -38,6 +38,11 @@ export async function syncAccountReels(accountId: string): Promise<{ synced: num
   }
 
   if (!reels.length) return { synced: 0, message: 'No se encontraron reels', trialDetectionError, trialCodesFound: trialCodes.size }
+
+  // Diagnostic: detectTrialReelCodes and scrapeInstagramProfile hit two
+  // different Apify actors — if their shortCodes don't overlap, every
+  // detected trial code is a dead end and no reel ever gets marked is_trial.
+  const trialCodesMatched = reels.filter(r => trialCodes.has(r.shortCode)).length
 
   // Calculate averages for multiplier
   const avgViews = reels.reduce((s, r) => s + r.videoViewCount, 0) / reels.length
@@ -87,5 +92,5 @@ export async function syncAccountReels(accountId: string): Promise<{ synced: num
     )
   }
 
-  return { synced: reels.length, trialDetectionError, trialCodesFound: trialCodes.size }
+  return { synced: reels.length, trialDetectionError, trialCodesFound: trialCodes.size, trialCodesMatched }
 }
