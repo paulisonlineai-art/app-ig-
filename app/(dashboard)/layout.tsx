@@ -52,7 +52,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             {account?.profile_picture_url
-              ? <img src={account.profile_picture_url} style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid var(--accent-light)' }} alt="" />
+              ? <img src={`/api/proxy-image?url=${encodeURIComponent(account.profile_picture_url)}`} style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid var(--accent-light)' }} alt="" />
               : <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>👤</div>
             }
             <div>
@@ -102,7 +102,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           flexShrink: 0,
         }}>
           {account?.profile_picture_url && (
-            <img src={account.profile_picture_url} style={{ width: 28, height: 28, borderRadius: '50%' }} alt="" />
+            <img src={`/api/proxy-image?url=${encodeURIComponent(account.profile_picture_url)}`} style={{ width: 28, height: 28, borderRadius: '50%' }} alt="" />
           )}
           <span style={{ fontSize: 13, fontWeight: 700 }}>{account?.username}</span>
 
