@@ -24,8 +24,8 @@ export default function ReferenciasClient({ references, accountId, brandDNA }: {
       setError('Solo se aceptan archivos de video (MP4, MOV)')
       return
     }
-    if (file.size > 100 * 1024 * 1024) {
-      setError('El video no puede superar 100MB')
+    if (file.size > 25 * 1024 * 1024) {
+      setError('El video no puede superar 25MB (límite de Whisper) — comprimilo o recortalo si pesa más')
       return
     }
 
@@ -127,7 +127,7 @@ export default function ReferenciasClient({ references, accountId, brandDNA }: {
             <div style={{ fontSize: 48, marginBottom: 12 }}>🎬</div>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Subí un video de referencia</div>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4 }}>
-              Arrastrá o hacé clic — MP4, MOV hasta 100MB
+              Arrastrá o hacé clic — MP4, MOV hasta 25MB
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>
               Moka transcribe, analiza estructura y genera tu versión adaptada
