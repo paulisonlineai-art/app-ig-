@@ -3,12 +3,31 @@ import { useState } from 'react'
 
 type Tab = 'transcripcion' | 'estructura' | 'adaptacion'
 
-export default function ReferenceCard({ ref_, brandDNA }: { ref_: any; brandDNA: string }) {
+export default function ReferenceCard({ ref_, brandDNA, onDelete }: { ref_: any; brandDNA: string; onDelete?: (id: string) => void }) {
   const [tab, setTab] = useState<Tab>('estructura')
   const [adapting, setAdapting] = useState(false)
   const [adaptation, setAdaptation] = useState(ref_.adaptation || '')
   const [customAngle, setCustomAngle] = useState('')
   const [expanded, setExpanded] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!confirm(`¿Borrar "${ref_.filename || 'este video'}"? No se puede deshacer.`)) return
+    setDeleting(true)
+    try {
+      const res = await fetch('/api/referencias/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refId: ref_.id }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) { alert(data.error || 'Error al borrar'); return }
+      onDelete?.(ref_.id)
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   const generateAdaptation = async (angle?: string) => {
     setAdapting(true)
@@ -53,6 +72,14 @@ export default function ReferenceCard({ ref_, brandDNA }: { ref_: any; brandDNA:
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {adaptation && <span style={{ fontSize: 11, background: 'var(--success-bg)', color: 'var(--success)', padding: '3px 8px', borderRadius: 6, fontWeight: 600 }}>Adaptado ✓</span>}
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            title="Borrar"
+            style={{ background: 'none', border: 'none', cursor: deleting ? 'default' : 'pointer', fontSize: 15, color: 'var(--text-faint)', padding: 4, opacity: deleting ? 0.5 : 1 }}
+          >
+            {deleting ? '⏳' : '🗑'}
+          </button>
           <span style={{ fontSize: 18, color: 'var(--text-muted)' }}>{expanded ? '↑' : '↓'}</span>
         </div>
       </div>

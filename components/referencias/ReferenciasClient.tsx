@@ -152,7 +152,7 @@ export default function ReferenciasClient({ references, accountId, brandDNA }: {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {refs.map((ref: any) => (
-            <ReferenceCard key={ref.id} ref_={ref} brandDNA={brandDNA} />
+            <ReferenceCard key={ref.id} ref_={ref} brandDNA={brandDNA} onDelete={id => setRefs(prev => prev.filter(r => r.id !== id))} />
           ))}
         </div>
       )}
