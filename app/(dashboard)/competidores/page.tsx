@@ -10,9 +10,10 @@ export default async function CompetidoresPage() {
   const db = createServerSupabase()
   const { data: competitors } = await db
     .from('competitors')
-    .select('*, competitor_reels(count)')
+    .select('*, competitor_reels(*)')
     .eq('account_id', accountId)
     .order('created_at', { ascending: false })
+    .order('timestamp', { referencedTable: 'competitor_reels', ascending: false })
 
   return (
     <div>

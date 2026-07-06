@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase'
-import { scrapeCompetitorReels } from '@/lib/apify'
+import { scrapeCompetitorReels, scrapeInstagramUser } from '@/lib/apify'
 
 export async function POST(req: NextRequest) {
   const accountId = req.cookies.get('ig_account_id')?.value
@@ -22,9 +22,17 @@ export async function POST(req: NextRequest) {
     // Competitors are public accounts you have no OAuth access to — Apify's
     // public scraper is the right tool here, unlike the old Business
     // Discovery Graph API call which required a token this app never has.
-    const reels = await scrapeCompetitorReels(competitor.ig_username, 20)
+    const [reels, profile] = await Promise.all([
+      scrapeCompetitorReels(competitor.ig_username, 20),
+      scrapeInstagramUser(competitor.ig_username).catch(() => null),
+    ])
 
     await db.from('competitors').update({
+      ...(profile ? {
+        ig_user_id: profile.id,
+        profile_picture_url: profile.profilePicUrl || null,
+        followers_count: profile.followersCount,
+      } : {}),
       last_synced_at: new Date().toISOString(),
     }).eq('id', competitorId)
 
