@@ -7,6 +7,7 @@ export interface ApifyReel {
   shortCode: string
   url: string
   displayUrl: string
+  videoUrl: string
   caption: string
   timestamp: string
   likesCount: number
@@ -58,6 +59,7 @@ export async function scrapeInstagramProfile(username: string, sessionCookie?: s
       shortCode: item.shortCode,
       url: item.url || `https://www.instagram.com/reel/${item.shortCode}/`,
       displayUrl: item.displayUrl || item.thumbnailUrl || '',
+      videoUrl: item.videoUrl || '',
       caption: item.caption || '',
       timestamp: item.timestamp,
       likesCount: item.likesCount || 0,
@@ -160,6 +162,7 @@ export async function scrapeCompetitorReels(username: string, limit = 20): Promi
       shortCode: item.shortCode,
       url: item.url || `https://www.instagram.com/reel/${item.shortCode}/`,
       displayUrl: item.displayUrl || '',
+      videoUrl: item.videoUrl || '',
       caption: item.caption || '',
       timestamp: item.timestamp,
       likesCount: item.likesCount || 0,

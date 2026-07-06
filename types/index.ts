@@ -101,6 +101,7 @@ export interface CompetitorReel {
   is_trial: boolean
   caption: string | null
   thumbnail_url: string | null
+  video_url: string | null
   permalink: string
   timestamp: string
   views: number | null
@@ -108,7 +109,13 @@ export interface CompetitorReel {
   comments: number | null
   shares: number | null
   transcript: string | null
+  word_count: number | null
   hook: string | null
+  structure: ReelStructure | null
+  adaptation: string | null
+  last_adapted_angle: string | null
+  transcribe_status: 'none' | 'transcribing' | 'transcribed' | 'error'
+  error_message: string | null
   ai_analysis: string | null
   created_at: string
 }

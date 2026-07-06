@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
         ig_media_id: r.shortCode || r.id,
         caption: r.caption || null,
         thumbnail_url: r.displayUrl || null,
+        video_url: r.videoUrl || null,
         permalink: r.url,
         timestamp: r.timestamp,
         views: r.videoViewCount || r.videoPlayCount || 0,

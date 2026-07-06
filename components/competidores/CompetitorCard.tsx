@@ -95,7 +95,7 @@ export default function CompetitorCard({ competitor }: { competitor: any }) {
       {showReels && reelCount > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 16 }}>
           {reels.map(r => (
-            <a key={r.id} href={r.permalink} target="_blank" rel="noopener noreferrer" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+            <a key={r.id} href={`/competidores/reels/${r.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
               <div style={{ position: 'relative', paddingBottom: '150%', background: 'var(--surface-2)', borderRadius: 8, overflow: 'hidden', marginBottom: 4 }}>
                 {r.thumbnail_url && (
                   <img src={`/api/proxy-image?url=${encodeURIComponent(r.thumbnail_url)}`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
