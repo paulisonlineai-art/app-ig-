@@ -19,6 +19,24 @@ export default function BrandDNAClient({ accountId, initial }: { accountId: stri
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [tab, setTab] = useState<'guided' | 'free'>('guided')
+  const [generating, setGenerating] = useState(false)
+  const [genError, setGenError] = useState('')
+
+  const autoGenerate = async () => {
+    setGenerating(true)
+    setGenError('')
+    try {
+      const res = await fetch('/api/brand/auto-generate', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok || data.error) { setGenError(data.error || 'Error generando ADN de marca'); return }
+      setFields(prev => ({ ...prev, ...data.fields }))
+      setTab('guided')
+    } catch (e: any) {
+      setGenError(e.message || 'Error generando ADN de marca')
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   const save = async () => {
     setSaving(true)
@@ -42,21 +60,37 @@ export default function BrandDNAClient({ accountId, initial }: { accountId: stri
   return (
     <div style={{ maxWidth: 800 }}>
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--surface-2)', borderRadius: 10, padding: 4, width: 'fit-content' }}>
-        {[['guided', '📋 Guiado'], ['free', '✏️ Libre']].map(([t, l]) => (
-          <button
-            key={t}
-            onClick={() => setTab(t as any)}
-            style={{
-              padding: '7px 16px', borderRadius: 7, border: 'none',
-              fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              background: tab === t ? 'var(--surface)' : 'transparent',
-              color: tab === t ? 'var(--accent)' : 'var(--text-muted)',
-              boxShadow: tab === t ? 'var(--shadow-sm)' : 'none',
-            }}
-          >{l}</button>
-        ))}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 4, background: 'var(--surface-2)', borderRadius: 10, padding: 4, width: 'fit-content' }}>
+          {[['guided', '📋 Guiado'], ['free', '✏️ Libre']].map(([t, l]) => (
+            <button
+              key={t}
+              onClick={() => setTab(t as any)}
+              style={{
+                padding: '7px 16px', borderRadius: 7, border: 'none',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                background: tab === t ? 'var(--surface)' : 'transparent',
+                color: tab === t ? 'var(--accent)' : 'var(--text-muted)',
+                boxShadow: tab === t ? 'var(--shadow-sm)' : 'none',
+              }}
+            >{l}</button>
+          ))}
+        </div>
+        <button
+          onClick={autoGenerate}
+          disabled={generating}
+          className="btn btn-ghost"
+          style={{ fontSize: 13, fontWeight: 600 }}
+          title="Analiza tu bio y tus reels con mejor desempeño para pre-llenar los campos — revisá y ajustá antes de guardar"
+        >
+          {generating ? '⏳ Analizando tu perfil...' : '🪄 Generar con IA'}
+        </button>
       </div>
+      {genError && (
+        <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--danger)', marginBottom: 16 }}>
+          {genError}
+        </div>
+      )}
 
       {tab === 'guided' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

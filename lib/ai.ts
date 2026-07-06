@@ -157,6 +157,58 @@ Basate en los patrones reales de lo que ya funcionó, no inventes cosas genéric
   return message.content[0].type === 'text' ? message.content[0].text : ''
 }
 
+export async function autoGenerateBrandDNA(params: {
+  username: string
+  fullName: string
+  biography: string
+  topReels: { caption: string | null; multiplier: number; views: number; hook: string | null; narrative_type?: string; desire_appealed?: string }[]
+  competitorUsernames: string[]
+}): Promise<Record<string, string>> {
+  const reelsSummary = params.topReels.slice(0, 15).map(r =>
+    `- (${r.multiplier.toFixed(1)}x, ${r.views.toLocaleString()} views) "${r.caption?.slice(0, 150) || '(sin caption)'}"${r.hook ? ` | Hook: ${r.hook}` : ''}${r.narrative_type ? ` | Tipo: ${r.narrative_type}` : ''}${r.desire_appealed ? ` | Deseo: ${r.desire_appealed}` : ''}`
+  ).join('\n')
+
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 2048,
+    messages: [{
+      role: 'user',
+      content: `Eres Moka, experto en estrategia de marca personal y contenido para creadores hispanohablantes que venden servicios digitales por Instagram.
+
+Analizá esta cuenta y armá un primer borrador de su "ADN de Marca" basándote SOLO en la evidencia real disponible (bio + reels que mejor funcionaron). Si algo no se puede inferir con confianza, dejalo corto o marcá que falta revisión manual — no inventes datos que no estén sugeridos por la evidencia.
+
+**CUENTA:** @${params.username}${params.fullName ? ` (${params.fullName})` : ''}
+**BIO:** ${params.biography || '(sin bio)'}
+
+**REELS QUE MEJOR FUNCIONARON (multiplicador vs promedio de la cuenta):**
+${reelsSummary || '(sin reels analizados todavía)'}
+
+${params.competitorUsernames.length ? `**COMPETIDORES YA TRACKEADOS EN LA APP:** ${params.competitorUsernames.map(u => '@' + u).join(', ')}` : ''}
+
+Devolvé SOLO un JSON con esta estructura exacta (todos los valores en español, texto plano, sin markdown):
+{
+  "niche": "nicho inferido de la bio y el contenido",
+  "offer": "qué parece vender, basado en la bio/CTAs de los reels (si no es claro, decilo)",
+  "audience": "a quién le habla, inferido del tono y los temas",
+  "content_strategy": "qué patrón de contenido se ve en los reels con mejor desempeño",
+  "tested_what_works": "qué tipo de reels/hooks/temas tuvieron multiplicador alto y por qué",
+  "tested_what_failed": "dejalo vacío o breve — no hay forma de saber qué falló sin ver los reels de bajo desempeño",
+  "competitors": "lista de competidores trackeados si los hay, si no dejalo vacío",
+  "voice": "tono y voz inferidos del lenguaje usado en captions/hooks",
+  "goals": "objetivo probable de contenido inferido de los CTAs (dejalo genérico si no hay evidencia clara)"
+}`
+    }],
+  })
+
+  const text = message.content[0].type === 'text' ? message.content[0].text : '{}'
+  const match = text.match(/\{[\s\S]*\}/)
+  try {
+    return JSON.parse(match ? match[0] : text)
+  } catch {
+    return {}
+  }
+}
+
 export async function chatWithMoka(params: {
   question: string
   reels: Reel[]

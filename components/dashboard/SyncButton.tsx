@@ -13,8 +13,8 @@ export default function SyncButton() {
       const data = await res.json()
       if (data.error) setMsg(`Error: ${data.error}`)
       else {
-        setMsg(`✓ ${data.synced} reels`)
-        setTimeout(() => { setMsg(''); window.location.reload() }, 2000)
+        setMsg(data.trialDetectionError ? `✓ ${data.synced} reels (trial reels: ${data.trialDetectionError})` : `✓ ${data.synced} reels`)
+        setTimeout(() => { setMsg(''); window.location.reload() }, data.trialDetectionError ? 6000 : 2000)
       }
     } catch { setMsg('Error') }
     finally { setLoading(false) }
