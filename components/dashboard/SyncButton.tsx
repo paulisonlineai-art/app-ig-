@@ -26,10 +26,7 @@ export default function SyncButton() {
       if (data.error) {
         setMsg(`Error: ${data.error}`)
       } else {
-        const trialInfo = data.trialDetectionError
-          ? `trial reels: falló — ${data.trialDetectionError}`
-          : `trial reels detectados: ${data.trialCodesFound ?? 0}, marcados en tus reels: ${data.trialCodesMatched ?? 0}`
-        sessionStorage.setItem(STORAGE_KEY, `✓ ${data.synced} reels — ${trialInfo}`)
+        sessionStorage.setItem(STORAGE_KEY, `✓ ${data.synced} reels — trial reels: ${data.trialCodesFound ?? 0}`)
         window.location.reload()
       }
     } catch { setMsg('Error') }

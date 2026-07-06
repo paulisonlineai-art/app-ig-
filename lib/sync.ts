@@ -1,48 +1,15 @@
 import { createServerSupabase } from '@/lib/supabase'
-import { scrapeInstagramProfile, detectTrialReelCodes } from '@/lib/apify'
+import { scrapeOwnReels } from '@/lib/apify'
 import { calcMultiplier, calcRate } from '@/lib/utils'
 
-export async function syncAccountReels(accountId: string): Promise<{ synced: number; message?: string; trialDetectionError?: string; trialCodesFound?: number; trialCodesMatched?: number }> {
+export async function syncAccountReels(accountId: string): Promise<{ synced: number; message?: string; trialCodesFound?: number }> {
   const db = createServerSupabase()
   const { data: account } = await db.from('ig_accounts').select('*').eq('id', accountId).single()
   if (!account) throw new Error('Cuenta no encontrada')
 
-  const [profileResult, trialResult] = await Promise.allSettled([
-    scrapeInstagramProfile(account.username, account.apify_session_cookie || undefined),
-    // Trial reel detection only works on public accounts (no session cookie
-    // support in that actor) — fail soft so a private account still syncs,
-    // but surface the reason instead of swallowing it, so a real actor
-    // failure doesn't look identical to "this account has no trial reels".
-    detectTrialReelCodes(account.username),
-  ])
+  const { reels, trialShortCodes } = await scrapeOwnReels(account.username)
 
-  if (profileResult.status === 'rejected') throw profileResult.reason
-  const { profile, reels } = profileResult.value
-
-  let trialCodes = new Set<string>()
-  let trialDetectionError: string | undefined
-  if (trialResult.status === 'fulfilled') {
-    trialCodes = trialResult.value
-  } else {
-    trialDetectionError = trialResult.reason?.message || String(trialResult.reason)
-    console.error('detectTrialReelCodes failed:', trialResult.reason)
-  }
-
-  // Update profile stats if we got them
-  if (profile && profile.followersCount > 0) {
-    await db.from('ig_accounts').update({
-      followers_count: profile.followersCount,
-      media_count: profile.postsCount,
-      profile_picture_url: profile.profilePicUrl || account.profile_picture_url,
-    }).eq('id', accountId)
-  }
-
-  if (!reels.length) return { synced: 0, message: 'No se encontraron reels', trialDetectionError, trialCodesFound: trialCodes.size }
-
-  // Diagnostic: detectTrialReelCodes and scrapeInstagramProfile hit two
-  // different Apify actors — if their shortCodes don't overlap, every
-  // detected trial code is a dead end and no reel ever gets marked is_trial.
-  const trialCodesMatched = reels.filter(r => trialCodes.has(r.shortCode)).length
+  if (!reels.length) return { synced: 0, message: 'No se encontraron reels', trialCodesFound: trialShortCodes.size }
 
   // Calculate averages for multiplier
   const avgViews = reels.reduce((s, r) => s + r.videoViewCount, 0) / reels.length
@@ -57,7 +24,7 @@ export async function syncAccountReels(accountId: string): Promise<{ synced: num
       account_id: accountId,
       ig_media_id: r.shortCode || r.id,
       media_type: 'VIDEO',
-      is_trial: trialCodes.has(r.shortCode),
+      is_trial: trialShortCodes.has(r.shortCode),
       caption: r.caption || null,
       thumbnail_url: r.displayUrl || null,
       permalink: r.url,
@@ -92,5 +59,5 @@ export async function syncAccountReels(accountId: string): Promise<{ synced: num
     )
   }
 
-  return { synced: reels.length, trialDetectionError, trialCodesFound: trialCodes.size, trialCodesMatched }
+  return { synced: reels.length, trialCodesFound: trialShortCodes.size }
 }

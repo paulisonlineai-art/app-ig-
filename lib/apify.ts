@@ -32,33 +32,49 @@ export interface ApifyProfile {
   isBusinessAccount: boolean
 }
 
-// Fetch profile + recent reels for a username
-export async function scrapeInstagramProfile(username: string, sessionCookie?: string): Promise<{
-  profile: ApifyProfile | null
+// Fetch this account's own reels AND which of them are trial reels, from a
+// single Apify actor (apify/instagram-reel-scraper) instead of two different
+// actors. Previously reels came from apify/instagram-scraper (posts) while
+// trial-detection came from apify/instagram-reel-scraper — two disjoint
+// scrapes whose shortCodes never lined up, so a reel could never actually
+// get flagged is_trial even when trial codes were found. Sourcing both the
+// reel list and the trial flag from the exact same dataset guarantees the
+// shortCodes match, and it costs one fewer Apify actor call per sync.
+// Public accounts only — this actor has no session cookie support.
+export async function scrapeOwnReels(username: string, limit = 50): Promise<{
   reels: ApifyReel[]
+  trialShortCodes: Set<string>
 }> {
-  const input: Record<string, any> = {
-    directUrls: [`https://www.instagram.com/${username}/`],
-    resultsType: 'posts',
-    resultsLimit: 50,
-    addParentData: true,
-    searchType: 'user',
-  }
+  const [withTrial, withoutTrial] = await Promise.all([
+    client.actor('apify/instagram-reel-scraper').call(
+      { username: [username], resultsLimit: limit, skipTrialReels: false },
+      { waitSecs: 120 }
+    ),
+    client.actor('apify/instagram-reel-scraper').call(
+      { username: [username], resultsLimit: limit, skipTrialReels: true },
+      { waitSecs: 120 }
+    ),
+  ])
 
-  if (sessionCookie) {
-    input.sessionCookieString = sessionCookie
-  }
+  const [{ items: allItems }, { items: noTrialItems }] = await Promise.all([
+    client.dataset(withTrial.defaultDatasetId).listItems(),
+    client.dataset(withoutTrial.defaultDatasetId).listItems(),
+  ])
 
-  const run = await client.actor('apify/instagram-scraper').call(input, { waitSecs: 120 })
-  const { items } = await client.dataset(run.defaultDatasetId).listItems()
+  const noTrialCodes = new Set((noTrialItems as any[]).map(i => i.shortCode))
+  const trialShortCodes = new Set(
+    (allItems as any[])
+      .map(i => i.shortCode)
+      .filter(code => code && !noTrialCodes.has(code))
+  )
 
-  const reels: ApifyReel[] = (items as any[])
-    .filter(item => item.type === 'Video' || item.type === 'Reel' || item.videoViewCount > 0)
+  const reels: ApifyReel[] = (allItems as any[])
+    .filter(item => item.type === 'Video' || item.videoViewCount > 0 || trialShortCodes.has(item.shortCode))
     .map(item => ({
       id: item.id || item.shortCode,
       shortCode: item.shortCode,
       url: item.url || `https://www.instagram.com/reel/${item.shortCode}/`,
-      displayUrl: item.displayUrl || item.thumbnailUrl || '',
+      displayUrl: item.displayUrl || '',
       videoUrl: item.videoUrl || '',
       caption: item.caption || '',
       timestamp: item.timestamp,
@@ -71,22 +87,7 @@ export async function scrapeInstagramProfile(username: string, sessionCookie?: s
       type: item.type || 'Reel',
     }))
 
-  // Profile comes as owner in items, or from a separate profile fetch
-  const firstItem = items[0] as any
-  const ownerData = firstItem?.ownerFullName ? {
-    id: firstItem.ownerId || username,
-    username: firstItem.ownerUsername || username,
-    fullName: firstItem.ownerFullName || '',
-    biography: '',
-    profilePicUrl: '',
-    followersCount: 0,
-    followsCount: 0,
-    postsCount: 0,
-    isVerified: false,
-    isBusinessAccount: false,
-  } : null
-
-  return { profile: ownerData, reels }
+  return { reels, trialShortCodes }
 }
 
 // Fetch just profile info
@@ -114,35 +115,6 @@ export async function scrapeInstagramUser(username: string, sessionCookie?: stri
     isVerified: u.verified || false,
     isBusinessAccount: u.isBusinessAccount || false,
   }
-}
-
-// Detect trial reels for a public account. apify/instagram-reel-scraper doesn't
-// mark trial reels in its output, so we diff two scrapes (with vs. without
-// skipTrialReels) by shortCode — codes present only in the first run are trials.
-// Public accounts only: this actor has no session cookie support.
-export async function detectTrialReelCodes(username: string, limit = 50): Promise<Set<string>> {
-  const [withTrial, withoutTrial] = await Promise.all([
-    client.actor('apify/instagram-reel-scraper').call(
-      { username: [username], resultsLimit: limit, skipTrialReels: false },
-      { waitSecs: 120 }
-    ),
-    client.actor('apify/instagram-reel-scraper').call(
-      { username: [username], resultsLimit: limit, skipTrialReels: true },
-      { waitSecs: 120 }
-    ),
-  ])
-
-  const [{ items: allItems }, { items: noTrialItems }] = await Promise.all([
-    client.dataset(withTrial.defaultDatasetId).listItems(),
-    client.dataset(withoutTrial.defaultDatasetId).listItems(),
-  ])
-
-  const noTrialCodes = new Set((noTrialItems as any[]).map(i => i.shortCode))
-  return new Set(
-    (allItems as any[])
-      .map(i => i.shortCode)
-      .filter(code => code && !noTrialCodes.has(code))
-  )
 }
 
 // Scrape reels for a competitor (public, no session needed). Apify only
