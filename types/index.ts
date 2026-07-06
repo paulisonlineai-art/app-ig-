@@ -9,6 +9,14 @@ export interface IGAccount {
   media_count: number
   access_token: string
   token_expires_at: string
+  data_source: string
+  apify_session_cookie: string | null
+  stripe_webhook_secret: string | null
+  hotmart_hottok: string | null
+  skool_webhook_secret: string | null
+  stripe_payment_link_base: string | null
+  hotmart_checkout_url_base: string | null
+  skool_fixed_price: number | null
   created_at: string
 }
 
@@ -48,6 +56,7 @@ export interface Reel {
   ai_analysis: string | null
   frames_analyzed: boolean
   duration_seconds: number | null
+  tracking_code: string | null
   synced_at: string
   created_at: string
 }
@@ -132,6 +141,8 @@ export interface Sale {
   reel_id: string | null
   story_id: string | null
   notes: string | null
+  source: 'manual' | 'stripe' | 'hotmart' | 'skool'
+  external_id: string | null
   created_at: string
 }
 

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import ReelDetailClient from '@/components/reels/detail/ReelDetailClient'
 import BenchmarkChart from '@/components/reels/detail/BenchmarkChart'
+import TrackingLinkCard from '@/components/reels/detail/TrackingLinkCard'
 
 function DeltaBadge({ actual, benchmark, label }: { actual: number; benchmark: number; label: string }) {
   if (!benchmark) return null
@@ -241,6 +242,10 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
             <p style={{ fontSize: 12, color: 'var(--text-faint)', fontStyle: 'italic' }}>Sin transcripción disponible</p>
           )}
         </div>
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <TrackingLinkCard reelId={reel.id} />
       </div>
 
       {/* AI Analysis section — client component for interactivity */}

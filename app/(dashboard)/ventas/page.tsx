@@ -57,7 +57,16 @@ export default async function VentasPage() {
                   <img src={sale.reels.thumbnail_url} alt="" style={{ width: 48, height: 72, borderRadius: 8, objectFit: 'cover' }} />
                 )}
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>{formatCurrency(sale.amount)}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontWeight: 600 }}>{formatCurrency(sale.amount)}</span>
+                    <span style={{
+                      fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+                      background: sale.source === 'manual' || !sale.source ? 'var(--surface-2)' : 'var(--success-bg)',
+                      color: sale.source === 'manual' || !sale.source ? 'var(--text-muted)' : 'var(--success)',
+                    }}>
+                      {{ stripe: '💳 Stripe', hotmart: '🔶 Hotmart', skool: '🟢 Skool' }[sale.source as string] || '✋ Manual'}
+                    </span>
+                  </div>
                   <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
                     {sale.installments} cuota{sale.installments > 1 ? 's' : ''} de {formatCurrency(sale.amount_per_installment)}
                   </div>

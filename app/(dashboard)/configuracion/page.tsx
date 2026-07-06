@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { createServerSupabase } from '@/lib/supabase'
+import PaymentIntegrationsForm from '@/components/settings/PaymentIntegrationsForm'
 
 export default async function ConfiguracionPage() {
   const cookieStore = await cookies()
@@ -33,6 +34,11 @@ export default async function ConfiguracionPage() {
         <a href="/connect" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 16, fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>
           → Reconectar Instagram
         </a>
+      </div>
+
+      <div className="card" style={{ padding: 24, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Integraciones de pago</h2>
+        <PaymentIntegrationsForm accountId={accountId} initial={account} />
       </div>
 
       <div className="card" style={{ padding: 24 }}>
