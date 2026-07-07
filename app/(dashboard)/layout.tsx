@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { createServerSupabase } from '@/lib/supabase'
 import MokaChat from '@/components/MokaChat'
 import NavLink from '@/components/NavLink'
+import LogoutButton from '@/components/LogoutButton'
 
 // Historias and Tu audiencia are hidden — both permanently show empty state
 // since nothing populates `stories`/`audience_stats`. Those metrics are only
@@ -87,6 +88,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {/* Bottom nav */}
         <div style={{ padding: '8px 10px 12px', borderTop: '1px solid var(--border)' }}>
           {NAV_BOTTOM.map(item => <NavLink key={item.href} {...item} />)}
+          <LogoutButton />
         </div>
       </aside>
 
