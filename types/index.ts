@@ -184,3 +184,62 @@ export interface AudienceStats {
   profile_views: number
   website_clicks: number
 }
+
+export interface BrandDNAFields {
+  niche?: string
+  offer?: string
+  audience?: string
+  content_strategy?: string
+  tested_what_works?: string
+  tested_what_failed?: string
+  competitors?: string
+  voice?: string
+  goals?: string
+}
+
+export interface BrandDNA {
+  id: string
+  account_id: string
+  content: string | null
+  fields: BrandDNAFields
+  created_at: string
+  updated_at: string
+}
+
+export interface ReferenceVideoStructure {
+  hook: string
+  hook_type: string
+  tone: string
+  persuasion_technique: string
+  cta: string
+  desire_appealed: string
+  ideal_duration: string
+  wpm: number
+  key_insights: string[]
+  blocks: { label: string; content: string; duration: string }[]
+}
+
+export interface ReferenceVideo {
+  id: string
+  account_id: string
+  filename: string
+  file_path: string | null
+  file_size: number | null
+  referent_name: string | null
+  duration_seconds: number | null
+  transcript: string | null
+  word_count: number | null
+  hook: string | null
+  structure: ReferenceVideoStructure | null
+  adaptation: string | null
+  last_adapted_angle: string | null
+  status: 'uploaded' | 'transcribed' | 'analyzed' | 'error'
+  error_message: string | null
+  created_at: string
+}
+
+export interface RateLimit {
+  account_id: string
+  action: string
+  last_called_at: string
+}

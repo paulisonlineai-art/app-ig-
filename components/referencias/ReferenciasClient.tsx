@@ -2,11 +2,12 @@
 import { useState, useRef } from 'react'
 import { createAuthBrowserClient } from '@/lib/supabase-browser'
 import ReferenceCard from './ReferenceCard'
+import type { ReferenceVideo } from '@/types'
 
 const BUCKET = 'reference-videos'
 
 export default function ReferenciasClient({ references, accountId, brandDNA }: {
-  references: any[]
+  references: ReferenceVideo[]
   accountId: string
   brandDNA: string
 }) {
@@ -151,7 +152,7 @@ export default function ReferenciasClient({ references, accountId, brandDNA }: {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {refs.map((ref: any) => (
+          {refs.map((ref) => (
             <ReferenceCard key={ref.id} ref_={ref} brandDNA={brandDNA} onDelete={id => setRefs(prev => prev.filter(r => r.id !== id))} />
           ))}
         </div>

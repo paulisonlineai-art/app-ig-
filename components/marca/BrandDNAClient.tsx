@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react'
+import type { BrandDNA, BrandDNAFields } from '@/types'
 
-const FIELDS = [
+const FIELDS: { key: keyof BrandDNAFields; label: string; placeholder: string }[] = [
   { key: 'niche', label: 'Tu nicho', placeholder: 'Ej: Marketing digital para coaches y consultores hispanohablantes' },
   { key: 'offer', label: '¿Qué vendés?', placeholder: 'Ej: Programa de mentoría de 3 meses para escalar a $10K/mes' },
   { key: 'audience', label: '¿A quién le hablás?', placeholder: 'Ej: Emprendedores con negocio propio que quieren vender por Instagram sin depender de ads' },
@@ -13,8 +14,8 @@ const FIELDS = [
   { key: 'goals', label: 'Objetivo de contenido', placeholder: 'Ej: Generar 50+ prospectos calificados por mes que me escriban preguntando por la mentoría' },
 ]
 
-export default function BrandDNAClient({ accountId, initial }: { accountId: string; initial: any }) {
-  const [fields, setFields] = useState<Record<string, string>>(initial?.fields || {})
+export default function BrandDNAClient({ accountId, initial }: { accountId: string; initial: BrandDNA | null }) {
+  const [fields, setFields] = useState<BrandDNAFields>(initial?.fields || {})
   const [freeform, setFreeform] = useState(initial?.content || '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)

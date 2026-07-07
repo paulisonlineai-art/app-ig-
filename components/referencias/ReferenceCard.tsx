@@ -1,9 +1,10 @@
 'use client'
 import { useState } from 'react'
+import type { ReferenceVideo } from '@/types'
 
 type Tab = 'transcripcion' | 'estructura' | 'adaptacion'
 
-export default function ReferenceCard({ ref_, brandDNA, onDelete }: { ref_: any; brandDNA: string; onDelete?: (id: string) => void }) {
+export default function ReferenceCard({ ref_, brandDNA, onDelete }: { ref_: ReferenceVideo; brandDNA: string; onDelete?: (id: string) => void }) {
   const [tab, setTab] = useState<Tab>('estructura')
   const [adapting, setAdapting] = useState(false)
   const [adaptation, setAdaptation] = useState(ref_.adaptation || '')
@@ -224,7 +225,7 @@ export default function ReferenceCard({ ref_, brandDNA, onDelete }: { ref_: any;
                   <span style={{ fontSize: 13, fontWeight: 600 }}>Transcripción completa</span>
                   {ref_.transcript && (
                     <button
-                      onClick={() => navigator.clipboard.writeText(ref_.transcript)}
+                      onClick={() => navigator.clipboard.writeText(ref_.transcript || '')}
                       className="btn btn-ghost"
                       style={{ fontSize: 12, padding: '5px 10px' }}
                     >
