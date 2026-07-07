@@ -38,34 +38,9 @@ export default async function ConfiguracionPage() {
         <RefreshProfileButton />
       </div>
 
-      <div className="card" style={{ padding: 24, marginBottom: 16 }}>
+      <div className="card" style={{ padding: 24 }}>
         <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Integraciones de pago</h2>
         <PaymentIntegrationsForm accountId={accountId} initial={account} />
-      </div>
-
-      <div className="card" style={{ padding: 24 }}>
-        <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Variables de entorno requeridas</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
-          {[
-            { key: 'NEXT_PUBLIC_SUPABASE_URL', label: 'Supabase URL' },
-            { key: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', label: 'Supabase Anon Key' },
-            { key: 'SUPABASE_SERVICE_ROLE_KEY', label: 'Supabase Service Role' },
-            { key: 'APIFY_API_TOKEN', label: 'Apify API Token' },
-            { key: 'ANTHROPIC_API_KEY', label: 'Anthropic API Key' },
-            { key: 'OPENAI_API_KEY', label: 'OpenAI API Key (transcripción)' },
-            { key: 'GOOGLE_CLIENT_ID', label: 'Google Client ID' },
-            { key: 'GOOGLE_CLIENT_SECRET', label: 'Google Client Secret' },
-            { key: 'CRON_SECRET', label: 'Cron Secret' },
-          ].map(v => {
-            const set = !!process.env[v.key]
-            return (
-              <div key={v.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-                <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{v.key}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: set ? 'var(--success)' : 'var(--danger)' }}>{set ? '✓' : '✗ falta'}</span>
-              </div>
-            )
-          })}
-        </div>
       </div>
     </div>
   )
