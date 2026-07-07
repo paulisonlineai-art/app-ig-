@@ -26,7 +26,7 @@ export default async function ContenidoPage() {
     <div>
       <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Mesa de trabajo</h1>
       <p style={{ color: 'var(--text-muted)', marginBottom: 32, fontSize: 14 }}>
-        Pipeline de contenido — arrastrá las tarjetas para avanzar el estado
+        Pipeline de contenido — usá los botones de cada tarjeta para avanzar o retroceder el estado
       </p>
       <ContentPipeline pieces={pieces || []} stages={STAGES} accountId={accountId} />
     </div>

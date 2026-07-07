@@ -10,16 +10,27 @@ export default function ContentPipeline({ pieces, stages, accountId }: { pieces:
   const [newTitle, setNewTitle] = useState('')
   const [newType, setNewType] = useState('reel')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   const byStage = (stageId: string) => items.filter(p => p.status === stageId)
 
   const moveStage = async (pieceId: string, newStatus: string) => {
+    const prevStatus = items.find(p => p.id === pieceId)?.status
+    setError('')
     setItems(prev => prev.map(p => p.id === pieceId ? { ...p, status: newStatus as any } : p))
-    await fetch('/api/content/update', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: pieceId, status: newStatus }),
-    })
+    try {
+      const res = await fetch('/api/content/update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: pieceId, status: newStatus }),
+      })
+      if (!res.ok) throw new Error('No se pudo mover la pieza')
+    } catch (e: any) {
+      // Revert the optimistic move — the card can't silently stay somewhere
+      // the database doesn't actually have it.
+      setItems(prev => prev.map(p => p.id === pieceId ? { ...p, status: prevStatus as any } : p))
+      setError(e.message || 'No se pudo mover la pieza')
+    }
   }
 
   const addPiece = async () => {
@@ -41,6 +52,11 @@ export default function ContentPipeline({ pieces, stages, accountId }: { pieces:
 
   return (
     <div>
+      {error && (
+        <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--danger)', marginBottom: 16 }}>
+          {error}
+        </div>
+      )}
       <div style={{ marginBottom: 16 }}>
         {!showForm ? (
           <button

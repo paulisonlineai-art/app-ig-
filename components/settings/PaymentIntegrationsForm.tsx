@@ -34,19 +34,28 @@ export default function PaymentIntegrationsForm({ accountId, initial }: { accoun
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState('')
 
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
   const save = async () => {
     setSaving(true)
+    setError('')
     try {
-      await fetch('/api/settings/payments', {
+      const res = await fetch('/api/settings/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'No se pudo guardar')
+        return
+      }
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
+    } catch (e: any) {
+      setError(e.message || 'No se pudo guardar')
     } finally {
       setSaving(false)
     }
@@ -100,6 +109,7 @@ export default function PaymentIntegrationsForm({ accountId, initial }: { accoun
           {saving ? 'Guardando...' : '💾 Guardar integraciones'}
         </button>
         {saved && <span style={{ fontSize: 13, color: 'var(--success)', fontWeight: 600 }}>✓ Guardado</span>}
+        {error && <span style={{ fontSize: 13, color: 'var(--danger)', fontWeight: 600 }}>✗ {error}</span>}
       </div>
     </div>
   )

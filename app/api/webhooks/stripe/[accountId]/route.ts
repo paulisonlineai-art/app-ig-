@@ -11,7 +11,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ acc
     .select('id, stripe_webhook_secret')
     .eq('id', accountId)
     .single()
-  if (!account?.stripe_webhook_secret) return NextResponse.json({ error: 'Cuenta no configurada' }, { status: 404 })
+  // Same generic response whether the account isn't configured or the
+  // signature is wrong — avoids leaking which accountId UUIDs have Stripe set up.
+  if (!account?.stripe_webhook_secret) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
   const sig = req.headers.get('stripe-signature')
   const rawBody = await req.text()
@@ -23,7 +25,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ acc
     const stripe = new Stripe('sk_placeholder')
     event = stripe.webhooks.constructEvent(rawBody, sig || '', account.stripe_webhook_secret)
   } catch (e: any) {
-    return NextResponse.json({ error: `Firma inválida: ${e.message}` }, { status: 401 })
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
   if (event.type !== 'checkout.session.completed') return NextResponse.json({ received: true })

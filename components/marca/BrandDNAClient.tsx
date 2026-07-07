@@ -18,6 +18,7 @@ export default function BrandDNAClient({ accountId, initial }: { accountId: stri
   const [freeform, setFreeform] = useState(initial?.content || '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [tab, setTab] = useState<'guided' | 'free'>('guided')
   const [generating, setGenerating] = useState(false)
   const [genError, setGenError] = useState('')
@@ -41,18 +42,26 @@ export default function BrandDNAClient({ accountId, initial }: { accountId: stri
 
   const save = async () => {
     setSaving(true)
+    setSaveError('')
     const content = tab === 'guided'
       ? FIELDS.map(f => `**${f.label}:**\n${fields[f.key] || '(Sin completar)'}`).join('\n\n')
       : freeform
 
     try {
-      await fetch('/api/brand/save', {
+      const res = await fetch('/api/brand/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, fields }),
       })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setSaveError(data.error || 'No se pudo guardar')
+        return
+      }
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
+    } catch (e: any) {
+      setSaveError(e.message || 'No se pudo guardar')
     } finally {
       setSaving(false)
     }
@@ -133,6 +142,7 @@ export default function BrandDNAClient({ accountId, initial }: { accountId: stri
           {saving ? 'Guardando...' : '💾 Guardar ADN de Marca'}
         </button>
         {saved && <span style={{ fontSize: 13, color: 'var(--success)', fontWeight: 600 }}>✓ Guardado. Moka ya usa este contexto.</span>}
+        {saveError && <span style={{ fontSize: 13, color: 'var(--danger)', fontWeight: 600 }}>✗ {saveError}</span>}
       </div>
     </div>
   )

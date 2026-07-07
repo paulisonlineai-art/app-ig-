@@ -52,6 +52,7 @@ export default async function ConfiguracionPage() {
             { key: 'SUPABASE_SERVICE_ROLE_KEY', label: 'Supabase Service Role' },
             { key: 'APIFY_API_TOKEN', label: 'Apify API Token' },
             { key: 'ANTHROPIC_API_KEY', label: 'Anthropic API Key' },
+            { key: 'OPENAI_API_KEY', label: 'OpenAI API Key (transcripción)' },
             { key: 'GOOGLE_CLIENT_ID', label: 'Google Client ID' },
             { key: 'GOOGLE_CLIENT_SECRET', label: 'Google Client Secret' },
             { key: 'CRON_SECRET', label: 'Cron Secret' },

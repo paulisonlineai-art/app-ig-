@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase'
+import { secureCompare } from '@/lib/secureCompare'
 
 // Skool has no webhooks or public API of its own — this is meant to be
 // called from a Zapier "new paid member" automation. Since that event
@@ -15,10 +16,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ acc
     .select('id, skool_webhook_secret, skool_fixed_price')
     .eq('id', accountId)
     .single()
-  if (!account?.skool_webhook_secret) return NextResponse.json({ error: 'Cuenta no configurada' }, { status: 404 })
 
-  const auth = req.headers.get('authorization')
-  if (auth !== `Bearer ${account.skool_webhook_secret}`) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  const auth = (req.headers.get('authorization') || '').replace(/^Bearer /, '')
+
+  // Same generic response for "account not configured" and "wrong secret" —
+  // avoids leaking which accountId UUIDs have Skool set up.
+  if (!account?.skool_webhook_secret || !secureCompare(auth, account.skool_webhook_secret)) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  }
 
   if (!account.skool_fixed_price) return NextResponse.json({ error: 'Falta configurar el precio fijo de Skool' }, { status: 400 })
 
