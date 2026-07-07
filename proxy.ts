@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 const PUBLIC_PATHS = new Set(['/', '/login', '/auth/callback'])
 const PUBLIC_PREFIXES = ['/api/webhooks/', '/api/cron/']
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   if (PUBLIC_PATHS.has(pathname) || PUBLIC_PREFIXES.some(p => pathname.startsWith(p))) {
