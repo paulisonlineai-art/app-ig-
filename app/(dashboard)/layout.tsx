@@ -5,12 +5,14 @@ import { createServerSupabase } from '@/lib/supabase'
 import MokaChat from '@/components/MokaChat'
 import NavLink from '@/components/NavLink'
 
+// Historias and Tu audiencia are hidden — both permanently show empty state
+// since nothing populates `stories`/`audience_stats`. Those metrics are only
+// available via Meta's official Graph API (instagram_manage_insights), which
+// this app deliberately doesn't use. Re-add once that integration exists.
 const NAV_TOP = [
   { href: '/dashboard', label: 'Dashboard', icon: '⊞' },
   { href: '/reels', label: 'Reels', icon: '▶' },
-  { href: '/historias', label: 'Historias', icon: '◎' },
   { href: '/competidores', label: 'Competencia', icon: '⚡' },
-  { href: '/audiencia', label: 'Tu audiencia', icon: '👥' },
   { href: '/ventas', label: 'Ventas', icon: '$' },
   { href: '/contenido', label: 'Mesa de trabajo', icon: '✏' },
   { href: '/ideas', label: 'Moka AI', icon: '🤖' },

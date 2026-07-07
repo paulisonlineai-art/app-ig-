@@ -81,7 +81,7 @@ export default function ConnectPage() {
                 />
               </div>
               <p style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 6 }}>
-                Solo necesitás el username. Funciona con cuentas públicas y privadas.
+                Solo necesitás el username. Por ahora funciona con cuentas públicas — las cuentas privadas todavía no pueden sincronizar reels.
               </p>
             </div>
 
@@ -110,7 +110,7 @@ export default function ConnectPage() {
                     <li>Copiá el valor y pegalo acá</li>
                   </ol>
                   <p style={{ marginTop: 8, color: 'var(--text-muted)' }}>
-                    Con la session cookie obtenés métricas privadas (saves, reach). Sin ella solo obtenés datos públicos.
+                    Opcional: si tu cuenta es privada, esto ayuda a traer tu foto de perfil y tu cantidad de seguidores. Todavía no habilita sincronizar reels de cuentas privadas, y no expone guardados ni alcance — Instagram no comparte esos datos públicamente con nadie.
                   </p>
                 </div>
               )}
