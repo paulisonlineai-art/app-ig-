@@ -11,7 +11,10 @@ const MIN_INTERVAL_SECONDS: Record<string, number> = {
   competitor_sync: 60,
   brand_auto_generate: 30,
   transcribe: 20,
-  adapt: 10,
+  // Trying several angles on the same reel/reference back-to-back is the
+  // intended workflow (both adapt UIs offer 5 preset angle buttons) — this
+  // just needs to block accidental double-clicks, not sequential exploring.
+  adapt: 3,
   chat: 5,
   generate_ideas: 15,
 }

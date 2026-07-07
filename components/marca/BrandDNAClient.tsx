@@ -22,17 +22,22 @@ export default function BrandDNAClient({ accountId, initial }: { accountId: stri
   const [tab, setTab] = useState<'guided' | 'free'>('guided')
   const [generating, setGenerating] = useState(false)
   const [genError, setGenError] = useState('')
+  const [genWarning, setGenWarning] = useState('')
 
   const autoGenerate = async () => {
     setGenerating(true)
     setGenError('')
+    setGenWarning('')
     try {
       const res = await fetch('/api/brand/auto-generate', { method: 'POST' })
       const data = await res.json()
       if (!res.ok || data.error) { setGenError(data.error || 'Error generando ADN de marca'); return }
       setFields(prev => ({ ...prev, ...data.fields }))
       setTab('guided')
-      if (data.warning) setGenError(data.warning)
+      // A partial success (e.g. Apify's bio fetch failed but reels-based
+      // generation still worked) isn't a failure — showing it as a red error
+      // makes a user think nothing happened when the fields did get filled.
+      if (data.warning) setGenWarning(data.warning)
     } catch (e: any) {
       setGenError(e.message || 'Error generando ADN de marca')
     } finally {
@@ -99,6 +104,11 @@ export default function BrandDNAClient({ accountId, initial }: { accountId: stri
       {genError && (
         <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--danger)', marginBottom: 16 }}>
           {genError}
+        </div>
+      )}
+      {genWarning && (
+        <div style={{ background: 'var(--accent-light)', border: '1px solid var(--accent)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--accent-dark)', marginBottom: 16 }}>
+          ✓ Se generó el ADN de marca. {genWarning}
         </div>
       )}
 

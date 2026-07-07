@@ -40,7 +40,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   // "vs período anterior" has no meaning for "todo el tiempo" — skip it there.
   let reelsPrevQuery = prevStart
-    ? db.from('reels').select('views,comments').eq('account_id', accountId).gte('timestamp', prevStart.toISOString())
+    ? db.from('reels').select('views,comments,shares').eq('account_id', accountId).gte('timestamp', prevStart.toISOString())
     : null
   if (reelsPrevQuery && prevEnd) reelsPrevQuery = reelsPrevQuery.lt('timestamp', prevEnd.toISOString())
 
@@ -68,7 +68,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const comments30 = r.reduce((s: number, x: any) => s + x.comments, 0)
   const commentsPrev = rp.reduce((s: number, x: any) => s + x.comments, 0)
   const conversations30 = r.reduce((s: number, x: any) => s + x.comments + x.shares, 0)
-  const conversationsPrev = rp.reduce((s: number, x: any) => s + x.comments, 0)
+  const conversationsPrev = rp.reduce((s: number, x: any) => s + x.comments + x.shares, 0)
   const storyReplies = (stories30 || []).reduce((s: number, x: any) => s + x.replies, 0)
 
   const allSales = sales30 || []

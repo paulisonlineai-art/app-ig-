@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 export default function AddSaleForm({ accountId, reels }: { accountId: string; reels: any[] }) {
   const [form, setForm] = useState({ amount: '', installments: '1', closed_at: new Date().toISOString().split('T')[0], reel_id: '', notes: '' })
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
 
   const amountNum = parseFloat(form.amount) || 0
@@ -14,6 +15,7 @@ export default function AddSaleForm({ accountId, reels }: { accountId: string; r
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError('')
     try {
       const res = await fetch('/api/sales/add', {
         method: 'POST',
@@ -32,7 +34,12 @@ export default function AddSaleForm({ accountId, reels }: { accountId: string; r
       if (res.ok) {
         setForm({ amount: '', installments: '1', closed_at: new Date().toISOString().split('T')[0], reel_id: '', notes: '' })
         router.refresh()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'No se pudo guardar la venta')
       }
+    } catch (e: any) {
+      setError(e.message || 'No se pudo guardar la venta')
     } finally {
       setLoading(false)
     }
@@ -81,6 +88,12 @@ export default function AddSaleForm({ accountId, reels }: { accountId: string; r
           ))}
         </select>
       </div>
+
+      {error && (
+        <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--danger)', marginBottom: 12 }}>
+          {error}
+        </div>
+      )}
 
       <button
         type="submit"

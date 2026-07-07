@@ -89,7 +89,10 @@ export default async function VentasPage() {
           </div>
         ) : (
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 48, textAlign: 'center', color: 'var(--text-muted)' }}>
-            No hay ventas registradas todavía
+            <p style={{ marginBottom: 8 }}>No hay ventas registradas todavía</p>
+            <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>
+              Cargá una arriba a mano, o configurá Stripe/Hotmart/Skool en <a href="/configuracion" style={{ color: 'var(--accent)', fontWeight: 600 }}>Settings</a> para que entren solas.
+            </p>
           </div>
         )}
       </div>

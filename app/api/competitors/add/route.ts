@@ -26,7 +26,12 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    // Postgres unique_violation — the pre-check above is racy under a
+    // double-click, so this is the real backstop against duplicates.
+    if (error.code === '23505') return NextResponse.json({ error: 'Ya estás trackeando este competidor' }, { status: 400 })
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
 
   return NextResponse.json({ competitor: data })
 }

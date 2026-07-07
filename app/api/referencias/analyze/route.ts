@@ -66,7 +66,8 @@ Devolvé un JSON con esta estructura exacta (sin markdown, solo JSON válido):
 
     const text = (response.content[0] as any).text
     const jsonMatch = text.match(/\{[\s\S]*\}/)
-    const structure = jsonMatch ? JSON.parse(jsonMatch[0]) : {}
+    if (!jsonMatch) throw new Error('Claude no devolvió un análisis con formato válido — probá de nuevo')
+    const structure = JSON.parse(jsonMatch[0])
 
     await db.from('reference_videos').update({
       structure,

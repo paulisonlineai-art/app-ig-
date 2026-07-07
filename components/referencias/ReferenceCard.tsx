@@ -7,6 +7,7 @@ export default function ReferenceCard({ ref_, brandDNA, onDelete }: { ref_: any;
   const [tab, setTab] = useState<Tab>('estructura')
   const [adapting, setAdapting] = useState(false)
   const [adaptation, setAdaptation] = useState(ref_.adaptation || '')
+  const [adaptError, setAdaptError] = useState('')
   const [customAngle, setCustomAngle] = useState('')
   const [expanded, setExpanded] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -31,6 +32,7 @@ export default function ReferenceCard({ ref_, brandDNA, onDelete }: { ref_: any;
 
   const generateAdaptation = async (angle?: string) => {
     setAdapting(true)
+    setAdaptError('')
     setTab('adaptacion')
     try {
       const res = await fetch('/api/referencias/adapt', {
@@ -39,7 +41,13 @@ export default function ReferenceCard({ ref_, brandDNA, onDelete }: { ref_: any;
         body: JSON.stringify({ refId: ref_.id, angle: angle || '' }),
       })
       const data = await res.json()
-      setAdaptation(data.adaptation || data.error || '')
+      if (!res.ok || data.error) {
+        setAdaptError(data.error || 'Error al adaptar')
+        return
+      }
+      setAdaptation(data.adaptation || '')
+    } catch (e: any) {
+      setAdaptError(e.message || 'Error al adaptar')
     } finally {
       setAdapting(false)
     }
@@ -247,6 +255,10 @@ export default function ReferenceCard({ ref_, brandDNA, onDelete }: { ref_: any;
                     <div style={{ fontSize: 32, marginBottom: 12 }}>✨</div>
                     <div style={{ fontSize: 14, fontWeight: 600 }}>Moka está adaptando el contenido...</div>
                     <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 4 }}>Analizando tu nicho y generando el guión</div>
+                  </div>
+                ) : adaptError ? (
+                  <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 10, padding: 16, fontSize: 13, color: 'var(--danger)' }}>
+                    {adaptError}
                   </div>
                 ) : adaptation ? (
                   <div>
