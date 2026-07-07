@@ -76,7 +76,13 @@ Solo devolvé el guión, sin explicaciones adicionales.`
 
     const adaptation = (response.content[0] as any).text
 
-    await db.from('competitor_reels').update({ adaptation, last_adapted_angle: angle || null }).eq('id', reelId)
+    // Independent re-check at write time, scoped by account — not just a
+    // reuse of the earlier select's trust, so this stays safe even if that
+    // check is ever refactored away.
+    const { data: owned } = await db.from('competitors').select('id').eq('id', reel.competitor_id).eq('account_id', accountId).single()
+    if (!owned) return NextResponse.json({ error: 'Reel no encontrado' }, { status: 404 })
+
+    await db.from('competitor_reels').update({ adaptation, last_adapted_angle: angle || null }).eq('id', reelId).eq('competitor_id', reel.competitor_id)
 
     return NextResponse.json({ adaptation, usingTranscript })
   } catch (e: any) {

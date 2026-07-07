@@ -24,13 +24,19 @@ export async function POST(req: NextRequest) {
 
   const { data: reel } = await db
     .from('competitor_reels')
-    .select('id, video_url, competitors!inner(account_id)')
+    .select('id, competitor_id, video_url, competitors!inner(account_id)')
     .eq('id', reelId)
     .eq('competitors.account_id', accountId)
     .single()
 
   if (!reel) return NextResponse.json({ error: 'Reel no encontrado' }, { status: 404 })
   if (!reel.video_url) return NextResponse.json({ error: 'Este reel no tiene video descargable' }, { status: 400 })
+
+  // Independent re-check at write time, scoped by account — not just a
+  // reuse of the earlier select's trust, so this stays safe even if that
+  // check is ever refactored away.
+  const { data: owned } = await db.from('competitors').select('id').eq('id', reel.competitor_id).eq('account_id', accountId).single()
+  if (!owned) return NextResponse.json({ error: 'Reel no encontrado' }, { status: 404 })
 
   try {
     const videoRes = await fetch(reel.video_url, {
@@ -65,11 +71,11 @@ export async function POST(req: NextRequest) {
       transcript,
       word_count: wordCount,
       transcribe_status: 'transcribed',
-    }).eq('id', reelId)
+    }).eq('id', reelId).eq('competitor_id', reel.competitor_id)
 
     return NextResponse.json({ transcript, wordCount })
   } catch (e: any) {
-    await db.from('competitor_reels').update({ transcribe_status: 'error', error_message: e.message }).eq('id', reelId)
+    await db.from('competitor_reels').update({ transcribe_status: 'error', error_message: e.message }).eq('id', reelId).eq('competitor_id', reel.competitor_id)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
