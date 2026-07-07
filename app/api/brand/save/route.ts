@@ -8,6 +8,6 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const db = createServerSupabase()
 
-  await db.from('brand_dna').upsert({ account_id: accountId, ...body }, { onConflict: 'account_id' })
+  await db.from('brand_dna').upsert({ ...body, account_id: accountId }, { onConflict: 'account_id' })
   return NextResponse.json({ ok: true })
 }

@@ -30,22 +30,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=auth_failed&detail=${encodeURIComponent(error.message)}`)
     }
 
-    // Check if user already has an IG account connected
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const db = (await import('@/lib/supabase')).createServerSupabase()
-      const { data: account } = await db
-        .from('ig_accounts')
-        .select('id')
-        .eq('user_id', user.id)
-        .single()
-
-      if (account) {
-        cookieStore.set('ig_account_id', account.id, { path: '/', maxAge: 60 * 60 * 24 * 365 })
-        return NextResponse.redirect(`${origin}/dashboard`)
-      }
-    }
-    return NextResponse.redirect(`${origin}/connect`)
+    // middleware.ts resolves the verified ig_account_id cookie from the
+    // Supabase session on the next request — it also decides dashboard vs
+    // /connect based on whether this user already has an ig_accounts row,
+    // so this redirect just needs to land somewhere middleware will route
+    // correctly from.
+    return NextResponse.redirect(`${origin}/dashboard`)
   }
 
   return NextResponse.redirect(`${origin}/login?error=auth_failed&detail=no_code`)

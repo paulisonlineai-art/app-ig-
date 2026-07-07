@@ -4,10 +4,13 @@ import { NextRequest, NextResponse } from 'next/server'
 // this endpoint exists purely to work around IG's hotlink protection for
 // thumbnails. Without a whitelist it's an open SSRF proxy (fetch any URL,
 // server-side, on Moka's behalf).
-const ALLOWED_HOST_SUFFIXES = ['.cdninstagram.com', '.fbcdn.net', 'instagram.com', 'fbsbx.com']
+//
+// Must be exact-match-or-subdomain, never suffix match: `endsWith('instagram.com')`
+// would also accept `evilinstagram.com`, letting an attacker's own host through.
+const ALLOWED_HOSTS = ['cdninstagram.com', 'fbcdn.net', 'instagram.com', 'fbsbx.com']
 
 function isAllowedHost(hostname: string): boolean {
-  return ALLOWED_HOST_SUFFIXES.some(suffix => hostname === suffix.replace(/^\./, '') || hostname.endsWith(suffix))
+  return ALLOWED_HOSTS.some(domain => hostname === domain || hostname.endsWith(`.${domain}`))
 }
 
 export async function GET(req: NextRequest) {
@@ -26,6 +29,10 @@ export async function GET(req: NextRequest) {
 
   try {
     const res = await fetch(url, {
+      // Don't auto-follow redirects — a whitelisted host could redirect to an
+      // internal/arbitrary address and the final destination would never get
+      // re-checked against the whitelist.
+      redirect: 'manual',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Referer': 'https://www.instagram.com/',

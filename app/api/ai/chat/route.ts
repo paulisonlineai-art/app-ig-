@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { chatWithMoka } from '@/lib/ai'
 import { createServerSupabase } from '@/lib/supabase'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 export async function POST(req: NextRequest) {
   const accountId = req.cookies.get('ig_account_id')?.value
   if (!accountId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+  const limit = await checkRateLimit(accountId, 'chat')
+  if (!limit.ok) return NextResponse.json({ error: `Esperá ${limit.retryAfterSeconds}s antes de preguntar de nuevo` }, { status: 429 })
 
   const { question, reelId } = await req.json()
   if (!question?.trim()) return NextResponse.json({ error: 'Question required' }, { status: 400 })
@@ -16,15 +20,18 @@ export async function POST(req: NextRequest) {
     db.from('ig_accounts').select('*').eq('id', accountId).single(),
   ])
 
-  const answer = await chatWithMoka({
-    question,
-    reels: reels || [],
-    accountStats: {
-      followers: account?.followers_count,
-      username: account?.username,
-      total_reels: reels?.length,
-    },
-  })
-
-  return NextResponse.json({ answer })
+  try {
+    const answer = await chatWithMoka({
+      question,
+      reels: reels || [],
+      accountStats: {
+        followers: account?.followers_count,
+        username: account?.username,
+        total_reels: reels?.length,
+      },
+    })
+    return NextResponse.json({ answer })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message || 'Error consultando a Moka' }, { status: 500 })
+  }
 }

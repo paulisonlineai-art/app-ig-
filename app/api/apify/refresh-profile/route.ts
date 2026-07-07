@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase'
 import { scrapeInstagramUser } from '@/lib/apify'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 export async function POST(req: NextRequest) {
   const accountId = req.cookies.get('ig_account_id')?.value
   if (!accountId) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+  const limit = await checkRateLimit(accountId, 'refresh_profile')
+  if (!limit.ok) return NextResponse.json({ error: `Esperá ${limit.retryAfterSeconds}s antes de volver a actualizar` }, { status: 429 })
 
   const db = createServerSupabase()
   const { data: account } = await db.from('ig_accounts').select('username, apify_session_cookie').eq('id', accountId).single()

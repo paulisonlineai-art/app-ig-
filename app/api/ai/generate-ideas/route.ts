@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase'
 import Anthropic from '@anthropic-ai/sdk'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
   const accountId = req.cookies.get('ig_account_id')?.value
   if (!accountId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+  const limit = await checkRateLimit(accountId, 'generate_ideas')
+  if (!limit.ok) return NextResponse.json({ error: `Esperá ${limit.retryAfterSeconds}s antes de generar más ideas` }, { status: 429 })
 
   const { prompt } = await req.json()
 
@@ -35,12 +39,13 @@ export async function POST(req: NextRequest) {
     })),
   }))
 
-  const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 2048,
-    messages: [{
-      role: 'user',
-      content: `Sos Moka, el sistema de IA para análisis de contenido de Instagram. Tenés acceso a datos reales de la cuenta.
+  try {
+    const message = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2048,
+      messages: [{
+        role: 'user',
+        content: `Sos Moka, el sistema de IA para análisis de contenido de Instagram. Tenés acceso a datos reales de la cuenta.
 
 **MIS REELS (ordenados por multiplicador):**
 ${JSON.stringify(reelsSummary, null, 2)}
@@ -59,9 +64,12 @@ Respondé de forma específica, data-driven. Cuando propongas ideas de contenido
 - CTA recomendado
 
 Sé directo y accionable. No uses frases genéricas.`,
-    }],
-  })
+      }],
+    })
 
-  const result = message.content[0].type === 'text' ? message.content[0].text : ''
-  return NextResponse.json({ result })
+    const result = message.content[0].type === 'text' ? message.content[0].text : ''
+    return NextResponse.json({ result })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message || 'Error generando ideas' }, { status: 500 })
+  }
 }

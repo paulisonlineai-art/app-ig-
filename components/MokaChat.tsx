@@ -35,6 +35,8 @@ export default function MokaChat() {
       })
       const data = await res.json()
       setMessages(prev => [...prev, { role: 'assistant', content: data.answer || data.error || 'Error' }])
+    } catch (e: any) {
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error de conexión: ${e.message || 'no se pudo contactar a Moka'}` }])
     } finally {
       setLoading(false)
     }

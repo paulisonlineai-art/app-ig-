@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase'
 import Anthropic from '@anthropic-ai/sdk'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 export const maxDuration = 60
 
@@ -9,6 +10,9 @@ const client = new Anthropic()
 export async function POST(req: NextRequest) {
   const accountId = req.cookies.get('ig_account_id')?.value
   if (!accountId) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+  const limit = await checkRateLimit(accountId, 'adapt')
+  if (!limit.ok) return NextResponse.json({ error: `Esperá ${limit.retryAfterSeconds}s antes de adaptar otro guión` }, { status: 429 })
 
   const { reelId, angle } = await req.json()
   if (!reelId) return NextResponse.json({ error: 'Parámetros faltantes' }, { status: 400 })

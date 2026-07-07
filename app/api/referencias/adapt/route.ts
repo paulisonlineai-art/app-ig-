@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createServerSupabase } from '@/lib/supabase'
 import Anthropic from '@anthropic-ai/sdk'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 export const maxDuration = 120
 
@@ -11,6 +12,9 @@ export async function POST(req: NextRequest) {
   const cookieStore = await cookies()
   const accountId = cookieStore.get('ig_account_id')?.value
   if (!accountId) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+  const limit = await checkRateLimit(accountId, 'adapt')
+  if (!limit.ok) return NextResponse.json({ error: `Esperá ${limit.retryAfterSeconds}s antes de adaptar otro guión` }, { status: 429 })
 
   const { refId, angle } = await req.json()
   const db = createServerSupabase()

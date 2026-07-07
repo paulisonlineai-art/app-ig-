@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase'
 import { scrapeCompetitorReels, scrapeInstagramUser } from '@/lib/apify'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 export async function POST(req: NextRequest) {
   const accountId = req.cookies.get('ig_account_id')?.value
   if (!accountId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+  const limit = await checkRateLimit(accountId, 'competitor_sync')
+  if (!limit.ok) return NextResponse.json({ error: `Esperá ${limit.retryAfterSeconds}s antes de volver a sincronizar` }, { status: 429 })
 
   const { competitorId, expandBy } = await req.json()
   const db = createServerSupabase()

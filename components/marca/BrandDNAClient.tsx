@@ -31,6 +31,7 @@ export default function BrandDNAClient({ accountId, initial }: { accountId: stri
       if (!res.ok || data.error) { setGenError(data.error || 'Error generando ADN de marca'); return }
       setFields(prev => ({ ...prev, ...data.fields }))
       setTab('guided')
+      if (data.warning) setGenError(data.warning)
     } catch (e: any) {
       setGenError(e.message || 'Error generando ADN de marca')
     } finally {

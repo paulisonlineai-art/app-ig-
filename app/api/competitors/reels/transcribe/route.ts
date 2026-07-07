@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase'
 import OpenAI from 'openai'
 import { toFile } from 'openai/uploads'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 // Same 25MB Whisper cap as Referencias — no server-side audio extraction
 // here either, for the same reliability reasons (see referencias/transcribe).
@@ -12,6 +13,9 @@ export const maxDuration = 120
 export async function POST(req: NextRequest) {
   const accountId = req.cookies.get('ig_account_id')?.value
   if (!accountId) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+  const limit = await checkRateLimit(accountId, 'transcribe')
+  if (!limit.ok) return NextResponse.json({ error: `Esperá ${limit.retryAfterSeconds}s antes de transcribir otro video` }, { status: 429 })
 
   const { reelId } = await req.json()
   if (!reelId) return NextResponse.json({ error: 'Parámetros faltantes' }, { status: 400 })

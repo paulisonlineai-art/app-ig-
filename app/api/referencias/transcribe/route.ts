@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createServerSupabase } from '@/lib/supabase'
 import OpenAI from 'openai'
 import { toFile } from 'openai/uploads'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 const BUCKET = 'reference-videos'
 // Whisper's hard limit is 25MB per file. No server-side audio extraction —
@@ -18,6 +19,9 @@ export async function POST(req: NextRequest) {
   const cookieStore = await cookies()
   const accountId = cookieStore.get('ig_account_id')?.value
   if (!accountId) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+  const limit = await checkRateLimit(accountId, 'transcribe')
+  if (!limit.ok) return NextResponse.json({ error: `Esperá ${limit.retryAfterSeconds}s antes de transcribir otro video` }, { status: 429 })
 
   const { refId } = await req.json()
   if (!refId) return NextResponse.json({ error: 'Parámetros faltantes' }, { status: 400 })
