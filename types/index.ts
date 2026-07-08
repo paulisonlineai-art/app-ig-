@@ -126,6 +126,7 @@ export interface CompetitorReel {
   transcribe_status: 'none' | 'transcribing' | 'transcribed' | 'error'
   error_message: string | null
   ai_analysis: string | null
+  saved: boolean
   created_at: string
 }
 

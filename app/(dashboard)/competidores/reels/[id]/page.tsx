@@ -4,6 +4,7 @@ import { formatNumber } from '@/lib/utils'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import CompetitorReelAdapt from '@/components/competidores/CompetitorReelAdapt'
+import SaveReelButton from '@/components/competidores/SaveReelButton'
 import BenchmarkChart from '@/components/reels/detail/BenchmarkChart'
 
 function DeltaBadge({ actual, benchmark }: { actual: number; benchmark: number }) {
@@ -57,9 +58,12 @@ export default async function CompetitorReelDetailPage({ params }: { params: Pro
 
   return (
     <div>
-      <Link href="/competidores" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 20 }}>
-        ← Volver a Competidores
-      </Link>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <Link href="/competidores" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>
+          ← Volver a Competidores
+        </Link>
+        <SaveReelButton reelId={reel.id} initialSaved={!!reel.saved} />
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24, alignItems: 'start' }}>
         {/* Left — video preview */}

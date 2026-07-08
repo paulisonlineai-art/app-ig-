@@ -8,6 +8,35 @@ export default function CompetitorCard({ competitor }: { competitor: any }) {
   const [syncing, setSyncing] = useState(false)
   const [error, setError] = useState('')
   const [showReels, setShowReels] = useState(false)
+  const [showSavedOnly, setShowSavedOnly] = useState(false)
+  const [savedIds, setSavedIds] = useState<Set<string>>(
+    new Set((competitor.competitor_reels || []).filter((r: any) => r.saved).map((r: any) => r.id))
+  )
+
+  const toggleSave = async (e: React.MouseEvent, reelId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const willBeSaved = !savedIds.has(reelId)
+    setSavedIds(prev => {
+      const next = new Set(prev)
+      willBeSaved ? next.add(reelId) : next.delete(reelId)
+      return next
+    })
+    try {
+      await fetch('/api/competitors/reels/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reelId, saved: willBeSaved }),
+      })
+    } catch {
+      // Revert on failure
+      setSavedIds(prev => {
+        const next = new Set(prev)
+        willBeSaved ? next.delete(reelId) : next.add(reelId)
+        return next
+      })
+    }
+  }
 
   const sync = async (expandBy?: number) => {
     setSyncing(true)
@@ -113,21 +142,47 @@ export default function CompetitorCard({ competitor }: { competitor: any }) {
       {error && <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 8 }}>{error}</p>}
 
       {showReels && reelCount > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 16 }}>
-          {reels.map(r => (
-            <a key={r.id} href={`/competidores/reels/${r.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
-              <div style={{ position: 'relative', paddingBottom: '150%', background: 'var(--surface-2)', borderRadius: 8, overflow: 'hidden', marginBottom: 4 }}>
-                {r.thumbnail_url && (
-                  <img src={`/api/proxy-image?url=${encodeURIComponent(r.thumbnail_url)}`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                )}
-              </div>
-              <div style={{ fontSize: 10.5, color: 'var(--text-muted)', display: 'flex', gap: 6 }}>
-                <span>👁 {formatNumber(r.views || 0)}</span>
-                <span>♥ {formatNumber(r.likes || 0)}</span>
-              </div>
-            </a>
-          ))}
-        </div>
+        <>
+          {savedIds.size > 0 && (
+            <button
+              onClick={() => setShowSavedOnly(s => !s)}
+              style={{
+                marginTop: 16, fontSize: 11.5, fontWeight: 600, padding: '5px 10px', borderRadius: 6,
+                border: '1px solid var(--border)', cursor: 'pointer',
+                background: showSavedOnly ? 'var(--accent)' : 'var(--surface-2)',
+                color: showSavedOnly ? 'white' : 'var(--text-muted)',
+              }}
+            >
+              ⭐ Guardados ({savedIds.size}){showSavedOnly ? ' ✕' : ''}
+            </button>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: showSavedOnly || savedIds.size === 0 ? 16 : 8 }}>
+            {(showSavedOnly ? reels.filter(r => savedIds.has(r.id)) : reels).map(r => (
+              <a key={r.id} href={`/competidores/reels/${r.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+                <div style={{ position: 'relative', paddingBottom: '150%', background: 'var(--surface-2)', borderRadius: 8, overflow: 'hidden', marginBottom: 4 }}>
+                  {r.thumbnail_url && (
+                    <img src={`/api/proxy-image?url=${encodeURIComponent(r.thumbnail_url)}`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                  )}
+                  <button
+                    onClick={e => toggleSave(e, r.id)}
+                    title={savedIds.has(r.id) ? 'Quitar de guardados' : 'Guardar para más adelante'}
+                    style={{
+                      position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%',
+                      border: 'none', background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', fontSize: 13, lineHeight: 1,
+                    }}
+                  >
+                    {savedIds.has(r.id) ? '⭐' : '☆'}
+                  </button>
+                </div>
+                <div style={{ fontSize: 10.5, color: 'var(--text-muted)', display: 'flex', gap: 6 }}>
+                  <span>👁 {formatNumber(r.views || 0)}</span>
+                  <span>♥ {formatNumber(r.likes || 0)}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </>
       )}
     </div>
   )
