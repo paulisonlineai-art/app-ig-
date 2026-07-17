@@ -40,22 +40,25 @@ export default async function ConstanciaPage() {
   let currentStreak = 0
   let maxStreak = 0
   let tempStreak = 0
+  let streakBroken = false
   const today = new Date()
   for (let i = 0; i < 90; i++) {
     const d = new Date(today)
     d.setDate(d.getDate() - i)
     const key = d.toISOString().split('T')[0]
     if (publishDates[key]) {
-      if (i === 0 || tempStreak > 0) tempStreak++
-      if (i === 0) currentStreak = tempStreak
+      tempStreak++
     } else {
-      if (currentStreak === 0 && i > 0) currentStreak = tempStreak
+      if (!streakBroken) {
+        currentStreak = tempStreak
+        streakBroken = true
+      }
       maxStreak = Math.max(maxStreak, tempStreak)
       tempStreak = 0
     }
   }
   maxStreak = Math.max(maxStreak, tempStreak)
-  if (currentStreak === 0) currentStreak = tempStreak
+  if (!streakBroken) currentStreak = tempStreak
 
   return (
     <div>

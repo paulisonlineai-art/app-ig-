@@ -23,10 +23,10 @@ export default function BenchmarkChart({ reel, avgs }: { reel: any; avgs: any })
       </div>
       <ResponsiveContainer width="100%" height={180}>
         <BarChart data={data} barGap={4}>
-          <XAxis dataKey="name" tick={{ fill: '#9999b3', fontSize: 11 }} tickLine={false} axisLine={false} />
-          <YAxis tickFormatter={v => `${v.toFixed(1)}%`} tick={{ fill: '#9999b3', fontSize: 10 }} tickLine={false} axisLine={false} width={36} />
+          <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} axisLine={false} />
+          <YAxis tickFormatter={v => `${v.toFixed(1)}%`} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} width={36} />
           <Tooltip
-            contentStyle={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
+            contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text)' }}
             formatter={(v: any) => [`${Number(v).toFixed(2)}%`]}
           />
           <Bar dataKey="actual" fill="#7c3aed" radius={[4, 4, 0, 0]} maxBarSize={40}>

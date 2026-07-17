@@ -35,7 +35,7 @@ export default function SyncButton() {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      {msg && <span style={{ fontSize: 12, color: 'var(--success)', fontWeight: 600 }}>{msg}</span>}
+      {msg && <span style={{ fontSize: 12, color: msg.startsWith('Error') ? 'var(--danger)' : 'var(--success)', fontWeight: 600 }}>{msg}</span>}
       <button
         onClick={sync}
         disabled={loading}

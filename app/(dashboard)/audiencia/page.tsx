@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { createServerSupabase } from '@/lib/supabase'
 import { formatNumber } from '@/lib/utils'
 import AudienciaClient from '@/components/audiencia/AudienciaClient'
+import CommentInsights from '@/components/audiencia/CommentInsights'
 
 export default async function AudienciaPage() {
   const cookieStore = await cookies()
@@ -85,6 +86,9 @@ export default async function AudienciaPage() {
           ))}
         </div>
       </div>
+
+      {/* Comment-based content ideas */}
+      <CommentInsights />
 
       {/* AI Analysis */}
       <AudienciaClient

@@ -43,8 +43,8 @@ export default function ReelPatterns({ patterns }: { patterns: Patterns }) {
 DATOS:
 - Total de reels: ${patterns.totalReels}
 - Duración óptima: ${formatDuration(patterns.optimalDuration)}
-- Mejores días: ${patterns.bestDays.map(d => `${d.day} (${d.avgMultiplier}x, ${d.count} reels)`).join(', ')}
-- Mejores horas: ${patterns.bestHours.map(h => `${formatHour(h.hour)} (${h.avgMultiplier}x, ${h.count} reels)`).join(', ')}
+- Mejores días (por rendimiento): ${patterns.bestDays.map(d => `${d.day} (${d.avgMultiplier}x, ${d.count} reels)`).join(', ')}
+- Mejores horas (por rendimiento): ${patterns.bestHours.map(h => `${formatHour(h.hour)} (${h.avgMultiplier}x, ${h.count} reels)`).join(', ')}
 - Save rate promedio: ${patterns.avgSaveRate}%
 - Share rate promedio: ${patterns.avgShareRate}%
 
@@ -98,53 +98,69 @@ Sé específico y basate solo en los datos reales.`,
 
       {expanded && (
         <>
+          {/* Explanation banner */}
+          <div style={{ background: 'var(--accent-light)', border: '1px solid rgba(247,0,124,0.15)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+            <strong style={{ color: 'var(--accent)' }}>Basado en rendimiento, no frecuencia.</strong> Estos datos muestran en qué días y horas tus reels obtuvieron <strong style={{ color: 'var(--text)' }}>mejor multiplicador</strong> (más views vs tu promedio), no solo cuándo publicás más.
+          </div>
+
           {/* Quick stats grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 16 }}>
             <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 14 }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em', marginBottom: 4 }}>DURACIÓN ÓPTIMA</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)' }}>{formatDuration(patterns.optimalDuration)}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-faint)', marginTop: 2 }}>de tus top reels</div>
             </div>
             <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 14 }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em', marginBottom: 4 }}>MEJOR DÍA</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em', marginBottom: 4 }}>MEJOR DÍA PARA PUBLICAR</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)', textTransform: 'capitalize' }}>{patterns.bestDays[0]?.day || '—'}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{patterns.bestDays[0]?.avgMultiplier}x promedio</div>
+              <div style={{ fontSize: 10, color: 'var(--text-faint)', marginTop: 2 }}>{patterns.bestDays[0]?.avgMultiplier}x rendimiento · {patterns.bestDays[0]?.count} reels</div>
             </div>
             <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 14 }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em', marginBottom: 4 }}>MEJOR HORA</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em', marginBottom: 4 }}>MEJOR HORA PARA PUBLICAR</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)' }}>{patterns.bestHours[0] ? formatHour(patterns.bestHours[0].hour) : '—'}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{patterns.bestHours[0]?.avgMultiplier}x promedio</div>
+              <div style={{ fontSize: 10, color: 'var(--text-faint)', marginTop: 2 }}>{patterns.bestHours[0]?.avgMultiplier}x rendimiento · {patterns.bestHours[0]?.count} reels</div>
             </div>
             <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 14 }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em', marginBottom: 4 }}>SAVE RATE</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: '#059669' }}>{patterns.avgSaveRate}%</div>
+              <div style={{ fontSize: 10, color: 'var(--text-faint)', marginTop: 2 }}>promedio general</div>
             </div>
             <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 14 }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em', marginBottom: 4 }}>SHARE RATE</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: '#2563eb' }}>{patterns.avgShareRate}%</div>
+              <div style={{ fontSize: 10, color: 'var(--text-faint)', marginTop: 2 }}>promedio general</div>
             </div>
           </div>
 
           {/* Best days & hours detail */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
             <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 14 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10, letterSpacing: '0.05em' }}>RANKING DE DÍAS</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 4, letterSpacing: '0.05em' }}>DÍAS CON MEJOR RENDIMIENTO</div>
+              <div style={{ fontSize: 10, color: 'var(--text-faint)', marginBottom: 10 }}>Ordenados por multiplicador promedio</div>
               {patterns.bestDays.map((d, i) => (
                 <div key={d.day} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 8, marginBottom: 8, borderBottom: i < patterns.bestDays.length - 1 ? '1px solid var(--border)' : 'none' }}>
                   <span style={{ fontSize: 13, textTransform: 'capitalize' }}>{i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'} {d.day}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700 }}>{d.avgMultiplier}x <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({d.count} reels)</span></span>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: 12, fontWeight: 700 }}>{d.avgMultiplier}x</span>
+                    <div style={{ fontSize: 10, color: 'var(--text-faint)' }}>{d.count} reels · {d.avgViews.toLocaleString()} views prom.</div>
+                  </div>
                 </div>
               ))}
             </div>
             <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 14 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10, letterSpacing: '0.05em' }}>RANKING DE HORAS</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 4, letterSpacing: '0.05em' }}>HORAS CON MEJOR RENDIMIENTO</div>
+              <div style={{ fontSize: 10, color: 'var(--text-faint)', marginBottom: 10 }}>Min. 2 reels por hora para aparecer</div>
               {patterns.bestHours.map((h, i) => (
                 <div key={h.hour} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 8, marginBottom: 8, borderBottom: i < patterns.bestHours.length - 1 ? '1px solid var(--border)' : 'none' }}>
                   <span style={{ fontSize: 13 }}>{i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'} {formatHour(h.hour)}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700 }}>{h.avgMultiplier}x <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({h.count} reels)</span></span>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: 12, fontWeight: 700 }}>{h.avgMultiplier}x</span>
+                    <div style={{ fontSize: 10, color: 'var(--text-faint)' }}>{h.count} reels · {h.avgViews.toLocaleString()} views prom.</div>
+                  </div>
                 </div>
               ))}
               {patterns.bestHours.length === 0 && (
-                <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Se necesitan más reels para detectar patrones horarios</p>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Necesitás publicar en más horarios distintos para detectar patrones</p>
               )}
             </div>
           </div>

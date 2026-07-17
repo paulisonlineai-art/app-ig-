@@ -60,7 +60,7 @@ export default function LoginPage() {
             disabled={loading}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-              background: 'white', border: '1.5px solid var(--border-strong)', borderRadius: 12,
+              background: 'var(--surface)', border: '1.5px solid var(--border-strong)', borderRadius: 12,
               padding: '14px 20px', fontSize: 15, fontWeight: 600, cursor: loading ? 'default' : 'pointer',
               color: 'var(--text)', transition: 'box-shadow 0.15s',
               boxShadow: 'var(--shadow-sm)',

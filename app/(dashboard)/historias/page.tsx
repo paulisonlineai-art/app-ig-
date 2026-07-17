@@ -42,10 +42,10 @@ export default async function HistoriasPage() {
                 </div>
                 <div className="grid-historia-metrics">
                   {[
-                    { label: 'Impresiones', value: formatNumber(story.impressions) },
-                    { label: 'Alcance', value: formatNumber(story.reach) },
-                    { label: 'Respuestas', value: formatNumber(story.replies) },
-                    { label: 'Tap fwd', value: formatNumber(story.taps_forward) },
+                    { label: 'Impresiones', value: formatNumber(story.impressions ?? 0) },
+                    { label: 'Alcance', value: formatNumber(story.reach ?? 0) },
+                    { label: 'Respuestas', value: formatNumber(story.replies ?? 0) },
+                    { label: 'Tap fwd', value: formatNumber(story.taps_forward ?? 0) },
                     { label: 'Drop-off', value: story.dropoff_percentage != null ? `${story.dropoff_percentage.toFixed(1)}%` : '—' },
                   ].map(m => (
                     <div key={m.label} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>

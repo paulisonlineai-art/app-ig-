@@ -28,18 +28,31 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const res = await fetch(url, {
-      // Don't auto-follow redirects — a whitelisted host could redirect to an
-      // internal/arbitrary address and the final destination would never get
-      // re-checked against the whitelist.
-      redirect: 'manual',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://www.instagram.com/',
-      },
-    })
+    // Follow redirects but verify each hop stays on whitelisted hosts
+    let currentUrl = url
+    let res: Response | null = null
+    for (let hops = 0; hops < 5; hops++) {
+      res = await fetch(currentUrl, {
+        redirect: 'manual',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': 'https://www.instagram.com/',
+        },
+      })
+      if (res.status >= 300 && res.status < 400) {
+        const location = res.headers.get('location')
+        if (!location) break
+        const next = new URL(location, currentUrl)
+        if (next.protocol !== 'https:' || !isAllowedHost(next.hostname)) {
+          return new NextResponse('Redirect to disallowed host', { status: 400 })
+        }
+        currentUrl = next.href
+        continue
+      }
+      break
+    }
 
-    if (!res.ok) return new NextResponse('Image not found', { status: 404 })
+    if (!res || !res.ok) return new NextResponse('Image not found', { status: 404 })
 
     const contentType = res.headers.get('content-type') || 'image/jpeg'
     const buffer = await res.arrayBuffer()

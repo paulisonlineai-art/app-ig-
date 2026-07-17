@@ -7,7 +7,12 @@ import DateRangeSelect from '@/components/dashboard/DateRangeSelect'
 import ProfileScore from '@/components/dashboard/ProfileScore'
 
 function PctChange({ val, prev }: { val: number; prev: number }) {
-  if (!prev) return null
+  if (prev === 0 && val === 0) return null
+  if (prev === 0) return (
+    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--success)', display: 'flex', alignItems: 'center', gap: 3, marginTop: 4 }}>
+      <span>↑</span> Nuevo
+    </span>
+  )
   const pct = ((val - prev) / prev) * 100
   const up = pct >= 0
   return (
@@ -30,9 +35,10 @@ function calcProfileScore(reels: any[], followers: number) {
   const engRate = totalViews > 0 ? ((totalLikes + totalComments + totalShares + totalSaves) / totalViews) * 100 : 0
   const engScore = Math.min(25, (engRate / 8) * 25)
 
-  const uniqueDays = new Set(reels.map((r: any) => r.timestamp?.split('T')[0])).size
-  const span = reels.length > 1
-    ? (new Date(reels[0].timestamp).getTime() - new Date(reels[reels.length - 1].timestamp).getTime()) / 864e5
+  const uniqueDays = new Set(reels.filter((r: any) => r.timestamp).map((r: any) => r.timestamp.split('T')[0])).size
+  const validTimestamps = reels.filter((r: any) => r.timestamp)
+  const span = validTimestamps.length > 1
+    ? (new Date(validTimestamps[0].timestamp).getTime() - new Date(validTimestamps[validTimestamps.length - 1].timestamp).getTime()) / 864e5
     : 30
   const frequency = span > 0 ? uniqueDays / (span / 7) : 0
   const consistencyScore = Math.min(25, (frequency / 4) * 25)
@@ -86,7 +92,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     { data: reelsPrev },
     { data: stories30 },
     { data: sales30 },
-    { data: topSaleReels },
     { data: audienceStats },
     { data: account },
   ] = await Promise.all([
@@ -94,7 +99,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     reelsPrevQuery || Promise.resolve({ data: [] as any[] }),
     storiesQuery,
     salesQuery.limit(200),
-    db.from('reels').select('id,caption,thumbnail_url,views,multiplier').eq('account_id', accountId).order('multiplier', { ascending: false }).limit(5),
     db.from('audience_stats').select('date,reach,impressions').eq('account_id', accountId).order('date', { ascending: true }).limit(60),
     db.from('ig_accounts').select('followers_count').eq('id', accountId).single(),
   ])
@@ -109,7 +113,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const commentsPrev = rp.reduce((s: number, x: any) => s + x.comments, 0)
   const conversations30 = r.reduce((s: number, x: any) => s + x.comments + x.shares, 0)
   const conversationsPrev = rp.reduce((s: number, x: any) => s + x.comments + x.shares, 0)
-  const storyReplies = (stories30 || []).reduce((s: number, x: any) => s + x.replies, 0)
+  const storyReplies = (stories30 || []).reduce((s: number, x: any) => s + (x.replies ?? 0), 0)
 
   const allSales = sales30 || []
   const totalRevenue = allSales.reduce((s: number, x: any) => s + x.amount, 0)

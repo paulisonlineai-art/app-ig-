@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { createServerSupabase } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 import AddSaleForm from '@/components/ventas/AddSaleForm'
+import MonetizationMap from '@/components/ventas/MonetizationMap'
 
 export default async function VentasPage() {
   const cookieStore = await cookies()
@@ -9,7 +10,7 @@ export default async function VentasPage() {
 
   const db = createServerSupabase()
   const [{ data: sales }, { data: reels }] = await Promise.all([
-    db.from('sales').select('*, reels(caption, thumbnail_url, permalink)').eq('account_id', accountId).order('closed_at', { ascending: false }).limit(200),
+    db.from('sales').select('*, reels(caption, thumbnail_url, permalink, views, multiplier, hook, save_rate, structure)').eq('account_id', accountId).order('closed_at', { ascending: false }).limit(200),
     db.from('reels').select('id, caption, thumbnail_url').eq('account_id', accountId).order('timestamp', { ascending: false }).limit(50),
   ])
 
@@ -39,6 +40,22 @@ export default async function VentasPage() {
           </div>
         ))}
       </div>
+
+      {/* Monetization Map */}
+      <MonetizationMap
+        sales={allSales.map((s: any) => ({
+          amount: s.amount,
+          closed_at: s.closed_at,
+          source: s.source,
+          reel_caption: s.reels?.caption || null,
+          reel_views: s.reels?.views || null,
+          reel_multiplier: s.reels?.multiplier || null,
+          reel_hook: s.reels?.hook || null,
+          reel_narrative_type: s.reels?.structure?.narrative_type || null,
+          reel_save_rate: s.reels?.save_rate || null,
+        }))}
+        totalRevenue={totalRevenue}
+      />
 
       {/* Add sale form */}
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, marginBottom: 32 }}>

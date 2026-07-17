@@ -7,6 +7,7 @@ const SUGGESTED = [
   '¿Por qué funcionó tan bien mi mejor reel?',
   'Basado en mis métricas, ¿en qué debería enfocarme?',
   'Dame 5 ideas de contenido ganadoras',
+  'Sacá ideas de contenido de los comentarios de mi audiencia',
   '¿Cuál es mi tasa de guardados y cómo mejorarla?',
 ]
 
@@ -79,9 +80,34 @@ export default function KlarChat() {
           overflow: 'hidden',
         }}>
           {/* Header */}
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--accent)', color: 'white' }}>
-            <div style={{ fontWeight: 800, fontSize: 15 }}>🤖 Klar AI</div>
-            <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>Preguntame sobre tu contenido e Instagram</div>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 15 }}>🤖 Klar AI</div>
+              <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>Preguntame sobre tu contenido e Instagram</div>
+            </div>
+            {messages.length > 0 && (
+              <button
+                onClick={() => { setMessages([]); setInput('') }}
+                title="Nuevo chat"
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  borderRadius: 8,
+                  padding: '6px 10px',
+                  color: 'white',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  transition: 'background 0.15s',
+                  flexShrink: 0,
+                }}
+              >
+                ✦ Nuevo chat
+              </button>
+            )}
           </div>
 
           {/* Messages */}

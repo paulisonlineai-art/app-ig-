@@ -3,6 +3,10 @@ import { createServerSupabase } from '@/lib/supabase'
 import { formatNumber, calcAverages, getRangeBounds } from '@/lib/utils'
 import ReelsGrid from '@/components/reels/ReelsGrid'
 import ReelPatterns from '@/components/reels/ReelPatterns'
+import ViralityPredictor from '@/components/reels/ViralityPredictor'
+import HookLab from '@/components/reels/HookLab'
+import FlopAutopsy from '@/components/reels/FlopAutopsy'
+import RecyclableContent from '@/components/reels/RecyclableContent'
 import SyncButton from '@/components/dashboard/SyncButton'
 import DateRangeSelect from '@/components/dashboard/DateRangeSelect'
 
@@ -118,6 +122,20 @@ export default async function ReelsPage({ searchParams }: { searchParams: Promis
       ) : (
         <>
           {patterns && <ReelPatterns patterns={patterns} />}
+          <ViralityPredictor />
+          <HookLab />
+          <FlopAutopsy />
+          <RecyclableContent reels={allReels.map((r: any) => ({
+            caption: r.caption,
+            hook: r.hook,
+            views: r.views,
+            saves: r.saves,
+            save_rate: r.views > 0 ? (r.saves / r.views) * 100 : 0,
+            comment_rate: r.views > 0 ? (r.comments / r.views) * 100 : 0,
+            multiplier: r.multiplier,
+            permalink: r.permalink,
+            thumbnail_url: r.thumbnail_url,
+          }))} />
           <ReelsGrid reels={allReels} averages={averages} totalLikes={totalLikes} totalViews={totalViews} />
         </>
       )}

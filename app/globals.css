@@ -57,6 +57,9 @@
   --danger: #ef4444;
   --danger-bg: rgba(239,68,68,0.1);
 
+  --accent-light: rgba(247,0,124,0.12);
+  --accent-dark: #ff1a8c;
+
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
   --shadow: 0 4px 12px rgba(0,0,0,0.4);
   --shadow-lg: 0 8px 30px rgba(0,0,0,0.5);

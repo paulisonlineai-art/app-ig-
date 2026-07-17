@@ -1,5 +1,5 @@
 'use client'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 
 export default function DashboardCharts({ audienceStats, reels }: { audienceStats: any[]; reels: any[] }) {
   const reachData = audienceStats.map(s => ({
@@ -19,7 +19,7 @@ export default function DashboardCharts({ audienceStats, reels }: { audienceStat
   }
   const interactData = Object.entries(byDate).map(([date, v]) => ({ date, ...v }))
 
-  const tooltipStyle = { background: '#fff', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }
+  const tooltipStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text)' }
 
   return (
     <div className="grid-detail-charts-2">
@@ -35,7 +35,7 @@ export default function DashboardCharts({ audienceStats, reels }: { audienceStat
         </div>
         <ResponsiveContainer width="100%" height={160}>
           <LineChart data={reachData}>
-            <XAxis dataKey="date" tick={{ fill: '#9999b3', fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+            <XAxis dataKey="date" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
             <YAxis hide />
             <Tooltip contentStyle={tooltipStyle} />
             <Line type="monotone" dataKey="Alcance" stroke="#7c3aed" dot={false} strokeWidth={2} />
@@ -56,7 +56,7 @@ export default function DashboardCharts({ audienceStats, reels }: { audienceStat
         </div>
         <ResponsiveContainer width="100%" height={160}>
           <BarChart data={interactData}>
-            <XAxis dataKey="date" tick={{ fill: '#9999b3', fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+            <XAxis dataKey="date" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
             <YAxis hide />
             <Tooltip contentStyle={tooltipStyle} />
             <Bar dataKey="likes" stackId="a" fill="#7c3aed" radius={[0, 0, 0, 0]} />

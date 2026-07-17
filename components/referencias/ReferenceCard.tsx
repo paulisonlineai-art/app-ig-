@@ -54,7 +54,12 @@ export default function ReferenceCard({ ref_, brandDNA, onDelete }: { ref_: Refe
     }
   }
 
-  const structure = ref_.structure ? (typeof ref_.structure === 'string' ? JSON.parse(ref_.structure) : ref_.structure) : null
+  let structure = null
+  if (ref_.structure) {
+    try {
+      structure = typeof ref_.structure === 'string' ? JSON.parse(ref_.structure) : ref_.structure
+    } catch { /* malformed JSON — treat as no structure */ }
+  }
 
   const ANGLES = ['Mismo tema, mi nicho', 'Hook replicado', 'Estructura exacta', 'Tono contrario', 'Caso de cliente']
 
@@ -98,7 +103,7 @@ export default function ReferenceCard({ ref_, brandDNA, onDelete }: { ref_: Refe
           {/* Quick hook preview */}
           {ref_.hook && (
             <div style={{ padding: '12px 20px', background: 'var(--accent-light)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', background: 'white', padding: '2px 7px', borderRadius: 4, flexShrink: 0, marginTop: 1 }}>HOOK</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', background: 'var(--surface)', padding: '2px 7px', borderRadius: 4, flexShrink: 0, marginTop: 1 }}>HOOK</span>
               <p style={{ fontSize: 13, color: 'var(--accent-dark)', lineHeight: 1.5, fontStyle: 'italic' }}>"{ref_.hook}"</p>
             </div>
           )}

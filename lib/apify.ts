@@ -117,6 +117,24 @@ export async function scrapeInstagramUser(username: string, sessionCookie?: stri
   }
 }
 
+// Scrape comments from specific reel URLs
+export async function scrapeReelComments(reelUrls: string[], limit = 50): Promise<{ reelUrl: string; username: string; text: string }[]> {
+  const run = await client.actor('apify/instagram-comment-scraper').call({
+    directUrls: reelUrls,
+    resultsLimit: limit,
+  }, { waitSecs: 120 })
+
+  const { items } = await client.dataset(run.defaultDatasetId).listItems()
+
+  return (items as any[])
+    .filter(item => item.text?.trim())
+    .map(item => ({
+      reelUrl: item.inputUrl || item.postUrl || '',
+      username: item.ownerUsername || item.username || '',
+      text: item.text || '',
+    }))
+}
+
 // Scrape reels for a competitor (public, no session needed). Apify only
 // ever returns a profile's most recent posts — there's no way to ask it
 // for "the most viral reel ever" without scraping the account's entire

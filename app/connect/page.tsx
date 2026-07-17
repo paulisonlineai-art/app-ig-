@@ -104,9 +104,9 @@ export default function ConnectPage() {
                   <strong style={{ color: 'var(--accent)' }}>Cómo obtener tu session cookie:</strong>
                   <ol style={{ margin: '8px 0 0 16px', padding: 0 }}>
                     <li>Abrí Instagram en Chrome y logueate</li>
-                    <li>Presioná <code style={{ background: 'white', padding: '1px 5px', borderRadius: 4 }}>F12</code> → pestaña <strong>Application</strong></li>
+                    <li>Presioná <code style={{ background: 'var(--surface-2)', padding: '1px 5px', borderRadius: 4 }}>F12</code> → pestaña <strong>Application</strong></li>
                     <li>En la barra izquierda: <strong>Cookies → instagram.com</strong></li>
-                    <li>Buscá la cookie llamada <code style={{ background: 'white', padding: '1px 5px', borderRadius: 4 }}>sessionid</code></li>
+                    <li>Buscá la cookie llamada <code style={{ background: 'var(--surface-2)', padding: '1px 5px', borderRadius: 4 }}>sessionid</code></li>
                     <li>Copiá el valor y pegalo acá</li>
                   </ol>
                   <p style={{ marginTop: 8, color: 'var(--text-muted)' }}>
