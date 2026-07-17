@@ -5,32 +5,27 @@ import { formatNumber } from '@/lib/utils'
 import type { Reel } from '@/types'
 import ReelsChart from './ReelsChart'
 
-type SortKey = 'timestamp' | 'views' | 'multiplier' | 'save_rate' | 'like_rate'
+type SortKey = 'timestamp' | 'views' | 'multiplier' | 'like_rate'
 type FilterType = 'all' | 'reel' | 'trial'
-type FilterOrganic = 'all' | 'organic' | 'paid'
 
 function MultiplierBadge({ m }: { m: number }) {
   const cls = m >= 2 ? 'badge-up' : m >= 0.7 ? 'badge-avg' : 'badge-down'
   return <span className={`badge-multiplier ${cls}`}>×{m.toFixed(1)}</span>
 }
 
-export default function ReelsGrid({ reels, averages, totalLikes, totalSaves, totalViews }: {
+export default function ReelsGrid({ reels, averages, totalLikes, totalViews }: {
   reels: Reel[]
   averages: any
   totalLikes: number
-  totalSaves: number
   totalViews: number
 }) {
   const [sort, setSort] = useState<SortKey>('timestamp')
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc')
   const [filterType, setFilterType] = useState<FilterType>('all')
-  const [filterOrganic, setFilterOrganic] = useState<FilterOrganic>('all')
 
   let filtered = reels
   if (filterType === 'reel') filtered = filtered.filter(r => !r.is_trial)
   if (filterType === 'trial') filtered = filtered.filter(r => r.is_trial)
-  if (filterOrganic === 'organic') filtered = filtered.filter(r => r.organic_percentage >= 90)
-  if (filterOrganic === 'paid') filtered = filtered.filter(r => r.ads_percentage > 10)
 
   const sorted = [...filtered].sort((a, b) => {
     const v = (x: Reel) => sort === 'timestamp' ? new Date(x.timestamp).getTime() : (x as any)[sort]
@@ -43,18 +38,17 @@ export default function ReelsGrid({ reels, averages, totalLikes, totalSaves, tot
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 20, alignItems: 'start' }}>
+    <div className="grid-reels-main">
       {/* Left — reels list */}
       <div>
         {/* Filters bar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-muted)' }}>
             Ordenar por
-            <select value={sort} onChange={e => setSort(e.target.value as SortKey)} style={{ fontSize: 12, padding: '5px 10px', borderRadius: 6 }}>
+            <select value={sort} onChange={e => setSort(e.target.value as SortKey)} style={{ fontSize: 12, padding: '5px 10px', borderRadius: 6 }} aria-label="Ordenar reels por">
               <option value="timestamp">Fecha</option>
               <option value="views">Vistas</option>
               <option value="multiplier">Multiplicador</option>
-              <option value="save_rate">Tasa guardados</option>
               <option value="like_rate">Tasa likes</option>
             </select>
           </div>
@@ -71,21 +65,13 @@ export default function ReelsGrid({ reels, averages, totalLikes, totalSaves, tot
             ))}
           </div>
 
-          <div style={{ display: 'flex', gap: 4 }}>
-            {(['all', 'organic', 'paid'] as FilterOrganic[]).map(t => (
-              <button key={t} onClick={() => setFilterOrganic(t)} className={`pill ${filterOrganic === t ? 'pill-active' : 'pill-inactive'}`} style={{ fontSize: 12 }}>
-                {t === 'all' ? 'Todos' : t === 'organic' ? '🟢 Orgánico' : '💰 Pagado'}
-              </button>
-            ))}
-          </div>
-
           <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>
             {sorted.length} de {reels.length}
           </span>
         </div>
 
         {/* Reels grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+        <div className="grid-reels">
           {sorted.map(reel => (
             <Link key={reel.id} href={`/reels/${reel.id}`} style={{ display: 'block' }}>
               <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', transition: 'box-shadow 0.15s', cursor: 'pointer' }}
@@ -94,16 +80,11 @@ export default function ReelsGrid({ reels, averages, totalLikes, totalSaves, tot
                 {/* Thumbnail */}
                 <div style={{ position: 'relative', paddingBottom: '160%', background: 'var(--surface-2)', overflow: 'hidden' }}>
                   {reel.thumbnail_url && (
-                    <img src={`/api/proxy-image?url=${encodeURIComponent(reel.thumbnail_url)}`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={`/api/proxy-image?url=${encodeURIComponent(reel.thumbnail_url)}`} alt={reel.caption?.split('\n')[0]?.slice(0, 80) || 'Miniatura del reel'} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                   )}
                   <div style={{ position: 'absolute', top: 6, left: 6 }}>
                     <MultiplierBadge m={reel.multiplier} />
                   </div>
-                  {reel.organic_percentage >= 90 && (
-                    <div style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(5,150,105,0.9)', color: 'white', fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>
-                      100% org
-                    </div>
-                  )}
                   {reel.duration_seconds && (
                     <div style={{ position: 'absolute', bottom: 6, left: 6, background: 'rgba(0,0,0,0.65)', color: 'white', fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 4 }}>
                       ⏱ {Math.floor(reel.duration_seconds / 60)}:{String(reel.duration_seconds % 60).padStart(2, '0')}
@@ -119,8 +100,7 @@ export default function ReelsGrid({ reels, averages, totalLikes, totalSaves, tot
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6, fontSize: 12, fontWeight: 600 }}>
                     <span>👁 {formatNumber(reel.views)}</span>
                     <span style={{ color: 'var(--text-muted)' }}>♥ {formatNumber(reel.likes)}</span>
-                    <span style={{ color: 'var(--text-muted)' }}>🔖 —</span>
-                    <span style={{ color: 'var(--text-muted)' }}>↗ —</span>
+                    <span style={{ color: 'var(--text-muted)' }}>💬 {formatNumber(reel.comments)}</span>
                   </div>
                   {reel.is_trial && (
                     <span style={{ fontSize: 10, background: 'var(--accent-light)', color: 'var(--accent)', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>Trial Reel</span>
@@ -140,12 +120,11 @@ export default function ReelsGrid({ reels, averages, totalLikes, totalSaves, tot
         <div className="card" style={{ padding: 20, marginBottom: 16 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 12 }}>RESUMEN {reels.length} REELS</div>
 
-          {/* Donut-style summary */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
-              { label: 'Likes totales', value: formatNumber(totalLikes), color: '#7c3aed' },
-              { label: 'Guardados totales', value: '—', color: '#10b981' },
               { label: 'Views totales', value: formatNumber(totalViews), color: '#f59e0b' },
+              { label: 'Likes totales', value: formatNumber(totalLikes), color: '#7c3aed' },
+              { label: 'Comentarios totales', value: formatNumber(reels.reduce((s, r) => s + r.comments, 0)), color: '#2563eb' },
             ].map(s => (
               <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 8, borderBottom: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -162,7 +141,6 @@ export default function ReelsGrid({ reels, averages, totalLikes, totalSaves, tot
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 12 }}>TUS PROMEDIOS</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              { label: 'Save rate', value: '—' },
               { label: 'Like rate', value: `${averages.avg_like_rate.toFixed(2)}%` },
               { label: 'Comment rate', value: `${averages.avg_comment_rate.toFixed(2)}%` },
               { label: 'WPM óptimo', value: averages.avg_wpm ? `${Math.round(averages.avg_wpm)} wpm` : '—' },

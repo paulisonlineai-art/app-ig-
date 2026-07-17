@@ -13,14 +13,14 @@ export default async function ConfiguracionPage() {
     <div style={{ maxWidth: 600 }}>
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 2 }}>Settings</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Configuración de tu cuenta Moka</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Configuración de tu cuenta Klar</p>
       </div>
 
       <div className="card" style={{ padding: 24, marginBottom: 16 }}>
         <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Cuenta de Instagram conectada</h2>
         {account ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            {account.profile_picture_url && <img src={`/api/proxy-image?url=${encodeURIComponent(account.profile_picture_url)}`} style={{ width: 52, height: 52, borderRadius: '50%' }} alt="" />}
+            {account.profile_picture_url && <img src={`/api/proxy-image?url=${encodeURIComponent(account.profile_picture_url)}`} style={{ width: 52, height: 52, borderRadius: '50%' }} alt={`Foto de perfil de @${account.username}`} />}
             <div>
               <div style={{ fontWeight: 700, fontSize: 16 }}>@{account.username}</div>
               <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>{account.followers_count?.toLocaleString()} seguidores</div>

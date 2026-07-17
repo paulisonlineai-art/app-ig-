@@ -65,12 +65,12 @@ export default async function CompetitorReelDetailPage({ params }: { params: Pro
         <SaveReelButton reelId={reel.id} initialSaved={!!reel.saved} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24, alignItems: 'start' }}>
+      <div className="grid-detail">
         {/* Left — video preview */}
         <div>
           <div style={{ background: '#000', borderRadius: 16, overflow: 'hidden', position: 'relative', paddingBottom: '177%' }}>
             {reel.thumbnail_url && (
-              <img src={`/api/proxy-image?url=${encodeURIComponent(reel.thumbnail_url)}`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} />
+              <img src={`/api/proxy-image?url=${encodeURIComponent(reel.thumbnail_url)}`} alt={`Reel de @${competitor?.ig_username}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} />
             )}
             <div style={{ position: 'absolute', top: 10, left: 10 }}>
               <span className={`badge-multiplier ${multiplier >= 2 ? 'badge-up' : multiplier >= 0.7 ? 'badge-avg' : 'badge-down'}`}>
@@ -89,7 +89,7 @@ export default async function CompetitorReelDetailPage({ params }: { params: Pro
           <div className="card" style={{ padding: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               {competitor?.profile_picture_url && (
-                <img src={`/api/proxy-image?url=${encodeURIComponent(competitor.profile_picture_url)}`} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                <img src={`/api/proxy-image?url=${encodeURIComponent(competitor.profile_picture_url)}`} alt={`Foto de perfil de @${competitor.ig_username}`} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
               )}
               <span style={{ fontWeight: 700, fontSize: 14 }}>@{competitor?.ig_username}</span>
             </div>
@@ -102,7 +102,7 @@ export default async function CompetitorReelDetailPage({ params }: { params: Pro
           </div>
 
           {/* Key metrics row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+          <div className="grid-stats-4">
             {[
               { label: 'Views', value: formatNumber(views), icon: '👁' },
               { label: 'Me gusta', value: formatNumber(reel.likes || 0), rate: likeRate, benchmark: avgLikeRate, icon: '♥' },

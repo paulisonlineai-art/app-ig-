@@ -2,21 +2,21 @@ import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createServerSupabase } from '@/lib/supabase'
-import MokaChat from '@/components/MokaChat'
+import KlarChat from '@/components/MokaChat'
 import NavLink from '@/components/NavLink'
 import LogoutButton from '@/components/LogoutButton'
+import MobileNav from '@/components/MobileNav'
+import ThemeToggle from '@/components/ThemeToggle'
 
-// Historias and Tu audiencia are hidden — both permanently show empty state
-// since nothing populates `stories`/`audience_stats`. Those metrics are only
-// available via Meta's official Graph API (instagram_manage_insights), which
-// this app deliberately doesn't use. Re-add once that integration exists.
 const NAV_TOP = [
   { href: '/dashboard', label: 'Dashboard', icon: '⊞' },
   { href: '/reels', label: 'Reels', icon: '▶' },
+  { href: '/constancia', label: 'Constancia', icon: '📅' },
+  { href: '/audiencia', label: 'Audiencia', icon: '👥' },
   { href: '/competidores', label: 'Competencia', icon: '⚡' },
   { href: '/ventas', label: 'Ventas', icon: '$' },
   { href: '/contenido', label: 'Mesa de trabajo', icon: '✏' },
-  { href: '/ideas', label: 'Moka AI', icon: '🤖' },
+  { href: '/ideas', label: 'Klar AI', icon: '🤖' },
   { href: '/referencias', label: 'Referencias', icon: '🎬' },
 ]
 
@@ -24,6 +24,48 @@ const NAV_BOTTOM = [
   { href: '/marca', label: 'ADN de Marca', icon: '◈' },
   { href: '/configuracion', label: 'Settings', icon: '⚙' },
 ]
+
+function SidebarContent({ account, totalViews }: { account: any; totalViews: number }) {
+  return (
+    <>
+      <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          {account?.profile_picture_url
+            ? <img src={`/api/proxy-image?url=${encodeURIComponent(account.profile_picture_url)}`} style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid var(--accent-light)' }} alt={`Foto de perfil de @${account?.username || 'usuario'}`} />
+            : <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>👤</div>
+          }
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{account?.username || 'Mi cuenta'}</div>
+            <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 500 }}>powered by Klar</div>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {[
+            { label: 'Seguidores', value: account?.followers_count ? (account.followers_count >= 1000 ? `${(account.followers_count/1000).toFixed(1)}K` : account.followers_count) : '—' },
+            { label: 'Views 30d', value: totalViews >= 1000 ? `${(totalViews/1000).toFixed(0)}K` : totalViews || '—' },
+          ].map(s => (
+            <div key={s.label} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 10px' }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>{s.value}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <nav style={{ flex: 1, padding: '8px 10px', overflowY: 'auto' }} aria-label="Navegación principal">
+        <div style={{ marginBottom: 4 }}>
+          {NAV_TOP.map(item => <NavLink key={item.href} {...item} />)}
+        </div>
+      </nav>
+
+      <div style={{ padding: '8px 10px 12px', borderTop: '1px solid var(--border)' }}>
+        {NAV_BOTTOM.map(item => <NavLink key={item.href} {...item} />)}
+        <LogoutButton />
+      </div>
+    </>
+  )
+}
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
@@ -39,62 +81,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const totalViews = (reels30d || []).reduce((s: number, r: any) => s + r.views, 0)
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
+    <div className="dashboard-layout">
 
-      {/* Sidebar */}
-      <aside style={{
-        width: 230,
-        background: 'var(--surface)',
-        borderRight: '1px solid var(--border)',
-        display: 'flex',
-        flexDirection: 'column',
-        flexShrink: 0,
-        overflow: 'hidden',
-      }}>
-        {/* Profile */}
-        <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            {account?.profile_picture_url
-              ? <img src={`/api/proxy-image?url=${encodeURIComponent(account.profile_picture_url)}`} style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid var(--accent-light)' }} alt="" />
-              : <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>👤</div>
-            }
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{account?.username || 'Mi cuenta'}</div>
-              <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 500 }}>powered by Moka</div>
-            </div>
-          </div>
-
-          {/* Quick stats in header */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {[
-              { label: 'Seguidores', value: account?.followers_count ? (account.followers_count >= 1000 ? `${(account.followers_count/1000).toFixed(1)}K` : account.followers_count) : '—' },
-              { label: 'Views 30d', value: totalViews >= 1000 ? `${(totalViews/1000).toFixed(0)}K` : totalViews || '—' },
-            ].map(s => (
-              <div key={s.label} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 10px' }}>
-                <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>{s.value}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Nav */}
-        <nav style={{ flex: 1, padding: '8px 10px', overflowY: 'auto' }}>
-          <div style={{ marginBottom: 4 }}>
-            {NAV_TOP.map(item => <NavLink key={item.href} {...item} />)}
-          </div>
-        </nav>
-
-        {/* Bottom nav */}
-        <div style={{ padding: '8px 10px 12px', borderTop: '1px solid var(--border)' }}>
-          {NAV_BOTTOM.map(item => <NavLink key={item.href} {...item} />)}
-          <LogoutButton />
-        </div>
+      {/* Desktop sidebar */}
+      <aside className="dashboard-sidebar">
+        <SidebarContent account={account} totalViews={totalViews} />
       </aside>
 
+      {/* Mobile sidebar (slide-out) */}
+      <MobileNav>
+        <SidebarContent account={account} totalViews={totalViews} />
+      </MobileNav>
+
       {/* Main */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Top header bar */}
+      <div className="dashboard-main">
         <header style={{
           height: 52,
           background: 'var(--surface)',
@@ -106,7 +106,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           flexShrink: 0,
         }}>
           {account?.profile_picture_url && (
-            <img src={`/api/proxy-image?url=${encodeURIComponent(account.profile_picture_url)}`} style={{ width: 28, height: 28, borderRadius: '50%' }} alt="" />
+            <img src={`/api/proxy-image?url=${encodeURIComponent(account.profile_picture_url)}`} style={{ width: 28, height: 28, borderRadius: '50%' }} alt={`@${account?.username}`} />
           )}
           <span style={{ fontSize: 13, fontWeight: 700 }}>{account?.username}</span>
 
@@ -126,17 +126,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
 
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ background: 'var(--accent-light)', color: 'var(--accent)', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>🎯 Moka</div>
+            <ThemeToggle />
+            <div style={{ background: 'var(--accent-light)', color: 'var(--accent)', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>🎯 Klar</div>
           </div>
         </header>
 
-        {/* Page content */}
-        <main style={{ flex: 1, overflow: 'auto', padding: '28px 28px' }}>
+        <main className="dashboard-content">
           {children}
         </main>
       </div>
 
-      <MokaChat />
+      <KlarChat />
     </div>
   )
 }

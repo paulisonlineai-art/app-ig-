@@ -31,14 +31,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative' }}>
       <Suspense fallback={null}>
         <LoginError onError={setError} />
       </Suspense>
       <div style={{ width: '100%', maxWidth: 420, textAlign: 'center' }}>
 
         <div style={{ fontSize: 48, marginBottom: 16 }}>🎯</div>
-        <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8 }}>Moka</h1>
+        <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8 }}>Klar</h1>
         <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 40 }}>
           Tu sistema de analytics de Instagram con IA
         </p>

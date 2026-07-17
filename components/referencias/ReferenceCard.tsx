@@ -254,7 +254,7 @@ export default function ReferenceCard({ ref_, brandDNA, onDelete }: { ref_: Refe
                 {adapting ? (
                   <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>
                     <div style={{ fontSize: 32, marginBottom: 12 }}>✨</div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>Moka está adaptando el contenido...</div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>Klar está adaptando el contenido...</div>
                     <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 4 }}>Analizando tu nicho y generando el guión</div>
                   </div>
                 ) : adaptError ? (

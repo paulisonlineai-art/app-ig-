@@ -131,7 +131,7 @@ export default function BrandDNAClient({ accountId, initial }: { accountId: stri
       ) : (
         <div className="card" style={{ padding: 20 }}>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
-            Escribí libremente todo sobre tu marca, audiencia, estrategia y contexto. Esta información va directamente a la IA de Moka.
+            Escribí libremente todo sobre tu marca, audiencia, estrategia y contexto. Esta información va directamente a la IA de Klar.
           </p>
           <textarea
             value={freeform}
@@ -152,7 +152,7 @@ export default function BrandDNAClient({ accountId, initial }: { accountId: stri
         >
           {saving ? 'Guardando...' : '💾 Guardar ADN de Marca'}
         </button>
-        {saved && <span style={{ fontSize: 13, color: 'var(--success)', fontWeight: 600 }}>✓ Guardado. Moka ya usa este contexto.</span>}
+        {saved && <span style={{ fontSize: 13, color: 'var(--success)', fontWeight: 600 }}>✓ Guardado. Klar ya usa este contexto.</span>}
         {saveError && <span style={{ fontSize: 13, color: 'var(--danger)', fontWeight: 600 }}>✗ {saveError}</span>}
       </div>
     </div>

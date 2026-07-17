@@ -23,6 +23,8 @@ export default function CompetitorReelAdapt({ reel }: { reel: any }) {
       const data = await res.json()
       if (!res.ok || data.error) { setError(data.error || 'Error al adaptar'); return }
       setAdaptation(data.adaptation)
+    } catch {
+      setError('Error de conexión — intentá de nuevo')
     } finally {
       setAdapting(false)
     }
@@ -40,6 +42,10 @@ export default function CompetitorReelAdapt({ reel }: { reel: any }) {
       const data = await res.json()
       if (!res.ok || data.error) { setError(data.error || 'Error al transcribir'); return }
       setTranscript(data.transcript)
+    } catch {
+      setError('Error de conexión — intentá de nuevo')
+      setTranscribing(false)
+      return
     } finally {
       setTranscribing(false)
     }

@@ -22,12 +22,12 @@ export async function POST(req: NextRequest) {
     const db = createServerSupabase()
     const igUserId = profile.id || profile.username
 
-    // If this Instagram profile is already connected to a DIFFERENT Moka
+    // If this Instagram profile is already connected to a DIFFERENT Klar
     // user, refuse — never let a request silently overwrite someone else's
     // account_id/access_token just by knowing their public username.
     const { data: existingByIg } = await db.from('ig_accounts').select('id, user_id').eq('ig_user_id', igUserId).maybeSingle()
     if (existingByIg && existingByIg.user_id && existingByIg.user_id !== user.id) {
-      return NextResponse.json({ error: 'Esta cuenta de Instagram ya está conectada a otro usuario de Moka.' }, { status: 409 })
+      return NextResponse.json({ error: 'Esta cuenta de Instagram ya está conectada a otro usuario de Klar.' }, { status: 409 })
     }
 
     const fields = {

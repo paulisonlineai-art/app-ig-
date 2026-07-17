@@ -60,7 +60,7 @@ export default function ReferenciasClient({ references, accountId, brandDNA }: {
       const transcribeData = await transcribeRes.json()
       if (transcribeData.error) { setError(transcribeData.error); return }
 
-      setProgress('🤖 Analizando estructura con Moka AI...')
+      setProgress('🤖 Analizando estructura con Klar AI...')
 
       const analyzeRes = await fetch('/api/referencias/analyze', {
         method: 'POST',
@@ -131,7 +131,7 @@ export default function ReferenciasClient({ references, accountId, brandDNA }: {
               Arrastrá o hacé clic — MP4, MOV hasta 25MB
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>
-              Moka transcribe, analiza estructura y genera tu versión adaptada
+              Klar transcribe, analiza estructura y genera tu versión adaptada
             </div>
           </div>
         )}

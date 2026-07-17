@@ -9,7 +9,7 @@ export default async function VentasPage() {
 
   const db = createServerSupabase()
   const [{ data: sales }, { data: reels }] = await Promise.all([
-    db.from('sales').select('*, reels(caption, thumbnail_url, permalink)').eq('account_id', accountId).order('closed_at', { ascending: false }),
+    db.from('sales').select('*, reels(caption, thumbnail_url, permalink)').eq('account_id', accountId).order('closed_at', { ascending: false }).limit(200),
     db.from('reels').select('id, caption, thumbnail_url').eq('account_id', accountId).order('timestamp', { ascending: false }).limit(50),
   ])
 
@@ -26,7 +26,7 @@ export default async function VentasPage() {
       </p>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
+      <div className="grid-stats-3" style={{ marginBottom: 32 }}>
         {[
           { label: 'Facturación total', value: formatCurrency(totalRevenue), icon: '💰' },
           { label: 'Cash cobrado', value: formatCurrency(totalCash), icon: '✅' },
@@ -54,7 +54,7 @@ export default async function VentasPage() {
             {allSales.map((sale: any) => (
               <div key={sale.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
                 {sale.reels?.thumbnail_url && (
-                  <img src={sale.reels.thumbnail_url} alt="" style={{ width: 48, height: 72, borderRadius: 8, objectFit: 'cover' }} />
+                  <img src={`/api/proxy-image?url=${encodeURIComponent(sale.reels.thumbnail_url)}`} alt="Reel asociado a la venta" style={{ width: 48, height: 72, borderRadius: 8, objectFit: 'cover' }} />
                 )}
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>

@@ -4,6 +4,7 @@ import { formatNumber, formatCurrency, getRangeBounds, DATE_RANGE_OPTIONS } from
 import SyncButton from '@/components/dashboard/SyncButton'
 import DashboardCharts from '@/components/dashboard/DashboardCharts'
 import DateRangeSelect from '@/components/dashboard/DateRangeSelect'
+import ProfileScore from '@/components/dashboard/ProfileScore'
 
 function PctChange({ val, prev }: { val: number; prev: number }) {
   if (!prev) return null
@@ -17,6 +18,43 @@ function PctChange({ val, prev }: { val: number; prev: number }) {
   )
 }
 
+function calcProfileScore(reels: any[], followers: number) {
+  if (!reels.length) return { total: 0, engagement: 0, consistency: 0, reach: 0, quality: 0 }
+
+  const totalViews = reels.reduce((s, r) => s + r.views, 0)
+  const totalLikes = reels.reduce((s, r) => s + r.likes, 0)
+  const totalComments = reels.reduce((s, r) => s + r.comments, 0)
+  const totalShares = reels.reduce((s, r) => s + r.shares, 0)
+  const totalSaves = reels.reduce((s, r) => s + r.saves, 0)
+
+  const engRate = totalViews > 0 ? ((totalLikes + totalComments + totalShares + totalSaves) / totalViews) * 100 : 0
+  const engScore = Math.min(25, (engRate / 8) * 25)
+
+  const uniqueDays = new Set(reels.map((r: any) => r.timestamp?.split('T')[0])).size
+  const span = reels.length > 1
+    ? (new Date(reels[0].timestamp).getTime() - new Date(reels[reels.length - 1].timestamp).getTime()) / 864e5
+    : 30
+  const frequency = span > 0 ? uniqueDays / (span / 7) : 0
+  const consistencyScore = Math.min(25, (frequency / 4) * 25)
+
+  const avgMultiplier = reels.reduce((s: number, r: any) => s + (r.multiplier || 1), 0) / reels.length
+  const reachScore = Math.min(25, (avgMultiplier / 3) * 25)
+
+  const saveRate = totalViews > 0 ? (totalSaves / totalViews) * 100 : 0
+  const shareRate = totalViews > 0 ? (totalShares / totalViews) * 100 : 0
+  const qualityScore = Math.min(25, ((saveRate + shareRate) / 3) * 25)
+
+  const total = Math.round(engScore + consistencyScore + reachScore + qualityScore)
+
+  return {
+    total: Math.min(100, total),
+    engagement: Math.round(engScore),
+    consistency: Math.round(consistencyScore),
+    reach: Math.round(reachScore),
+    quality: Math.round(qualityScore),
+  }
+}
+
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const cookieStore = await cookies()
   const accountId = cookieStore.get('ig_account_id')?.value!
@@ -26,7 +64,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const db = createServerSupabase()
 
-  let reelsQuery = db.from('reels').select('views,likes,comments,shares,saves,timestamp').eq('account_id', accountId)
+  let reelsQuery = db.from('reels').select('views,likes,comments,shares,saves,timestamp,multiplier').eq('account_id', accountId)
   if (start) reelsQuery = reelsQuery.gte('timestamp', start.toISOString())
   if (end) reelsQuery = reelsQuery.lt('timestamp', end.toISOString())
 
@@ -38,7 +76,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   if (start) salesQuery = salesQuery.gte('closed_at', start.toISOString().split('T')[0])
   if (end) salesQuery = salesQuery.lt('closed_at', end.toISOString().split('T')[0])
 
-  // "vs período anterior" has no meaning for "todo el tiempo" — skip it there.
   let reelsPrevQuery = prevStart
     ? db.from('reels').select('views,comments,shares').eq('account_id', accountId).gte('timestamp', prevStart.toISOString())
     : null
@@ -51,6 +88,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     { data: sales30 },
     { data: topSaleReels },
     { data: audienceStats },
+    { data: account },
   ] = await Promise.all([
     reelsQuery,
     reelsPrevQuery || Promise.resolve({ data: [] as any[] }),
@@ -58,10 +96,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     salesQuery.limit(200),
     db.from('reels').select('id,caption,thumbnail_url,views,multiplier').eq('account_id', accountId).order('multiplier', { ascending: false }).limit(5),
     db.from('audience_stats').select('date,reach,impressions').eq('account_id', accountId).order('date', { ascending: true }).limit(60),
+    db.from('ig_accounts').select('followers_count').eq('id', accountId).single(),
   ])
 
   const r = reels30 || []
   const rp = reelsPrev || []
+  const profileScore = calcProfileScore(r, account?.followers_count || 0)
 
   const views30 = r.reduce((s: number, x: any) => s + x.views, 0)
   const viewsPrev = rp.reduce((s: number, x: any) => s + x.views, 0)
@@ -99,12 +139,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20 }}>
+      {/* Profile Score */}
+      <ProfileScore score={profileScore} />
+
+      <div className="grid-dashboard">
         {/* Left column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Top stats row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          <div className="grid-stats-4">
             {[
               { label: 'VISTAS TOTALES', value: formatNumber(views30), prev: viewsPrev, curr: views30, icon: '👁' },
               { label: 'CONVERSACIONES GENERADAS', value: formatNumber(conversations30), prev: conversationsPrev, curr: conversations30, icon: '💬' },
@@ -138,7 +181,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 {topSources.map((src, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', width: 16 }}>{i + 1}</span>
-                    {src.thumbnail && <img src={src.thumbnail} style={{ width: 36, height: 52, borderRadius: 6, objectFit: 'cover' }} alt="" />}
+                    {src.thumbnail && <img src={`/api/proxy-image?url=${encodeURIComponent(src.thumbnail)}`} style={{ width: 36, height: 52, borderRadius: 6, objectFit: 'cover' }} alt="Reel fuente de venta" />}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {src.caption?.slice(0, 60) || 'Sin título'}
@@ -187,7 +230,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               {[
                 { label: 'Reels este período', value: r.length },
                 { label: 'Likes totales', value: formatNumber(r.reduce((s: number, x: any) => s + x.likes, 0)) },
-                { label: 'Guardados totales', value: '—' },
+                { label: 'Comentarios totales', value: formatNumber(r.reduce((s: number, x: any) => s + x.comments, 0)) },
                 { label: 'Ventas registradas', value: allSales.length },
               ].map(item => (
                 <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 8, borderBottom: '1px solid var(--border)' }}>

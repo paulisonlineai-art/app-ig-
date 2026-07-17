@@ -8,9 +8,12 @@ export default function ReelCard({ reel }: { reel: Reel }) {
   const [analysis, setAnalysis] = useState(reel.ai_analysis || '')
   const [expanded, setExpanded] = useState(false)
 
+  const [analyzeError, setAnalyzeError] = useState('')
+
   const analyze = async (e: React.MouseEvent) => {
     e.stopPropagation()
     setAnalyzing(true)
+    setAnalyzeError('')
     try {
       const res = await fetch('/api/ai/analyze-reel', {
         method: 'POST',
@@ -18,8 +21,14 @@ export default function ReelCard({ reel }: { reel: Reel }) {
         body: JSON.stringify({ reelId: reel.id }),
       })
       const data = await res.json()
+      if (!res.ok || data.error) {
+        setAnalyzeError(data.error || 'Error al analizar')
+        return
+      }
       setAnalysis(data.analysis)
       setExpanded(true)
+    } catch {
+      setAnalyzeError('Error de conexión — intentá de nuevo')
     } finally {
       setAnalyzing(false)
     }
@@ -38,7 +47,7 @@ export default function ReelCard({ reel }: { reel: Reel }) {
       {/* Thumbnail */}
       <div style={{ position: 'relative', aspectRatio: '9/16', maxHeight: 200, background: 'var(--surface-2)', overflow: 'hidden' }}>
         {reel.thumbnail_url && (
-          <img src={reel.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={`/api/proxy-image?url=${encodeURIComponent(reel.thumbnail_url)}`} alt={reel.caption?.split('\n')[0]?.slice(0, 80) || 'Reel'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         )}
         <div style={{
           position: 'absolute',
@@ -80,7 +89,6 @@ export default function ReelCard({ reel }: { reel: Reel }) {
           {[
             { label: 'Views', value: formatNumber(reel.views) },
             { label: 'Likes', value: `${reel.like_rate.toFixed(1)}%` },
-            { label: 'Guardados', value: `${reel.save_rate.toFixed(1)}%` },
             { label: 'Comentarios', value: `${reel.comment_rate.toFixed(1)}%` },
           ].map(m => (
             <div key={m.label} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 10px' }}>
@@ -135,6 +143,10 @@ export default function ReelCard({ reel }: { reel: Reel }) {
             IG ↗
           </a>
         </div>
+
+        {analyzeError && (
+          <div style={{ marginTop: 8, fontSize: 12, color: 'var(--danger)' }}>{analyzeError}</div>
+        )}
 
         {/* AI Analysis */}
         {analysis && expanded && (

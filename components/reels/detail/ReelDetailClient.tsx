@@ -4,12 +4,15 @@ import { useState } from 'react'
 export default function ReelDetailClient({ reelId, existingAnalysis }: { reelId: string; existingAnalysis: string }) {
   const [analysis, setAnalysis] = useState(existingAnalysis)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [question, setQuestion] = useState('')
   const [chatAnswer, setChatAnswer] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
+  const [chatError, setChatError] = useState('')
 
   const analyze = async () => {
     setLoading(true)
+    setError('')
     try {
       const res = await fetch('/api/ai/analyze-reel', {
         method: 'POST',
@@ -17,15 +20,22 @@ export default function ReelDetailClient({ reelId, existingAnalysis }: { reelId:
         body: JSON.stringify({ reelId }),
       })
       const data = await res.json()
-      setAnalysis(data.analysis || '')
+      if (!res.ok || data.error) {
+        setError(data.error || 'Error al analizar el reel')
+      } else {
+        setAnalysis(data.analysis || '')
+      }
+    } catch {
+      setError('Error de conexión — intentá de nuevo')
     } finally {
       setLoading(false)
     }
   }
 
-  const askMoka = async () => {
+  const askKlar = async () => {
     if (!question.trim()) return
     setChatLoading(true)
+    setChatError('')
     try {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
@@ -33,19 +43,25 @@ export default function ReelDetailClient({ reelId, existingAnalysis }: { reelId:
         body: JSON.stringify({ question: `Sobre este reel específico (ID: ${reelId}): ${question}` }),
       })
       const data = await res.json()
-      setChatAnswer(data.answer || '')
+      if (!res.ok || data.error) {
+        setChatError(data.error || 'Error al consultar')
+      } else {
+        setChatAnswer(data.answer || '')
+      }
+    } catch {
+      setChatError('Error de conexión — intentá de nuevo')
     } finally {
       setChatLoading(false)
     }
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+    <div className="grid-detail-charts-2">
       {/* AI Analysis */}
       <div className="card" style={{ padding: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>ANÁLISIS DE MOKA AI</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>ANÁLISIS DE KLAR AI</div>
             <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 2 }}>Por qué funcionó este reel</div>
           </div>
           <button
@@ -54,42 +70,54 @@ export default function ReelDetailClient({ reelId, existingAnalysis }: { reelId:
             className="btn btn-primary"
             style={{ fontSize: 12, padding: '7px 14px' }}
           >
-            {loading ? '⏳ Analizando...' : analysis ? '🔄 Re-analizar' : '🤖 Analizar con Moka'}
+            {loading ? '⏳ Analizando...' : analysis ? '🔄 Re-analizar' : '🤖 Analizar con Klar'}
           </button>
         </div>
+
+        {error && (
+          <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--danger)', marginBottom: 14 }}>
+            {error}
+          </div>
+        )}
 
         {analysis ? (
           <div style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-wrap', maxHeight: 320, overflowY: 'auto' }}>
             {analysis}
           </div>
-        ) : (
+        ) : !error && (
           <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-faint)' }}>
             <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
-            <p style={{ fontSize: 13 }}>Hacé clic en "Analizar con Moka" para obtener un análisis completo de este reel</p>
+            <p style={{ fontSize: 13 }}>Hacé clic en "Analizar con Klar" para obtener un análisis completo de este reel</p>
           </div>
         )}
       </div>
 
-      {/* Preguntale a Moka */}
+      {/* Preguntale a Klar */}
       <div className="card" style={{ padding: 20 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 4 }}>PREGUNTALE A MOKA 🔥</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 4 }}>PREGUNTALE A KLAR 🔥</div>
         <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 14 }}>Hacé cualquier pregunta sobre este reel</div>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           <input
             value={question}
             onChange={e => setQuestion(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && askMoka()}
+            onKeyDown={e => e.key === 'Enter' && askKlar()}
             placeholder="¿Por qué funcionó tan bien este reel?"
             style={{ flex: 1, fontSize: 13 }}
           />
-          <button onClick={askMoka} disabled={chatLoading || !question.trim()} className="btn btn-primary" style={{ fontSize: 13 }}>
+          <button onClick={askKlar} disabled={chatLoading || !question.trim()} className="btn btn-primary" style={{ fontSize: 13 }} aria-label="Enviar pregunta">
             {chatLoading ? '⏳' : '→'}
           </button>
         </div>
 
+        {chatError && (
+          <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--danger)', marginBottom: 12 }}>
+            {chatError}
+          </div>
+        )}
+
         {/* Suggested questions */}
-        {!chatAnswer && (
+        {!chatAnswer && !chatError && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
               '¿Por qué funcionó tan bien este reel?',

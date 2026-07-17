@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-const STORAGE_KEY = 'moka_sync_msg'
+const STORAGE_KEY = 'klar_sync_msg'
 
 export default function SyncButton() {
   const [loading, setLoading] = useState(false)

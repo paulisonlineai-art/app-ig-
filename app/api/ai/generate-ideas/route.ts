@@ -16,9 +16,9 @@ export async function POST(req: NextRequest) {
 
   const db = createServerSupabase()
   const [{ data: reels }, { data: brand }, { data: competitors }] = await Promise.all([
-    db.from('reels').select('caption,views,multiplier,like_rate,comment_rate,hook,timestamp').eq('account_id', accountId).order('multiplier', { ascending: false }).limit(25),
+    db.from('reels').select('caption,views,multiplier,like_rate,comment_rate,hook,timestamp').eq('account_id', accountId).order('multiplier', { ascending: false }).limit(15),
     db.from('brand_dna').select('content').eq('account_id', accountId).single(),
-    db.from('competitors').select('ig_username, competitor_reels(caption,views,likes,hook)').eq('account_id', accountId),
+    db.from('competitors').select('ig_username, competitor_reels(caption,views,likes,hook)').eq('account_id', accountId).limit(5),
   ])
 
   const reelsSummary = (reels || []).map(r => ({
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   const competitorSummary = (competitors || []).map((c: any) => ({
     username: c.ig_username,
-    topReels: (c.competitor_reels || []).slice(0, 5).map((r: any) => ({
+    topReels: (c.competitor_reels || []).slice(0, 3).map((r: any) => ({
       caption: r.caption?.slice(0, 60),
       views: r.views,
       hook: r.hook,
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       max_tokens: 2048,
       messages: [{
         role: 'user',
-        content: `Sos Moka, el sistema de IA para análisis de contenido de Instagram. Tenés acceso a datos reales de la cuenta.
+        content: `Sos Klar, el sistema de IA para análisis de contenido de Instagram. Tenés acceso a datos reales de la cuenta.
 
 **MIS REELS (ordenados por multiplicador):**
 ${JSON.stringify(reelsSummary, null, 2)}

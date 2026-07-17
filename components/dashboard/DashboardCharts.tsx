@@ -22,7 +22,7 @@ export default function DashboardCharts({ audienceStats, reels }: { audienceStat
   const tooltipStyle = { background: '#fff', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+    <div className="grid-detail-charts-2">
       <div className="card" style={{ padding: 20 }}>
         <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Alcance & Visibilidad</div>
         <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>

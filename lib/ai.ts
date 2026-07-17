@@ -8,12 +8,10 @@ const client = new Anthropic({
 export async function analyzeReel(reel: Reel, accountAverages: {
   avg_views: number
   avg_like_rate: number
-  avg_save_rate: number
   avg_comment_rate: number
-  avg_share_rate: number
   avg_wpm: number
 }): Promise<string> {
-  const prompt = `Eres Moka, un experto en análisis de contenido de Instagram especializado en creadores de contenido hispanohablantes que venden servicios digitales.
+  const prompt = `Eres Klar, un experto en análisis de contenido de Instagram especializado en creadores de contenido hispanohablantes que venden servicios digitales.
 
 Analizá este Reel con todos los datos disponibles:
 
@@ -129,7 +127,7 @@ export async function generateContentIdeas(params: {
     max_tokens: 2048,
     messages: [{
       role: 'user',
-      content: `Eres Moka, experto en contenido de Instagram para venta de servicios digitales.
+      content: `Eres Klar, experto en contenido de Instagram para venta de servicios digitales.
 
 **ADN DE MARCA:**
 ${params.accountDNA}
@@ -173,7 +171,7 @@ export async function autoGenerateBrandDNA(params: {
     max_tokens: 2048,
     messages: [{
       role: 'user',
-      content: `Eres Moka, experto en estrategia de marca personal y contenido para creadores hispanohablantes que venden servicios digitales por Instagram.
+      content: `Eres Klar, experto en estrategia de marca personal y contenido para creadores hispanohablantes que venden servicios digitales por Instagram.
 
 Analizá esta cuenta y armá un primer borrador de su "ADN de Marca" basándote SOLO en la evidencia real disponible (bio + reels que mejor funcionaron). Si algo no se puede inferir con confianza, dejalo corto o marcá que falta revisión manual — no inventes datos que no estén sugeridos por la evidencia.
 
@@ -209,9 +207,9 @@ Devolvé SOLO un JSON con esta estructura exacta (todos los valores en español,
   }
 }
 
-export async function chatWithMoka(params: {
+export async function chatWithKlar(params: {
   question: string
-  reels: Reel[]
+  reels: Pick<Reel, 'caption' | 'views' | 'multiplier' | 'like_rate' | 'comment_rate' | 'hook' | 'timestamp'>[]
   accountStats: object
   competitorData?: object
   accountDNA?: string
@@ -224,7 +222,6 @@ export async function chatWithMoka(params: {
     comment_rate: r.comment_rate,
     hook: r.hook,
     timestamp: r.timestamp,
-    sales: 0,
   }))
 
   const message = await client.messages.create({
@@ -232,7 +229,7 @@ export async function chatWithMoka(params: {
     max_tokens: 2048,
     messages: [{
       role: 'user',
-      content: `Eres Moka, el sistema de IA para análisis de contenido de Instagram. Tenés acceso a todos los datos de la cuenta.
+      content: `Eres Klar, el sistema de IA para análisis de contenido de Instagram. Tenés acceso a todos los datos de la cuenta.
 
 **STATS GENERALES:**
 ${JSON.stringify(params.accountStats, null, 2)}

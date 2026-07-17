@@ -10,7 +10,7 @@ const SUGGESTED = [
   '¿Cuál es mi tasa de guardados y cómo mejorarla?',
 ]
 
-export default function MokaChat() {
+export default function KlarChat() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -36,7 +36,7 @@ export default function MokaChat() {
       const data = await res.json()
       setMessages(prev => [...prev, { role: 'assistant', content: data.answer || data.error || 'Error' }])
     } catch (e: any) {
-      setMessages(prev => [...prev, { role: 'assistant', content: `Error de conexión: ${e.message || 'no se pudo contactar a Moka'}` }])
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error de conexión: ${e.message || 'no se pudo contactar a Klar'}` }])
     } finally {
       setLoading(false)
     }
@@ -62,14 +62,14 @@ export default function MokaChat() {
         }}
       >
         <span style={{ fontSize: 16 }}>{open ? '✕' : '🔥'}</span>
-        {!open && 'Preguntale a Moka'}
+        {!open && 'Preguntale a Klar'}
       </button>
 
       {/* Panel */}
       {open && (
         <div style={{
           position: 'fixed', bottom: 80, right: 24,
-          width: 420, height: 580,
+          width: 'min(420px, calc(100vw - 48px))', height: 'min(580px, calc(100vh - 120px))',
           background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: 20,
@@ -80,7 +80,7 @@ export default function MokaChat() {
         }}>
           {/* Header */}
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--accent)', color: 'white' }}>
-            <div style={{ fontWeight: 800, fontSize: 15 }}>🤖 Moka AI</div>
+            <div style={{ fontWeight: 800, fontSize: 15 }}>🤖 Klar AI</div>
             <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>Preguntame sobre tu contenido e Instagram</div>
           </div>
 
@@ -144,6 +144,7 @@ export default function MokaChat() {
             <button
               onClick={() => send()}
               disabled={loading || !input.trim()}
+              aria-label="Enviar mensaje"
               style={{
                 background: 'var(--accent)', color: 'white', border: 'none',
                 padding: '9px 14px', borderRadius: 8, fontSize: 15,

@@ -14,7 +14,7 @@ export default async function MarcaPage() {
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 2 }}>ADN de Marca</h1>
         <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-          Esta información alimenta la IA de Moka para darte análisis y sugerencias personalizadas.
+          Esta información alimenta la IA de Klar para darte análisis y sugerencias personalizadas.
         </p>
       </div>
       <BrandDNAClient accountId={accountId} initial={brand} />

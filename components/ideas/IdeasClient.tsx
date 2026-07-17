@@ -35,11 +35,14 @@ export default function IdeasClient({ topReels, competitors, brandDNA, accountId
   const [loading, setLoading] = useState(false)
   const [history, setHistory] = useState<{ prompt: string; result: string }[]>([])
 
+  const [error, setError] = useState('')
+
   const generate = async (customPrompt?: string) => {
     const q = customPrompt || prompt
     if (!q.trim()) return
     setLoading(true)
     setResult('')
+    setError('')
     try {
       const res = await fetch('/api/ai/generate-ideas', {
         method: 'POST',
@@ -47,15 +50,21 @@ export default function IdeasClient({ topReels, competitors, brandDNA, accountId
         body: JSON.stringify({ prompt: q }),
       })
       const data = await res.json()
-      setResult(data.result || data.error || 'Error')
+      if (!res.ok || data.error) {
+        setError(data.error || 'Error generando ideas')
+        return
+      }
+      setResult(data.result || '')
       if (data.result) setHistory(h => [{ prompt: q, result: data.result }, ...h.slice(0, 9)])
+    } catch {
+      setError('Error de conexión — intentá de nuevo')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 20, alignItems: 'start' }}>
+    <div className="grid-ideas">
       {/* Left panel */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {/* Quick templates */}
@@ -132,7 +141,7 @@ export default function IdeasClient({ topReels, competitors, brandDNA, accountId
           <textarea
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
-            placeholder="Describí lo que querés que Moka analice o genere. Podés pedirle ideas de contenido, análisis de qué funcionó, estrategias específicas..."
+            placeholder="Describí lo que querés que Klar analice o genere. Podés pedirle ideas de contenido, análisis de qué funcionó, estrategias específicas..."
             rows={4}
             style={{ width: '100%', resize: 'vertical', marginBottom: 10, fontSize: 13, lineHeight: 1.6 }}
           />
@@ -142,9 +151,15 @@ export default function IdeasClient({ topReels, competitors, brandDNA, accountId
             className="btn btn-primary"
             style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
           >
-            {loading ? '⏳ Moka está pensando...' : '🤖 Generar con Moka AI →'}
+            {loading ? '⏳ Klar está pensando...' : '🤖 Generar con Klar AI →'}
           </button>
         </div>
+
+        {error && (
+          <div className="card" style={{ padding: 16, background: 'var(--danger-bg)', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: 13 }}>
+            {error}
+          </div>
+        )}
 
         {/* Result */}
         {(result || loading) && (
@@ -152,13 +167,13 @@ export default function IdeasClient({ topReels, competitors, brandDNA, accountId
             {loading ? (
               <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>🤖</div>
-                <p style={{ fontSize: 14, fontWeight: 600 }}>Moka está analizando tus datos...</p>
+                <p style={{ fontSize: 14, fontWeight: 600 }}>Klar está analizando tus datos...</p>
                 <p style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 4 }}>Esto puede tomar unos segundos</p>
               </div>
             ) : (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700 }}>Respuesta de Moka AI</div>
+                  <div style={{ fontSize: 13, fontWeight: 700 }}>Respuesta de Klar AI</div>
                   <button
                     onClick={() => navigator.clipboard.writeText(result)}
                     style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 6, padding: '5px 10px', fontSize: 11.5, color: 'var(--text-muted)', cursor: 'pointer' }}

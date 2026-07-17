@@ -48,13 +48,19 @@ export async function syncAccountReels(accountId: string): Promise<{ synced: num
   const { error } = await db.from('reels').upsert(upserts, { onConflict: 'account_id,ig_media_id' })
   if (error) throw new Error(error.message)
 
-  // Recalculate multipliers with real average
+  // Recalculate multipliers with real average — batch by multiplier value to reduce queries
   const { data: allReels } = await db.from('reels').select('id, views').eq('account_id', accountId)
   if (allReels && allReels.length > 0) {
     const realAvg = allReels.reduce((s, r) => s + (r.views || 0), 0) / allReels.length
+    const byMultiplier: Record<string, string[]> = {}
+    for (const r of allReels) {
+      const m = calcMultiplier(r.views || 0, realAvg).toFixed(4)
+      if (!byMultiplier[m]) byMultiplier[m] = []
+      byMultiplier[m].push(r.id)
+    }
     await Promise.all(
-      allReels.map(r =>
-        db.from('reels').update({ multiplier: calcMultiplier(r.views || 0, realAvg) }).eq('id', r.id)
+      Object.entries(byMultiplier).map(([m, ids]) =>
+        db.from('reels').update({ multiplier: parseFloat(m) }).in('id', ids)
       )
     )
   }

@@ -26,7 +26,7 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
   const db = createServerSupabase()
   const [{ data: reel }, { data: allReels }, { data: sales }] = await Promise.all([
     db.from('reels').select('*').eq('id', id).eq('account_id', accountId).single(),
-    db.from('reels').select('views,like_rate,save_rate,comment_rate,share_rate,words_per_minute,timestamp').eq('account_id', accountId),
+    db.from('reels').select('views,like_rate,comment_rate,words_per_minute,timestamp').eq('account_id', accountId),
     db.from('sales').select('amount,cash_collected').eq('account_id', accountId).eq('reel_id', id),
   ])
 
@@ -56,12 +56,12 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
         ← Volver a Reels
       </Link>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24, alignItems: 'start' }}>
+      <div className="grid-detail">
         {/* Left — video preview */}
         <div>
           <div style={{ background: '#000', borderRadius: 16, overflow: 'hidden', position: 'relative', paddingBottom: '177%' }}>
             {reel.thumbnail_url && (
-              <img src={`/api/proxy-image?url=${encodeURIComponent(reel.thumbnail_url)}`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} />
+              <img src={`/api/proxy-image?url=${encodeURIComponent(reel.thumbnail_url)}`} alt={reel.caption?.split('\n')[0]?.slice(0, 80) || 'Miniatura del reel'} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} />
             )}
             <div style={{ position: 'absolute', top: 10, left: 10 }}>
               <span className={`badge-multiplier ${reel.multiplier >= 2 ? 'badge-up' : reel.multiplier >= 0.7 ? 'badge-avg' : 'badge-down'}`}>
@@ -99,12 +99,11 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
           </div>
 
           {/* Key metrics row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
+          <div className="grid-stats-4">
             {[
               { label: 'Me gusta', value: formatNumber(reel.likes), rate: reel.like_rate, benchmark: avgs.avg_like_rate, icon: '♥' },
-              { label: 'Guardados', value: '—', rate: null, benchmark: null, icon: '🔖' },
-              { label: 'Compartidos', value: '—', rate: null, benchmark: null, icon: '↗' },
               { label: 'Comentarios', value: formatNumber(reel.comments), rate: reel.comment_rate, benchmark: avgs.avg_comment_rate, icon: '💬' },
+              { label: 'Multiplicador', value: `×${reel.multiplier.toFixed(2)}`, rate: null, benchmark: null, icon: '📈' },
               { label: 'Ventas', value: totalSales > 0 ? formatCurrency(totalSales) : '—', rate: null, benchmark: null, icon: '$' },
             ].map(m => (
               <div key={m.label} className="metric-card" style={{ padding: 14 }}>
@@ -112,13 +111,12 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
                 <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>{m.value}</div>
                 {m.rate !== null && <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>{m.rate!.toFixed(2)}% de vistas</div>}
                 {m.benchmark !== null && <DeltaBadge actual={m.rate!} benchmark={m.benchmark!} label={m.label} />}
-                {m.rate === null && m.value === '—' && <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>Sin datos</div>}
               </div>
             ))}
           </div>
 
           {/* Bottom stats bar */}
-          <div className="card" style={{ padding: 16, display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }}>
+          <div className="card grid-detail-bottom-6" style={{ padding: 16 }}>
             {[
               { label: 'VISTAS', value: formatNumber(reel.views) },
               { label: 'ALCANCE', value: formatNumber(reel.reach) },
@@ -137,7 +135,7 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
       </div>
 
       {/* Charts row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 20 }}>
+      <div className="grid-detail-charts-2" style={{ marginTop: 20 }}>
         <BenchmarkChart reel={reel} avgs={avgs} />
 
         <div className="card" style={{ padding: 20 }}>
@@ -166,7 +164,7 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
       </div>
 
       {/* VS Benchmark + Ratios + Transcript */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginTop: 16 }}>
+      <div className="grid-detail-3col" style={{ marginTop: 16 }}>
         {/* VS Benchmark 90d */}
         <div className="card" style={{ padding: 20 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 16 }}>VS BENCHMARK 90D</div>
@@ -199,7 +197,7 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
           <p style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 12 }}>Proporciones con denominador real</p>
           {[
             { label: 'Interacciones / Views', value: `${((reel.likes + reel.comments + reel.shares + reel.saves) / Math.max(reel.views, 1) * 100).toFixed(2)}%`, sub: `${formatNumber(reel.likes + reel.comments + reel.shares + reel.saves)} de ${formatNumber(reel.views)}`, note: 'engagement bruto' },
-            { label: 'Saves / Views', value: '—', sub: 'Instagram no expone este dato públicamente', note: 'guardados sobre reproducciones' },
+            { label: 'Shares / Views', value: reel.shares ? `${((reel.shares / Math.max(reel.views,1)) * 100).toFixed(2)}%` : '—', sub: reel.shares ? `${formatNumber(reel.shares)} de ${formatNumber(reel.views)}` : 'No disponible vía scraping público', note: 'compartidos sobre reproducciones' },
             { label: 'Likes / Views', value: `${reel.like_rate.toFixed(2)}%`, sub: `${formatNumber(reel.likes)} de ${formatNumber(reel.views)}`, note: 'likes sobre reproducciones' },
             { label: 'Comments / Views', value: `${reel.comment_rate.toFixed(2)}%`, sub: `${formatNumber(reel.comments)} de ${formatNumber(reel.views)}`, note: 'comentarios sobre reproducciones' },
           ].map(r => (

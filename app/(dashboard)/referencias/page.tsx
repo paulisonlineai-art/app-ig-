@@ -19,7 +19,7 @@ export default async function ReferenciasPage() {
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 4 }}>Videos de Referencia</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, maxWidth: 520 }}>
-            Subí videos de referentes. Moka los transcribe, analiza la estructura y genera una versión adaptada a tu nicho y estilo.
+            Subí videos de referentes. Klar los transcribe, analiza la estructura y genera una versión adaptada a tu nicho y estilo.
           </p>
         </div>
         {!brand?.content && (

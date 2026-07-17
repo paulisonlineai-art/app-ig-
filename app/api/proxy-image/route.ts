@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // Only Instagram/Facebook's own CDN hosts are ever legitimate values here —
 // this endpoint exists purely to work around IG's hotlink protection for
 // thumbnails. Without a whitelist it's an open SSRF proxy (fetch any URL,
-// server-side, on Moka's behalf).
+// server-side, on Klar's behalf).
 //
 // Must be exact-match-or-subdomain, never suffix match: `endsWith('instagram.com')`
 // would also accept `evilinstagram.com`, letting an attacker's own host through.

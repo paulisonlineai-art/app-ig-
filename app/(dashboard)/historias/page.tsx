@@ -34,13 +34,13 @@ export default async function HistoriasPage() {
           {allStories.map((story: any) => (
             <div key={story.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, display: 'flex', gap: 16, alignItems: 'center' }}>
               {story.media_url && (
-                <img src={story.media_url} alt="" style={{ width: 54, height: 96, borderRadius: 8, objectFit: 'cover' }} />
+                <img src={`/api/proxy-image?url=${encodeURIComponent(story.media_url)}`} alt="Historia de Instagram" style={{ width: 54, height: 96, borderRadius: 8, objectFit: 'cover' }} />
               )}
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>
                   {new Date(story.timestamp).toLocaleString('es')}
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+                <div className="grid-historia-metrics">
                   {[
                     { label: 'Impresiones', value: formatNumber(story.impressions) },
                     { label: 'Alcance', value: formatNumber(story.reach) },

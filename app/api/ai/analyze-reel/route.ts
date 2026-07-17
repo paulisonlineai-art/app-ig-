@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const db = createServerSupabase()
   const [{ data: reel }, { data: allReels }] = await Promise.all([
     db.from('reels').select('*').eq('id', reelId).eq('account_id', accountId).single(),
-    db.from('reels').select('views,like_rate,save_rate,comment_rate,share_rate,words_per_minute').eq('account_id', accountId),
+    db.from('reels').select('views,like_rate,comment_rate,words_per_minute').eq('account_id', accountId),
   ])
 
   if (!reel) return NextResponse.json({ error: 'Reel not found' }, { status: 404 })

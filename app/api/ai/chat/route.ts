@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { chatWithMoka } from '@/lib/ai'
+import { chatWithKlar } from '@/lib/ai'
 import { createServerSupabase } from '@/lib/supabase'
 import { checkRateLimit } from '@/lib/rateLimit'
 
@@ -16,12 +16,12 @@ export async function POST(req: NextRequest) {
   const db = createServerSupabase()
 
   const [{ data: reels }, { data: account }] = await Promise.all([
-    db.from('reels').select('*').eq('account_id', accountId).order('views', { ascending: false }).limit(30),
+    db.from('reels').select('caption,views,multiplier,like_rate,comment_rate,hook,timestamp,is_trial').eq('account_id', accountId).order('views', { ascending: false }).limit(20),
     db.from('ig_accounts').select('*').eq('id', accountId).single(),
   ])
 
   try {
-    const answer = await chatWithMoka({
+    const answer = await chatWithKlar({
       question,
       reels: reels || [],
       accountStats: {
@@ -32,6 +32,6 @@ export async function POST(req: NextRequest) {
     })
     return NextResponse.json({ answer })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Error consultando a Moka' }, { status: 500 })
+    return NextResponse.json({ error: e.message || 'Error consultando a Klar' }, { status: 500 })
   }
 }

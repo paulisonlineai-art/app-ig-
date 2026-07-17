@@ -68,7 +68,7 @@ export default function CompetitorCard({ competitor }: { competitor: any }) {
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
         {competitor.profile_picture_url ? (
-          <img src={`/api/proxy-image?url=${encodeURIComponent(competitor.profile_picture_url)}`} alt="" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
+          <img src={`/api/proxy-image?url=${encodeURIComponent(competitor.profile_picture_url)}`} alt={`Foto de perfil de @${competitor.ig_username}`} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
         ) : (
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>👤</div>
         )}
@@ -156,12 +156,12 @@ export default function CompetitorCard({ competitor }: { competitor: any }) {
               ⭐ Guardados ({savedIds.size}){showSavedOnly ? ' ✕' : ''}
             </button>
           )}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: showSavedOnly || savedIds.size === 0 ? 16 : 8 }}>
+          <div className="grid-comp-reels" style={{ marginTop: showSavedOnly || savedIds.size === 0 ? 16 : 8 }}>
             {(showSavedOnly ? reels.filter(r => savedIds.has(r.id)) : reels).map(r => (
               <a key={r.id} href={`/competidores/reels/${r.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
                 <div style={{ position: 'relative', paddingBottom: '150%', background: 'var(--surface-2)', borderRadius: 8, overflow: 'hidden', marginBottom: 4 }}>
                   {r.thumbnail_url && (
-                    <img src={`/api/proxy-image?url=${encodeURIComponent(r.thumbnail_url)}`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={`/api/proxy-image?url=${encodeURIComponent(r.thumbnail_url)}`} alt={`Reel de @${competitor.ig_username}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                   )}
                   <button
                     onClick={e => toggleSave(e, r.id)}
