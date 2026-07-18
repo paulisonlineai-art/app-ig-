@@ -15,20 +15,34 @@ export async function POST(req: NextRequest) {
 
   const db = createServerSupabase()
 
-  const { data: topReels } = await db
-    .from('reels')
-    .select('caption, views, comments, multiplier, permalink, hook')
-    .eq('account_id', accountId)
-    .order('comments', { ascending: false })
-    .limit(5)
+  let body: { permalinks?: string[] } = {}
+  try { body = await req.json() } catch {}
 
-  if (!topReels?.length) {
-    return NextResponse.json({ error: 'No hay reels con comentarios para analizar' }, { status: 400 })
+  let topReels: any[]
+  let reelUrls: string[]
+
+  if (body.permalinks?.length) {
+    reelUrls = body.permalinks
+    const { data } = await db
+      .from('reels')
+      .select('caption, views, comments, multiplier, permalink, hook')
+      .eq('account_id', accountId)
+      .in('permalink', reelUrls)
+    topReels = data || []
+  } else {
+    const { data } = await db
+      .from('reels')
+      .select('caption, views, comments, multiplier, permalink, hook')
+      .eq('account_id', accountId)
+      .order('comments', { ascending: false })
+      .limit(5)
+    topReels = data || []
+    reelUrls = topReels.map(r => r.permalink).filter((url): url is string => !!url)
   }
 
-  const reelUrls = topReels
-    .map(r => r.permalink)
-    .filter((url): url is string => !!url)
+  if (!topReels.length) {
+    return NextResponse.json({ error: 'No hay reels con comentarios para analizar' }, { status: 400 })
+  }
 
   if (!reelUrls.length) {
     return NextResponse.json({ error: 'No se encontraron URLs de reels' }, { status: 400 })

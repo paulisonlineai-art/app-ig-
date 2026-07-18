@@ -12,7 +12,7 @@ export default async function AudienciaPage() {
 
   const [{ data: stats }, { data: reels }, { data: account }] = await Promise.all([
     db.from('audience_stats').select('*').eq('account_id', accountId).order('date', { ascending: false }).limit(30),
-    db.from('reels').select('id,caption,views,likes,comments,shares,saves,multiplier,like_rate,comment_rate,hook,transcript,timestamp').eq('account_id', accountId).order('timestamp', { ascending: false }).limit(50),
+    db.from('reels').select('id,caption,views,likes,comments,shares,saves,multiplier,like_rate,comment_rate,hook,transcript,timestamp,permalink,thumbnail_url').eq('account_id', accountId).order('timestamp', { ascending: false }).limit(50),
     db.from('ig_accounts').select('username,followers_count').eq('id', accountId).single(),
   ])
 
@@ -88,7 +88,13 @@ export default async function AudienciaPage() {
       </div>
 
       {/* Comment-based content ideas */}
-      <CommentInsights />
+      <CommentInsights reels={allReels.filter((r: any) => r.comments > 0).map((r: any) => ({
+        caption: r.caption || '',
+        permalink: r.permalink || '',
+        views: r.views || 0,
+        comments: r.comments || 0,
+        thumbnail_url: r.thumbnail_url,
+      }))} />
 
       {/* AI Analysis */}
       <AudienciaClient
