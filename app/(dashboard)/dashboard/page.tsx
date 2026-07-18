@@ -94,6 +94,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     { data: sales30 },
     { data: audienceStats },
     { data: account },
+    { data: streakReels },
   ] = await Promise.all([
     reelsQuery,
     reelsPrevQuery || Promise.resolve({ data: [] as any[] }),
@@ -101,6 +102,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     salesQuery.limit(200),
     db.from('audience_stats').select('date,reach,impressions').eq('account_id', accountId).order('date', { ascending: true }).limit(60),
     db.from('ig_accounts').select('followers_count').eq('id', accountId).single(),
+    db.from('reels').select('timestamp').eq('account_id', accountId).gte('timestamp', new Date(Date.now() - 90 * 864e5).toISOString()).order('timestamp', { ascending: true }),
   ])
 
   const r = reels30 || []
@@ -114,6 +116,21 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const conversations30 = r.reduce((s: number, x: any) => s + x.comments + x.shares, 0)
   const conversationsPrev = rp.reduce((s: number, x: any) => s + x.comments + x.shares, 0)
   const storyReplies = (stories30 || []).reduce((s: number, x: any) => s + (x.replies ?? 0), 0)
+
+  // Streak calculation
+  const streakDates = new Set((streakReels || []).map((r: any) => r.timestamp?.split('T')[0]).filter(Boolean))
+  let currentStreak = 0
+  const today = new Date()
+  for (let i = 0; i < 90; i++) {
+    const d = new Date(today)
+    d.setDate(d.getDate() - i)
+    const key = d.toISOString().split('T')[0]
+    if (streakDates.has(key)) {
+      currentStreak++
+    } else {
+      break
+    }
+  }
 
   const allSales = sales30 || []
   const totalRevenue = allSales.reduce((s: number, x: any) => s + x.amount, 0)
@@ -156,7 +173,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               { label: 'VISTAS TOTALES', value: formatNumber(views30), prev: viewsPrev, curr: views30, icon: '👁' },
               { label: 'CONVERSACIONES GENERADAS', value: formatNumber(conversations30), prev: conversationsPrev, curr: conversations30, icon: '💬' },
               { label: 'COMENTARIOS', value: formatNumber(comments30), prev: commentsPrev, curr: comments30, icon: '🗨' },
-              { label: 'RESPUESTAS A HISTORIAS', value: formatNumber(storyReplies), icon: '↩' },
+              { label: 'RACHA', value: `${currentStreak}d`, icon: '🔥' },
             ].map(s => (
               <div key={s.label} className="metric-card">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
