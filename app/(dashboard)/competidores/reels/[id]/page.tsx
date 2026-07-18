@@ -3,6 +3,7 @@ import { createServerSupabase } from '@/lib/supabase'
 import { formatNumber } from '@/lib/utils'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import ProfileAvatar from '@/components/ProfileAvatar'
 import CompetitorReelAdapt from '@/components/competidores/CompetitorReelAdapt'
 import SaveReelButton from '@/components/competidores/SaveReelButton'
 import BenchmarkChart from '@/components/reels/detail/BenchmarkChart'
@@ -27,7 +28,7 @@ export default async function CompetitorReelDetailPage({ params }: { params: Pro
 
   const { data: reel } = await db
     .from('competitor_reels')
-    .select('*, competitors!inner(account_id, ig_username, profile_picture_url)')
+    .select('*, competitors!inner(id, account_id, ig_username, profile_picture_url)')
     .eq('id', id)
     .eq('competitors.account_id', accountId)
     .single()
@@ -88,9 +89,7 @@ export default async function CompetitorReelDetailPage({ params }: { params: Pro
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="card" style={{ padding: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-              {competitor?.profile_picture_url && (
-                <img src={`/api/proxy-image?url=${encodeURIComponent(competitor.profile_picture_url)}`} alt={`Foto de perfil de @${competitor.ig_username}`} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
-              )}
+              <ProfileAvatar accountId={competitor?.id} type="competitor" username={competitor?.ig_username} size={28} />
               <span style={{ fontWeight: 700, fontSize: 14 }}>@{competitor?.ig_username}</span>
             </div>
             <h1 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 8, lineHeight: 1.4 }}>

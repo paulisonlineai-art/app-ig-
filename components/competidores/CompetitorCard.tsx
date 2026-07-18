@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatNumber } from '@/lib/utils'
+import ProfileAvatar from '@/components/ProfileAvatar'
 
 export default function CompetitorCard({ competitor }: { competitor: any }) {
   const router = useRouter()
@@ -67,11 +68,7 @@ export default function CompetitorCard({ competitor }: { competitor: any }) {
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        {competitor.profile_picture_url ? (
-          <img src={`/api/proxy-image?url=${encodeURIComponent(competitor.profile_picture_url)}`} alt={`Foto de perfil de @${competitor.ig_username}`} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
-        ) : (
-          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>👤</div>
-        )}
+        <ProfileAvatar accountId={competitor.id} type="competitor" username={competitor.ig_username} size={48} />
         <div>
           <div style={{ fontWeight: 700, fontSize: 16 }}>@{competitor.ig_username}</div>
           {competitor.followers_count ? (

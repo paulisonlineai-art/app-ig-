@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { createServerSupabase } from '@/lib/supabase'
 import PaymentIntegrationsForm from '@/components/settings/PaymentIntegrationsForm'
 import RefreshProfileButton from '@/components/settings/RefreshProfileButton'
+import ProfileAvatar from '@/components/ProfileAvatar'
 
 export default async function ConfiguracionPage() {
   const cookieStore = await cookies()
@@ -20,7 +21,7 @@ export default async function ConfiguracionPage() {
         <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Cuenta de Instagram conectada</h2>
         {account ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            {account.profile_picture_url && <img src={`/api/proxy-image?url=${encodeURIComponent(account.profile_picture_url)}`} style={{ width: 52, height: 52, borderRadius: '50%' }} alt={`Foto de perfil de @${account.username}`} />}
+            <ProfileAvatar accountId={accountId} username={account.username} size={52} />
             <div>
               <div style={{ fontWeight: 700, fontSize: 16 }}>@{account.username}</div>
               <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>{account.followers_count?.toLocaleString()} seguidores</div>

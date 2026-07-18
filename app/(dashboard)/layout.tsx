@@ -7,17 +7,18 @@ import NavLink from '@/components/NavLink'
 import LogoutButton from '@/components/LogoutButton'
 import MobileNav from '@/components/MobileNav'
 import ThemeToggle from '@/components/ThemeToggle'
+import ProfileAvatar from '@/components/ProfileAvatar'
 
 const NAV_TOP = [
   { href: '/dashboard', label: 'Dashboard', icon: '⊞' },
+  { href: '/rayos-x', label: 'Rayos X', icon: '🔬' },
+  { href: '/laboratorio', label: 'Laboratorio', icon: '🧪' },
+  { href: '/ideas', label: 'Klar AI', icon: '🤖' },
+  { href: '/espia', label: 'Espía', icon: '👁' },
   { href: '/reels', label: 'Reels', icon: '▶' },
-  { href: '/constancia', label: 'Constancia', icon: '📅' },
-  { href: '/audiencia', label: 'Audiencia', icon: '👥' },
-  { href: '/competidores', label: 'Competencia', icon: '⚡' },
+  { href: '/calendario', label: 'Calendario', icon: '📅' },
   { href: '/ventas', label: 'Ventas', icon: '$' },
   { href: '/contenido', label: 'Mesa de trabajo', icon: '✏' },
-  { href: '/ideas', label: 'Klar AI', icon: '🤖' },
-  { href: '/referencias', label: 'Referencias', icon: '🎬' },
 ]
 
 const NAV_BOTTOM = [
@@ -25,15 +26,12 @@ const NAV_BOTTOM = [
   { href: '/configuracion', label: 'Settings', icon: '⚙' },
 ]
 
-function SidebarContent({ account, totalViews }: { account: any; totalViews: number }) {
+function SidebarContent({ account, accountId, totalViews }: { account: any; accountId: string; totalViews: number }) {
   return (
     <>
       <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          {account?.profile_picture_url
-            ? <img src={`/api/proxy-image?url=${encodeURIComponent(account.profile_picture_url)}`} style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid var(--accent-light)' }} alt={`Foto de perfil de @${account?.username || 'usuario'}`} />
-            : <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>👤</div>
-          }
+          <ProfileAvatar accountId={accountId} username={account?.username} size={36} border="2px solid var(--accent-light)" />
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{account?.username || 'Mi cuenta'}</div>
             <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 500 }}>powered by Klar</div>
@@ -85,12 +83,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       {/* Desktop sidebar */}
       <aside className="dashboard-sidebar">
-        <SidebarContent account={account} totalViews={totalViews} />
+        <SidebarContent account={account} accountId={accountId} totalViews={totalViews} />
       </aside>
 
       {/* Mobile sidebar (slide-out) */}
       <MobileNav>
-        <SidebarContent account={account} totalViews={totalViews} />
+        <SidebarContent account={account} accountId={accountId} totalViews={totalViews} />
       </MobileNav>
 
       {/* Main */}
@@ -105,9 +103,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           gap: 16,
           flexShrink: 0,
         }}>
-          {account?.profile_picture_url && (
-            <img src={`/api/proxy-image?url=${encodeURIComponent(account.profile_picture_url)}`} style={{ width: 28, height: 28, borderRadius: '50%' }} alt={`@${account?.username}`} />
-          )}
+          <ProfileAvatar accountId={accountId} username={account?.username} size={28} />
           <span style={{ fontSize: 13, fontWeight: 700 }}>{account?.username}</span>
 
           <div style={{ display: 'flex', gap: 20, marginLeft: 16 }}>

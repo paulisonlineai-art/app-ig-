@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { createServerSupabase } from '@/lib/supabase'
 import IdeasClient from '@/components/ideas/IdeasClient'
+import CommentInsights from '@/components/audiencia/CommentInsights'
 
 export default async function IdeasPage() {
   const cookieStore = await cookies()
@@ -18,9 +19,12 @@ export default async function IdeasPage() {
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 2 }}>Klar AI</h1>
         <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-          Generá ideas de contenido basadas en tus métricas reales y las de tus competidores.
+          Tu asistente de contenido con IA. Pedile ideas, análisis, o que saque insights de los comentarios de tu audiencia.
         </p>
       </div>
+
+      <CommentInsights />
+
       <IdeasClient
         topReels={topReels || []}
         competitors={(competitors || []).map((c: any) => c.ig_username)}
