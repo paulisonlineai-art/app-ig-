@@ -442,15 +442,10 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   letter-spacing: 0.02em;
 }
 
-/* Revenue row */
+/* Legacy layout helpers kept for other pages */
 .dash-revenue-row {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
   margin-bottom: 16px;
-}
-/* Bottom row: score + quick stats side by side */
-.dash-bottom-row {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-  margin-top: 16px;
 }
 
 /* Stat cards */
@@ -559,8 +554,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
 .dash-quick-value { font-size: 14px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
 
 @media (max-width: 1024px) {
-  .dash-revenue-row { grid-template-columns: 1fr 1fr; }
-  .dash-bottom-row { grid-template-columns: 1fr; }
+  .dash-revenue-row { grid-template-columns: 1fr; }
   .dash-stats { grid-template-columns: repeat(2, 1fr); }
   .dash-charts-grid { grid-template-columns: 1fr; }
 }

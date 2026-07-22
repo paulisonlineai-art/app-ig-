@@ -177,7 +177,7 @@ export default function HookLab({ reels }: { reels: Reel[] }) {
             <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8 }}>¿DE DÓNDE SALE EL HOOK?</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => { setInputMode('write'); setSelectedReel(null) }}
+                onClick={() => { setInputMode('write'); setSelectedReel(null); setShowReelPicker(false) }}
                 style={{
                   flex: 1, padding: '10px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                   background: inputMode === 'write' ? 'var(--accent)' : 'var(--surface-2)',
@@ -231,7 +231,7 @@ export default function HookLab({ reels }: { reels: Reel[] }) {
             </div>
           )}
 
-          {showReelPicker && (
+          {inputMode === 'reel' && showReelPicker && (
             <div style={{ marginBottom: 16, maxHeight: 320, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)' }}>
               <div style={{ padding: '10px 14px', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1 }}>
                 ELIGE UN REEL PARA ANALIZAR SU HOOK

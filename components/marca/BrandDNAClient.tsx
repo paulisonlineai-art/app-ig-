@@ -14,7 +14,7 @@ const FIELDS: { key: keyof BrandDNAFields; label: string; placeholder: string }[
   { key: 'goals', label: 'Objetivo de contenido', placeholder: 'Ej: Generar 50+ prospectos calificados por mes que me escriban preguntando por la mentoría' },
 ]
 
-export default function BrandDNAClient({ accountId, initial }: { accountId: string; initial: BrandDNA | null }) {
+export default function BrandDNAClient({ accountId, initial, isOnboarding }: { accountId: string; initial: BrandDNA | null; isOnboarding?: boolean }) {
   const [fields, setFields] = useState<BrandDNAFields>(initial?.fields || {})
   const [freeform, setFreeform] = useState(initial?.content || '')
   const [saving, setSaving] = useState(false)
@@ -155,6 +155,30 @@ export default function BrandDNAClient({ accountId, initial }: { accountId: stri
         {saved && <span style={{ fontSize: 13, color: 'var(--success)', fontWeight: 600 }}>✓ Guardado. Klar ya usa este contexto.</span>}
         {saveError && <span style={{ fontSize: 13, color: 'var(--danger)', fontWeight: 600 }}>✗ {saveError}</span>}
       </div>
+
+      {isOnboarding && saved && (
+        <a
+          href="/dashboard"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            marginTop: 16, padding: '14px 28px', borderRadius: 12,
+            background: 'var(--accent)', color: 'white',
+            fontSize: 15, fontWeight: 700, textDecoration: 'none',
+            transition: 'opacity 0.15s',
+          }}
+        >
+          Ir al Dashboard →
+        </a>
+      )}
+
+      {isOnboarding && !saved && (
+        <a
+          href="/dashboard"
+          style={{ display: 'block', marginTop: 12, fontSize: 13, color: 'var(--text-muted)', textDecoration: 'none', textAlign: 'center' }}
+        >
+          Saltar por ahora →
+        </a>
+      )}
     </div>
   )
 }

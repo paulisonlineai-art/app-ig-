@@ -64,7 +64,7 @@ export default function ConnectPage() {
         setStep('form')
         return
       }
-      router.push('/dashboard')
+      router.push('/marca?onboarding=1')
     } catch (e: any) {
       setError(e.message)
       setStep('form')
