@@ -146,8 +146,8 @@ export default function ConnectPage() {
         {step === 'connecting' && (
           <div className="card" style={{ padding: 48, textAlign: 'center' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Conectando con Apify...</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Estamos obteniendo tu perfil de Instagram.<br />Esto puede tardar 30-60 segundos.</div>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Conectando...</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Estamos obteniendo tu perfil de Instagram.<br />Esto puede tardar unos segundos.</div>
             <div style={{ marginTop: 24, height: 4, background: 'var(--surface-2)', borderRadius: 2 }}>
               <div style={{ height: '100%', background: 'var(--accent)', borderRadius: 2, width: '60%', animation: 'pulse 2s infinite' }} />
             </div>
@@ -224,7 +224,7 @@ export default function ConnectPage() {
             </button>
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginTop: 20 }}>
-              {['Sin OAuth de Meta', 'Sin permisos de app', 'Datos seguros', 'Powered by Apify'].map(b => (
+              {['Sin OAuth de Meta', 'Sin permisos de app', 'Datos seguros'].map(b => (
                 <span key={b} style={{ fontSize: 11, background: 'var(--surface-2)', color: 'var(--text-muted)', padding: '4px 10px', borderRadius: 20, fontWeight: 500 }}>{b}</span>
               ))}
             </div>

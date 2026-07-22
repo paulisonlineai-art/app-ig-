@@ -28,54 +28,129 @@ export interface ApifyProfile {
   isBusinessAccount: boolean
 }
 
-const IG_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-  'X-IG-App-ID': '936619743392459',
-  'X-Requested-With': 'XMLHttpRequest',
-  'Accept': '*/*',
-  'Accept-Language': 'en-US,en;q=0.9',
-  'Sec-Fetch-Site': 'same-origin',
-  'Referer': 'https://www.instagram.com/',
-}
-
 async function fetchIG(url: string, sessionCookie?: string): Promise<any> {
-  const headers: Record<string, string> = { ...IG_HEADERS }
+  const headers: Record<string, string> = {
+    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+    'Accept': '*/*',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'X-IG-App-ID': '936619743392459',
+    'X-Requested-With': 'XMLHttpRequest',
+    'Sec-Fetch-Site': 'same-origin',
+    'Sec-Fetch-Mode': 'cors',
+    'Referer': 'https://www.instagram.com/',
+    'Origin': 'https://www.instagram.com',
+  }
   if (sessionCookie) {
     headers['Cookie'] = `sessionid=${sessionCookie}`
   }
 
-  const res = await fetch(url, { headers, next: { revalidate: 0 } })
+  const res = await fetch(url, {
+    headers,
+    cache: 'no-store',
+    signal: AbortSignal.timeout(15000),
+  })
   if (!res.ok) {
-    throw new Error(`Instagram API error: ${res.status} ${res.statusText}`)
+    const text = await res.text().catch(() => '')
+    throw new Error(`IG ${res.status}: ${text.slice(0, 200)}`)
   }
   return res.json()
 }
 
+function parseProfileData(u: any): ApifyProfile {
+  return {
+    id: u.id || u.pk?.toString() || u.username || '',
+    username: u.username || '',
+    fullName: u.full_name || u.fullName || '',
+    biography: u.biography || u.bio || '',
+    profilePicUrl: u.profile_pic_url_hd || u.profile_pic_url || u.profilePicUrl || '',
+    followersCount: u.edge_followed_by?.count || u.follower_count || u.followersCount || 0,
+    followsCount: u.edge_follow?.count || u.following_count || u.followsCount || 0,
+    postsCount: u.edge_owner_to_timeline_media?.count || u.media_count || u.postsCount || 0,
+    isVerified: u.is_verified || false,
+    isBusinessAccount: u.is_business_account || u.is_professional_account || false,
+  }
+}
+
 export async function scrapeInstagramUser(username: string, sessionCookie?: string): Promise<ApifyProfile | null> {
+  // Strategy 1: web_profile_info API
   try {
     const data = await fetchIG(
       `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`,
       sessionCookie,
     )
     const u = data?.data?.user
-    if (!u) return null
+    if (u) return parseProfileData(u)
+  } catch (e) {
+    console.error(`[scraper] web_profile_info failed for ${username}:`, e)
+  }
 
-    return {
-      id: u.id || u.pk?.toString() || username,
-      username: u.username,
-      fullName: u.full_name || '',
-      biography: u.biography || '',
-      profilePicUrl: u.profile_pic_url_hd || u.profile_pic_url || '',
-      followersCount: u.edge_followed_by?.count || u.follower_count || 0,
-      followsCount: u.edge_follow?.count || u.following_count || 0,
-      postsCount: u.edge_owner_to_timeline_media?.count || u.media_count || 0,
-      isVerified: u.is_verified || false,
-      isBusinessAccount: u.is_business_account || u.is_professional_account || false,
+  // Strategy 2: HTML page scrape (extract shared_data JSON)
+  try {
+    const res = await fetch(`https://www.instagram.com/${encodeURIComponent(username)}/`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      cache: 'no-store',
+      redirect: 'follow',
+      signal: AbortSignal.timeout(15000),
+    })
+    if (res.ok) {
+      const html = await res.text()
+
+      // Try to extract from meta tags
+      const ogTitle = html.match(/<meta\s+property="og:title"\s+content="([^"]+)"/)?.[1]
+      const ogDesc = html.match(/<meta\s+property="og:description"\s+content="([^"]+)"/)?.[1]
+      const ogImage = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/)?.[1]
+
+      if (ogTitle || ogDesc) {
+        const followersMatch = ogDesc?.match(/([\d,.]+[KMkm]?)\s*Followers/i)
+        const followingMatch = ogDesc?.match(/([\d,.]+[KMkm]?)\s*Following/i)
+        const postsMatch = ogDesc?.match(/([\d,.]+[KMkm]?)\s*Posts/i)
+
+        const parseCount = (s?: string): number => {
+          if (!s) return 0
+          const n = parseFloat(s.replace(/,/g, ''))
+          if (s.match(/[Kk]$/)) return n * 1000
+          if (s.match(/[Mm]$/)) return n * 1_000_000
+          return n
+        }
+
+        return {
+          id: username,
+          username,
+          fullName: ogTitle?.replace(/\s*\(@[^)]+\).*/, '') || '',
+          biography: '',
+          profilePicUrl: ogImage || '',
+          followersCount: parseCount(followersMatch?.[1]),
+          followsCount: parseCount(followingMatch?.[1]),
+          postsCount: parseCount(postsMatch?.[1]),
+          isVerified: false,
+          isBusinessAccount: false,
+        }
+      }
     }
   } catch (e) {
-    console.error(`[scraper] Failed to fetch profile for ${username}:`, e)
-    return null
+    console.error(`[scraper] HTML fallback failed for ${username}:`, e)
   }
+
+  // Strategy 3: i.instagram.com mobile API (needs session cookie)
+  if (sessionCookie) {
+    try {
+      const searchData = await fetchIG(
+        `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`,
+        sessionCookie,
+      )
+      const u = searchData?.data?.user
+      if (u) return parseProfileData(u)
+    } catch (e) {
+      console.error(`[scraper] mobile API failed for ${username}:`, e)
+    }
+  }
+
+  console.error(`[scraper] All strategies failed for ${username}`)
+  return null
 }
 
 function parseMediaEdge(node: any): ApifyReel | null {
