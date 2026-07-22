@@ -110,23 +110,61 @@ export async function scrapeOwnReels(username: string, limit = 50): Promise<{
   trialShortCodes: Set<string>
 }> {
   const reels: ApifyReel[] = []
+  const trialShortCodes = new Set<string>()
 
   try {
     const data = await fetchIG(
       `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`,
     )
     const user = data?.data?.user
-    if (!user) return { reels: [], trialShortCodes: new Set() }
+    if (!user) return { reels: [], trialShortCodes }
 
-    const edges = user.edge_owner_to_timeline_media?.edges || []
-    for (const edge of edges) {
-      const reel = parseMediaEdge(edge.node)
+    // 1. Profile grid media — these are NON-trial reels (trials don't
+    //    appear on the profile grid by default)
+    const gridEdges = user.edge_owner_to_timeline_media?.edges || []
+    const gridCodes = new Set<string>()
+    for (const edge of gridEdges) {
+      const node = edge.node
+      const code = node.shortcode || node.code
+      if (code) gridCodes.add(code)
+      const reel = parseMediaEdge(node)
       if (reel) reels.push(reel)
     }
 
-    // Also try the reels tab endpoint for more reels
-    if (user.id || user.pk) {
-      const userId = user.id || user.pk?.toString()
+    // 2. Fetch the clips/reels tab — this includes ALL reels including trials
+    const userId = user.id || user.pk?.toString()
+    if (userId) {
+      try {
+        const clipsData = await fetchIG(
+          `https://www.instagram.com/graphql/query/?query_hash=bc78b344a68ed16dd5d7f264681c4c76&variables=${encodeURIComponent(JSON.stringify({
+            id: userId,
+            first: Math.min(limit, 50),
+          }))}`,
+        )
+        const clipEdges = clipsData?.data?.user?.edge_felix_video_timeline?.edges || []
+        const existingCodes = new Set(reels.map(r => r.shortCode))
+
+        for (const edge of clipEdges) {
+          const reel = parseMediaEdge(edge.node)
+          if (!reel) continue
+
+          // Reel in clips tab but NOT on profile grid = trial reel
+          if (!gridCodes.has(reel.shortCode)) {
+            trialShortCodes.add(reel.shortCode)
+          }
+
+          if (!existingCodes.has(reel.shortCode)) {
+            reels.push(reel)
+            existingCodes.add(reel.shortCode)
+          }
+        }
+      } catch {
+        // clips endpoint may fail — we still have grid media
+      }
+
+      // 3. Also check individual reel metadata for trial indicators
+      //    Instagram sometimes marks trials with audience or
+      //    share_to_feed fields
       try {
         const reelsData = await fetchIG(
           `https://www.instagram.com/graphql/query/?query_hash=d4d88dc1500312af6f937f7b804c68c3&variables=${encodeURIComponent(JSON.stringify({ id: userId, first: Math.min(limit, 50) }))}`,
@@ -134,21 +172,31 @@ export async function scrapeOwnReels(username: string, limit = 50): Promise<{
         const reelEdges = reelsData?.data?.user?.edge_owner_to_timeline_media?.edges || []
         const existingCodes = new Set(reels.map(r => r.shortCode))
         for (const edge of reelEdges) {
-          const reel = parseMediaEdge(edge.node)
+          const node = edge.node
+          // Check for trial indicators in metadata
+          if (node.audience === 'non_followers' || node.is_trial === true) {
+            const code = node.shortcode || node.code
+            if (code) trialShortCodes.add(code)
+          }
+          const reel = parseMediaEdge(node)
           if (reel && !existingCodes.has(reel.shortCode)) {
             reels.push(reel)
             existingCodes.add(reel.shortCode)
           }
         }
       } catch {
-        // graphql endpoint may fail, that's ok — we have the basic media
+        // fallback — we already have reels from other endpoints
       }
     }
   } catch (e) {
     console.error(`[scraper] Failed to fetch reels for ${username}:`, e)
   }
 
-  return { reels: reels.slice(0, limit), trialShortCodes: new Set() }
+  if (trialShortCodes.size > 0) {
+    console.log(`[scraper] Found ${trialShortCodes.size} trial reel(s) for ${username}`)
+  }
+
+  return { reels: reels.slice(0, limit), trialShortCodes }
 }
 
 export async function scrapeCompetitorReels(username: string, limit = 20): Promise<ApifyReel[]> {
