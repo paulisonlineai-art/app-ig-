@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase'
 import { createAuthServerClient } from '@/lib/supabase-server'
-import { scrapeInstagramUser } from '@/lib/apify'
+import { scrapeInstagramUser } from '@/lib/scraper'
 
 export async function GET() {
   const authClient = await createAuthServerClient()

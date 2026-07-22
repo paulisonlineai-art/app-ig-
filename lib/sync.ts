@@ -1,5 +1,5 @@
 import { createServerSupabase } from '@/lib/supabase'
-import { scrapeOwnReels } from '@/lib/apify'
+import { scrapeOwnReels } from '@/lib/scraper'
 import { calcMultiplier, calcRate } from '@/lib/utils'
 
 export async function syncAccountReels(accountId: string): Promise<{ synced: number; message?: string; trialCodesFound?: number }> {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase'
-import { scrapeCompetitorReels, scrapeInstagramUser } from '@/lib/apify'
+import { scrapeCompetitorReels, scrapeInstagramUser } from '@/lib/scraper'
 import { checkRateLimit } from '@/lib/rateLimit'
 
 export async function POST(req: NextRequest) {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { chatWithKlar } from '@/lib/ai'
 import { createServerSupabase } from '@/lib/supabase'
 import { checkRateLimit } from '@/lib/rateLimit'
-import { scrapeReelComments } from '@/lib/apify'
+import { scrapeReelComments } from '@/lib/scraper'
 
 const COMMENT_KEYWORDS = ['comentario', 'comments', 'audiencia dice', 'audiencia pide', 'ideas de contenido de', 'sacá ideas', 'saca ideas', 'comentan', 'preguntan']
 

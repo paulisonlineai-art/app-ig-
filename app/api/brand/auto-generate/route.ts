@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase'
-import { scrapeInstagramUser } from '@/lib/apify'
+import { scrapeInstagramUser } from '@/lib/scraper'
 import { autoGenerateBrandDNA } from '@/lib/ai'
 import { checkRateLimit } from '@/lib/rateLimit'
 
