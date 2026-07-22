@@ -15,7 +15,7 @@ export default function LogoutButton() {
       const supabase = createAuthBrowserClient()
       await supabase.auth.signOut()
     } finally {
-      window.location.href = '/login'
+      window.location.href = '/connect'
     }
   }
 
