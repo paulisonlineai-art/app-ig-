@@ -3,6 +3,17 @@ import { createServerSupabase } from '@/lib/supabase'
 import { createAuthServerClient } from '@/lib/supabase-server'
 import { scrapeInstagramUser } from '@/lib/apify'
 
+export async function GET() {
+  const authClient = await createAuthServerClient()
+  const { data: { user } } = await authClient.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+  const db = createServerSupabase()
+  const { data: account } = await db.from('ig_accounts').select('id').eq('user_id', user.id).maybeSingle()
+  if (!account) return NextResponse.json({ error: 'No conectado' }, { status: 404 })
+  return NextResponse.json({ connected: true })
+}
+
 export async function POST(req: NextRequest) {
   // A Google session is required — without it there is no way to tie an
   // Instagram username (just public text, not proof of ownership) to a real

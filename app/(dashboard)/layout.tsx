@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createServerSupabase } from '@/lib/supabase'
@@ -10,53 +9,50 @@ import ThemeToggle from '@/components/ThemeToggle'
 import ProfileAvatar from '@/components/ProfileAvatar'
 
 const NAV_TOP = [
-  { href: '/dashboard', label: 'Dashboard', icon: '⊞' },
-  { href: '/rayos-x', label: 'Rayos X', icon: '🔬' },
-  { href: '/laboratorio', label: 'Laboratorio', icon: '🧪' },
-  { href: '/ideas', label: 'Klar AI', icon: '🤖' },
+  { href: '/dashboard', label: 'Inicio', icon: '⊞' },
+  { href: '/reels', label: 'Mis Reels', icon: '▶' },
+  { href: '/rayos-x', label: 'Análisis', icon: '📊' },
+  { href: '/crear', label: 'Crear', icon: '✨' },
   { href: '/espia', label: 'Espía', icon: '👁' },
-  { href: '/reels', label: 'Reels', icon: '▶' },
   { href: '/calendario', label: 'Calendario', icon: '📅' },
-  { href: '/ventas', label: 'Ventas', icon: '$' },
-  { href: '/contenido', label: 'Mesa de trabajo', icon: '✏' },
+  { href: '/ventas', label: 'Ventas', icon: '💰' },
 ]
 
 const NAV_BOTTOM = [
-  { href: '/marca', label: 'ADN de Marca', icon: '◈' },
-  { href: '/configuracion', label: 'Settings', icon: '⚙' },
+  { href: '/marca', label: 'Mi Marca', icon: '◈' },
+  { href: '/configuracion', label: 'Configuración', icon: '⚙' },
 ]
 
-function SidebarContent({ account, accountId, totalViews }: { account: any; accountId: string; totalViews: number }) {
+function formatK(n: number) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`
+  return String(n)
+}
+
+function SidebarContent({ account, accountId }: { account: any; accountId: string }) {
   return (
     <>
-      <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <ProfileAvatar accountId={accountId} username={account?.username} size={36} border="2px solid var(--accent-light)" />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{account?.username || 'Mi cuenta'}</div>
-            <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 500 }}>powered by Klar</div>
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {[
-            { label: 'Seguidores', value: account?.followers_count ? (account.followers_count >= 1000 ? `${(account.followers_count/1000).toFixed(1)}K` : account.followers_count) : '—' },
-            { label: 'Views 30d', value: totalViews >= 1000 ? `${(totalViews/1000).toFixed(0)}K` : totalViews || '—' },
-          ].map(s => (
-            <div key={s.label} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 10px' }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>{s.value}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500 }}>{s.label}</div>
+      {/* Profile */}
+      <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ProfileAvatar accountId={accountId} username={account?.username} size={34} border="2px solid var(--accent-light)" />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              @{account?.username || 'cuenta'}
             </div>
-          ))}
+            <div style={{ fontSize: 11, color: 'var(--text-faint)', fontWeight: 500 }}>
+              {account?.followers_count ? formatK(account.followers_count) + ' seguidores' : 'Klar'}
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Nav */}
       <nav style={{ flex: 1, padding: '8px 10px', overflowY: 'auto' }} aria-label="Navegación principal">
-        <div style={{ marginBottom: 4 }}>
-          {NAV_TOP.map(item => <NavLink key={item.href} {...item} />)}
-        </div>
+        {NAV_TOP.map(item => <NavLink key={item.href} {...item} />)}
       </nav>
 
+      {/* Bottom */}
       <div style={{ padding: '8px 10px 12px', borderTop: '1px solid var(--border)' }}>
         {NAV_BOTTOM.map(item => <NavLink key={item.href} {...item} />)}
         <LogoutButton />
@@ -71,59 +67,65 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!accountId) redirect('/connect')
 
   const db = createServerSupabase()
-  const [{ data: account }, { data: reels30d }] = await Promise.all([
+  const [{ data: account }, { data: reels30d }, { data: lastSync }] = await Promise.all([
     db.from('ig_accounts').select('username, profile_picture_url, followers_count').eq('id', accountId).single(),
-    db.from('reels').select('views').eq('account_id', accountId).gte('timestamp', new Date(Date.now() - 30 * 864e5).toISOString()),
+    db.from('reels').select('views,likes,comments,shares,saves').eq('account_id', accountId).gte('timestamp', new Date(Date.now() - 30 * 864e5).toISOString()),
+    db.from('reels').select('synced_at').eq('account_id', accountId).order('synced_at', { ascending: false }).limit(1),
   ])
 
-  const totalViews = (reels30d || []).reduce((s: number, r: any) => s + r.views, 0)
+  const r30 = reels30d || []
+  const totalViews = r30.reduce((s: number, x: any) => s + x.views, 0)
+  const totalInteractions = r30.reduce((s: number, x: any) => s + x.likes + x.comments + x.shares + x.saves, 0)
+  const engRate = totalViews > 0 ? ((totalInteractions / totalViews) * 100).toFixed(1) : '0'
+
+  const syncedAt = (lastSync as any)?.[0]?.synced_at
+  const syncLabel = syncedAt
+    ? (() => {
+        const diff = Date.now() - new Date(syncedAt).getTime()
+        if (diff < 3600_000) return `hace ${Math.round(diff / 60_000)}m`
+        if (diff < 86400_000) return `hace ${Math.round(diff / 3600_000)}h`
+        return `hace ${Math.round(diff / 86400_000)}d`
+      })()
+    : null
 
   return (
     <div className="dashboard-layout">
-
-      {/* Desktop sidebar */}
       <aside className="dashboard-sidebar">
-        <SidebarContent account={account} accountId={accountId} totalViews={totalViews} />
+        <SidebarContent account={account} accountId={accountId} />
       </aside>
 
-      {/* Mobile sidebar (slide-out) */}
       <MobileNav>
-        <SidebarContent account={account} accountId={accountId} totalViews={totalViews} />
+        <SidebarContent account={account} accountId={accountId} />
       </MobileNav>
 
-      {/* Main */}
       <div className="dashboard-main">
-        <header style={{
-          height: 52,
-          background: 'var(--surface)',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 24px',
-          gap: 16,
-          flexShrink: 0,
-        }}>
-          <ProfileAvatar accountId={accountId} username={account?.username} size={28} />
-          <span style={{ fontSize: 13, fontWeight: 700 }}>{account?.username}</span>
+        {/* Header with always-visible KPIs */}
+        <header className="dash-topbar">
+          <ProfileAvatar accountId={accountId} username={account?.username} size={26} />
+          <span className="dash-topbar-user">@{account?.username}</span>
 
-          <div style={{ display: 'flex', gap: 20, marginLeft: 16 }}>
-            {[
-              { icon: '👁', label: 'VIEWS', value: totalViews >= 1000000 ? `${(totalViews/1000000).toFixed(1)}M` : totalViews >= 1000 ? `${(totalViews/1000).toFixed(1)}K` : totalViews || '0' },
-              { icon: '👥', label: 'FOLLOWERS', value: account?.followers_count ? `${(account.followers_count/1000).toFixed(1)}K` : '—' },
-            ].map(s => (
-              <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ fontSize: 13 }}>{s.icon}</span>
-                <div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em' }}>{s.label}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1 }}>{s.value}</div>
-                </div>
+          <div className="dash-topbar-right">
+            <div className="dash-topbar-kpis">
+              <div className="dash-topbar-kpi">
+                <span className="dash-topbar-kpi-value">{formatK(totalViews)}</span>
+                <span className="dash-topbar-kpi-label">Views</span>
               </div>
-            ))}
-          </div>
-
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="dash-topbar-kpi">
+                <span className="dash-topbar-kpi-value">{formatK(account?.followers_count || 0)}</span>
+                <span className="dash-topbar-kpi-label">Followers</span>
+              </div>
+              <div className="dash-topbar-kpi">
+                <span className="dash-topbar-kpi-value">{engRate}%</span>
+                <span className="dash-topbar-kpi-label">Eng. Rate</span>
+              </div>
+            </div>
+            {syncLabel && (
+              <span className="dash-topbar-sync">
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--success)', display: 'inline-block' }} />
+                {syncLabel}
+              </span>
+            )}
             <ThemeToggle />
-            <div style={{ background: 'var(--accent-light)', color: 'var(--accent)', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>🎯 Klar</div>
           </div>
         </header>
 
