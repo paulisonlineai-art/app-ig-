@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   if (!accountId) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
   const limit = await checkRateLimit(accountId, 'adapt')
-  if (!limit.ok) return NextResponse.json({ error: `Esperá ${limit.retryAfterSeconds}s antes de adaptar otro guión` }, { status: 429 })
+  if (!limit.ok) return NextResponse.json({ error: !limit.ok && "message" in limit ? limit.message : `Límite alcanzado. Intentá en ${limit.retryAfterSeconds}s` }, { status: 429 })
 
   const { reelId, angle } = await req.json()
   if (!reelId) return NextResponse.json({ error: 'Parámetros faltantes' }, { status: 400 })

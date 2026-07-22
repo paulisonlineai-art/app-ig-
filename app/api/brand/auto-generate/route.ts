@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   if (!accountId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
   const limit = await checkRateLimit(accountId, 'brand_auto_generate')
-  if (!limit.ok) return NextResponse.json({ error: `Esperá ${limit.retryAfterSeconds}s antes de volver a generar` }, { status: 429 })
+  if (!limit.ok) return NextResponse.json({ error: !limit.ok && "message" in limit ? limit.message : `Límite alcanzado. Intentá en ${limit.retryAfterSeconds}s` }, { status: 429 })
 
   const db = createServerSupabase()
 

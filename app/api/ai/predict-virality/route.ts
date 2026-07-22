@@ -9,8 +9,8 @@ export async function POST(req: NextRequest) {
   const accountId = req.cookies.get('ig_account_id')?.value
   if (!accountId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-  const limit = await checkRateLimit(accountId, 'generate_ideas')
-  if (!limit.ok) return NextResponse.json({ error: `Esperá ${limit.retryAfterSeconds}s` }, { status: 429 })
+  const limit = await checkRateLimit(accountId, 'predict_virality')
+  if (!limit.ok) return NextResponse.json({ error: !limit.ok && "message" in limit ? limit.message : `Límite alcanzado. Intentá en ${limit.retryAfterSeconds}s` }, { status: 429 })
 
   const { hook, caption, duration, format } = await req.json()
   if (!hook?.trim()) return NextResponse.json({ error: 'Hook requerido' }, { status: 400 })
