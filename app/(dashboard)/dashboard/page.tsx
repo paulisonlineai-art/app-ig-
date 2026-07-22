@@ -197,30 +197,21 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </a>
       )}
 
-      {/* Streak + Score side by side */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-        <div className={`dash-streak ${publishedToday ? 'streak-active' : 'streak-idle'}`} style={{ marginBottom: 0 }}>
-          <div className="streak-left">
-            <div className="streak-fire">{publishedToday ? '🔥' : '⚡'}</div>
-            <div>
-              <div className="streak-count">{currentStreak}</div>
-              <div className="streak-label">día{currentStreak !== 1 ? 's' : ''} de racha</div>
-            </div>
-          </div>
-          <div className="streak-msg">
-            {publishedToday
-              ? currentStreak >= 7
-                ? 'Imparable.'
-                : currentStreak >= 3
-                  ? 'Buen ritmo.'
-                  : 'Buen inicio.'
-              : currentStreak > 0
-                ? `No pierdas tu racha. Publicá hoy.`
-                : 'Publicá hoy.'}
-          </div>
-        </div>
-
-        <ProfileScore score={profileScore} />
+      {/* Streak bar */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '10px 16px', borderRadius: 10, marginBottom: 16,
+        background: publishedToday ? 'rgba(5,150,105,0.06)' : 'var(--surface-2)',
+        border: publishedToday ? '1px solid rgba(5,150,105,0.15)' : '1px solid var(--border)',
+      }}>
+        <span style={{ fontSize: 18 }}>{publishedToday ? '🔥' : '⚡'}</span>
+        <span style={{ fontSize: 22, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: 'var(--text)' }}>{currentStreak}</span>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>día{currentStreak !== 1 ? 's' : ''} de racha</span>
+        <span style={{ marginLeft: 'auto', fontSize: 12, color: publishedToday ? 'var(--success)' : 'var(--text-muted)', fontWeight: 600 }}>
+          {publishedToday
+            ? currentStreak >= 7 ? 'Imparable' : currentStreak >= 3 ? 'Buen ritmo' : '✓ Publicaste hoy'
+            : 'Publicá hoy para mantener la racha'}
+        </span>
       </div>
 
       {/* Main KPIs */}
@@ -242,10 +233,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         ))}
       </div>
 
-      {/* Charts */}
-      {(audienceStats?.length || 0) > 0 && (
-        <DashboardCharts audienceStats={audienceStats || []} reels={r} />
-      )}
+      {/* Score + Charts */}
+      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16, marginBottom: 16 }}>
+        <ProfileScore score={profileScore} />
+        {(audienceStats?.length || 0) > 0 ? (
+          <DashboardCharts audienceStats={audienceStats || []} reels={r} />
+        ) : <div />}
+      </div>
 
       {/* Revenue section */}
       {(totalRevenue > 0 || allSales.length > 0) && (
