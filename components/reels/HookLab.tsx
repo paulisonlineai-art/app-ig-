@@ -73,6 +73,11 @@ export default function HookLab({ reels }: { reels: Reel[] }) {
     }
   }
 
+  const sortedReels = [...reels]
+    .filter(r => r.hook || r.caption)
+    .sort((a, b) => b.multiplier - a.multiplier)
+    .slice(0, 30)
+
   const pickReel = (reel: Reel) => {
     setSelectedReel(reel)
     setHookInput(reel.hook || reel.caption?.slice(0, 100) || '')
@@ -103,11 +108,48 @@ export default function HookLab({ reels }: { reels: Reel[] }) {
 
       {tab === 'analysis' && (
         <>
-          {!analysis ? (
-            <button onClick={analyze} disabled={loading} className="btn btn-primary" style={{ width: '100%' }}>
-              {loading ? '⏳ Analizando todos tus hooks...' : '🪝 Analizar mis hooks'}
-            </button>
-          ) : (
+          {/* Reel hooks list */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: 4 }}>
+              TUS REELS Y SUS HOOKS ({sortedReels.length})
+            </div>
+            {sortedReels.map((r, i) => {
+              const multColor = r.multiplier >= 1.5 ? '#059669' : r.multiplier >= 1 ? 'var(--text)' : '#dc2626'
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'var(--surface-2)', borderRadius: 10 }}>
+                  {r.thumbnail_url && (
+                    <img src={`/api/proxy-image?url=${encodeURIComponent(r.thumbnail_url)}`} alt="" style={{ width: 36, height: 50, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {r.hook ? `"${r.hook}"` : r.caption?.slice(0, 60) || '(sin hook)'}
+                    </div>
+                    {r.hook && r.caption && (
+                      <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {r.caption.slice(0, 70)}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, flexShrink: 0, alignItems: 'center' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: 12, fontWeight: 700 }}>{r.views.toLocaleString()}</div>
+                      <div style={{ fontSize: 9, color: 'var(--text-faint)' }}>views</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: multColor }}>{r.multiplier.toFixed(1)}x</div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* AI deep analysis */}
+          <button onClick={analyze} disabled={loading} className="btn btn-primary" style={{ width: '100%', marginBottom: analysis ? 16 : 0 }}>
+            {loading ? '⏳ Analizando patrones...' : analysis ? '🔄 Regenerar análisis IA' : '🪝 Analizar patrones con IA'}
+          </button>
+
+          {analysis && (
             <>
               <div style={{ background: 'var(--accent-light)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 13, fontWeight: 600, color: 'var(--accent)' }}>
                 {analysis.summary}
@@ -161,10 +203,6 @@ export default function HookLab({ reels }: { reels: Reel[] }) {
                   <div key={i} style={{ fontSize: 12, marginBottom: 4 }}>⭐ {r}</div>
                 ))}
               </div>
-
-              <button onClick={analyze} disabled={loading} style={{ marginTop: 12, background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 14px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 600 }}>
-                🔄 Regenerar análisis
-              </button>
             </>
           )}
         </>
