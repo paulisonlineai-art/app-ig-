@@ -442,12 +442,16 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   letter-spacing: 0.02em;
 }
 
-/* Grid */
-.dash-grid {
-  display: grid; grid-template-columns: 1fr 320px; gap: 20px;
+/* Revenue row */
+.dash-revenue-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  margin-bottom: 16px;
 }
-.dash-left { display: flex; flex-direction: column; gap: 16px; }
-.dash-right { display: flex; flex-direction: column; gap: 12px; }
+/* Bottom row: score + quick stats side by side */
+.dash-bottom-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  margin-top: 16px;
+}
 
 /* Stat cards */
 .dash-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
@@ -555,11 +559,13 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
 .dash-quick-value { font-size: 14px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
 
 @media (max-width: 1024px) {
-  .dash-grid { grid-template-columns: 1fr; }
+  .dash-revenue-row { grid-template-columns: 1fr 1fr; }
+  .dash-bottom-row { grid-template-columns: 1fr; }
   .dash-stats { grid-template-columns: repeat(2, 1fr); }
   .dash-charts-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 768px) {
+  .dash-revenue-row { grid-template-columns: 1fr; }
   .dash-stats { grid-template-columns: repeat(2, 1fr); }
   .dash-charts-grid { grid-template-columns: 1fr; }
 }

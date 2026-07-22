@@ -31,7 +31,7 @@ export default async function LaboratorioPage() {
       </div>
 
       <ViralityPredictor />
-      <HookLab />
+      <HookLab reels={allReels} />
       <RecyclableContent reels={allReels} />
     </div>
   )

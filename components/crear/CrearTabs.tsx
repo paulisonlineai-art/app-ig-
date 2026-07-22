@@ -3,8 +3,8 @@ import { useState } from 'react'
 
 const TABS = [
   { id: 'ideas', label: 'Ideas IA', icon: '🤖' },
-  { id: 'lab', label: 'Laboratorio', icon: '🧪' },
-  { id: 'pipeline', label: 'Pipeline', icon: '📋' },
+  { id: 'hooks', label: 'Hooks', icon: '🪝' },
+  { id: 'reciclar', label: 'Reciclar', icon: '♻️' },
 ] as const
 
 type TabId = typeof TABS[number]['id']
@@ -14,7 +14,7 @@ export default function CrearTabs({ children }: { children: Record<string, React
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 0 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 0 }}>
         {TABS.map(tab => (
           <button
             key={tab.id}
@@ -28,6 +28,7 @@ export default function CrearTabs({ children }: { children: Record<string, React
               borderBottom: active === tab.id ? '2px solid var(--accent)' : '2px solid transparent',
               marginBottom: -1,
               transition: 'all 0.15s',
+              whiteSpace: 'nowrap',
             }}
           >
             <span style={{ fontSize: 14 }}>{tab.icon}</span>

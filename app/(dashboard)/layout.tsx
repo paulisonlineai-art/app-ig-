@@ -13,6 +13,7 @@ const NAV_TOP = [
   { href: '/reels', label: 'Mis Reels', icon: '▶' },
   { href: '/rayos-x', label: 'Análisis', icon: '📊' },
   { href: '/crear', label: 'Crear', icon: '✨' },
+  { href: '/pipeline', label: 'Pipeline', icon: '📋' },
   { href: '/espia', label: 'Espía', icon: '👁' },
   { href: '/calendario', label: 'Calendario', icon: '📅' },
   { href: '/ventas', label: 'Ventas', icon: '💰' },

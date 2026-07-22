@@ -246,131 +246,125 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         )}
       </div>
 
-      {/* Main grid */}
-      <div className="dash-grid">
-        {/* Left — metrics + charts */}
-        <div className="dash-left">
-          {/* Stat cards */}
-          <div className="dash-stats">
-            {stats.map(s => {
-              const icon = STAT_ICONS[s.key]
-              return (
-                <div key={s.key} className="dash-stat-card">
-                  <div className="dash-stat-icon" style={{ background: icon.bg }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={icon.fg} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: icon.svg }} />
-                  </div>
-                  <div className="dash-stat-label">{s.label}</div>
-                  <div className="dash-stat-value">{s.value}</div>
-                  {s.prev !== undefined && <PctChange val={s.curr!} prev={s.prev} />}
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Charts */}
-          {(audienceStats?.length || 0) > 0 && (
-            <DashboardCharts audienceStats={audienceStats || []} reels={r} />
-          )}
-
-          {/* Top fuentes de facturación */}
-          {topSources.length > 0 && (
-            <div className="dash-card">
-              <div className="dash-card-header">
-                <h2 className="dash-card-title">Fuentes de facturación</h2>
-                <span className="dash-card-badge">{rangeLabel}</span>
+      {/* Stat cards */}
+      <div className="dash-stats">
+        {stats.map(s => {
+          const icon = STAT_ICONS[s.key]
+          return (
+            <div key={s.key} className="dash-stat-card">
+              <div className="dash-stat-icon" style={{ background: icon.bg }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={icon.fg} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: icon.svg }} />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {topSources.map((src, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span className="dash-rank">{i + 1}</span>
-                    {src.thumbnail && <img src={`/api/proxy-image?url=${encodeURIComponent(src.thumbnail)}`} className="dash-source-thumb" alt="" />}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="dash-source-caption">
-                        {src.caption?.slice(0, 60) || 'Sin título'}
-                      </div>
-                      <div className="dash-source-bar-track">
-                        <div className="dash-source-bar-fill" style={{ width: `${Math.min(100, (src.amount / topSources[0].amount) * 100)}%` }} />
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div className="dash-source-amount">{formatCurrency(src.amount)}</div>
-                      <div className="dash-source-count">{src.count} venta{src.count > 1 ? 's' : ''}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <div className="dash-stat-label">{s.label}</div>
+              <div className="dash-stat-value">{s.value}</div>
+              {s.prev !== undefined && <PctChange val={s.curr!} prev={s.prev} />}
             </div>
-          )}
+          )
+        })}
+      </div>
+
+      {/* Revenue row */}
+      <div className="dash-revenue-row">
+        <div className="dash-revenue-card">
+          <div className="dash-revenue-header">
+            <span className="dash-revenue-label">FACTURACIÓN</span>
+            <div className="dash-revenue-icon" style={{ background: 'rgba(5,150,105,0.08)' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </div>
+          </div>
+          <div className="dash-revenue-amount">{formatCurrency(totalRevenue)}</div>
+          <div className="dash-revenue-sub">{allSales.length} venta{allSales.length !== 1 ? 's' : ''} · {rangeLabel.toLowerCase()}</div>
         </div>
 
-        {/* Right — revenue + score */}
-        <div className="dash-right">
-          {/* Revenue cards */}
+        <div className="dash-revenue-card">
+          <div className="dash-revenue-header">
+            <span className="dash-revenue-label">EFECTIVO COBRADO</span>
+            <div className="dash-revenue-icon" style={{ background: 'rgba(37,99,235,0.08)' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+              </svg>
+            </div>
+          </div>
+          <div className="dash-revenue-amount" style={{ color: 'var(--success)' }}>{formatCurrency(totalCash)}</div>
+          <div className="dash-revenue-sub">{totalRevenue > 0 ? `${((totalCash / totalRevenue) * 100).toFixed(0)}% del total` : '—'}</div>
+        </div>
+
+        {pendingAmount > 0 && (
           <div className="dash-revenue-card">
             <div className="dash-revenue-header">
-              <span className="dash-revenue-label">FACTURACIÓN</span>
-              <div className="dash-revenue-icon" style={{ background: 'rgba(5,150,105,0.08)' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              <span className="dash-revenue-label">POR COBRAR</span>
+              <div className="dash-revenue-icon" style={{ background: 'rgba(217,119,6,0.08)' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                 </svg>
               </div>
             </div>
-            <div className="dash-revenue-amount">{formatCurrency(totalRevenue)}</div>
-            <div className="dash-revenue-sub">{allSales.length} venta{allSales.length !== 1 ? 's' : ''} · {rangeLabel.toLowerCase()}</div>
+            <div className="dash-revenue-amount" style={{ color: 'var(--warning)' }}>{formatCurrency(pendingAmount)}</div>
+            <div className="dash-revenue-sub">pendiente de cobro</div>
           </div>
+        )}
+      </div>
 
-          <div className="dash-revenue-card">
-            <div className="dash-revenue-header">
-              <span className="dash-revenue-label">EFECTIVO COBRADO</span>
-              <div className="dash-revenue-icon" style={{ background: 'rgba(37,99,235,0.08)' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-                </svg>
-              </div>
-            </div>
-            <div className="dash-revenue-amount" style={{ color: 'var(--success)' }}>{formatCurrency(totalCash)}</div>
-            <div className="dash-revenue-sub">{totalRevenue > 0 ? `${((totalCash / totalRevenue) * 100).toFixed(0)}% del total` : '—'}</div>
+      {/* Charts */}
+      {(audienceStats?.length || 0) > 0 && (
+        <DashboardCharts audienceStats={audienceStats || []} reels={r} />
+      )}
+
+      {/* Profile Score + Quick Stats side by side */}
+      <div className="dash-bottom-row">
+        <ProfileScore score={profileScore} />
+
+        <div className="dash-card">
+          <div className="dash-card-header">
+            <h2 className="dash-card-title">Resumen rápido</h2>
           </div>
-
-          {pendingAmount > 0 && (
-            <div className="dash-revenue-card">
-              <div className="dash-revenue-header">
-                <span className="dash-revenue-label">POR COBRAR</span>
-                <div className="dash-revenue-icon" style={{ background: 'rgba(217,119,6,0.08)' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {[
+              { label: 'Seguidores', value: formatNumber(account?.followers_count || 0) },
+              { label: 'Engagement Rate', value: `${engRate}%` },
+              { label: 'Reels este período', value: r.length },
+              { label: 'Likes totales', value: formatNumber(totalLikes) },
+            ].map((item, i) => (
+              <div key={item.label} className="dash-quick-row" style={i === 0 ? { paddingTop: 0 } : undefined}>
+                <span className="dash-quick-label">{item.label}</span>
+                <span className="dash-quick-value">{item.value}</span>
               </div>
-              <div className="dash-revenue-amount" style={{ color: 'var(--warning)' }}>{formatCurrency(pendingAmount)}</div>
-              <div className="dash-revenue-sub">pendiente de cobro</div>
-            </div>
-          )}
-
-          {/* Profile Score */}
-          <ProfileScore score={profileScore} />
-
-          {/* Quick stats */}
-          <div className="dash-card">
-            <div className="dash-card-header">
-              <h2 className="dash-card-title">Resumen rápido</h2>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              {[
-                { label: 'Seguidores', value: formatNumber(account?.followers_count || 0) },
-                { label: 'Engagement Rate', value: `${engRate}%` },
-                { label: 'Reels este período', value: r.length },
-                { label: 'Likes totales', value: formatNumber(totalLikes) },
-              ].map((item, i) => (
-                <div key={item.label} className="dash-quick-row" style={i === 0 ? { paddingTop: 0 } : undefined}>
-                  <span className="dash-quick-label">{item.label}</span>
-                  <span className="dash-quick-value">{item.value}</span>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </div>
+
+      {/* Top fuentes de facturación */}
+      {topSources.length > 0 && (
+        <div className="dash-card" style={{ marginTop: 16 }}>
+          <div className="dash-card-header">
+            <h2 className="dash-card-title">Fuentes de facturación</h2>
+            <span className="dash-card-badge">{rangeLabel}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {topSources.map((src, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span className="dash-rank">{i + 1}</span>
+                {src.thumbnail && <img src={`/api/proxy-image?url=${encodeURIComponent(src.thumbnail)}`} className="dash-source-thumb" alt="" />}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="dash-source-caption">
+                    {src.caption?.slice(0, 60) || 'Sin título'}
+                  </div>
+                  <div className="dash-source-bar-track">
+                    <div className="dash-source-bar-fill" style={{ width: `${Math.min(100, (src.amount / topSources[0].amount) * 100)}%` }} />
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div className="dash-source-amount">{formatCurrency(src.amount)}</div>
+                  <div className="dash-source-count">{src.count} venta{src.count > 1 ? 's' : ''}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

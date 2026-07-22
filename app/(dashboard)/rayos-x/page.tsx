@@ -3,6 +3,7 @@ import { createServerSupabase } from '@/lib/supabase'
 import { formatNumber, getRangeBounds } from '@/lib/utils'
 import ReelPatterns from '@/components/reels/ReelPatterns'
 import FlopAutopsy from '@/components/reels/FlopAutopsy'
+import ViralityPredictor from '@/components/reels/ViralityPredictor'
 import DateRangeSelect from '@/components/dashboard/DateRangeSelect'
 
 function calcPatterns(reels: any[]) {
@@ -161,6 +162,9 @@ export default async function RayosXPage({ searchParams }: { searchParams: Promi
 
           {/* Patterns */}
           {patterns && <ReelPatterns patterns={patterns} />}
+
+          {/* Virality Predictor */}
+          <ViralityPredictor />
 
           {/* Flop Autopsy */}
           <FlopAutopsy />
