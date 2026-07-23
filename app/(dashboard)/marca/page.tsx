@@ -14,11 +14,11 @@ export default async function MarcaPage({ searchParams }: { searchParams: Promis
     <div>
       {isOnboarding && !brand?.content && (
         <div style={{ background: 'var(--accent-light)', border: '1px solid var(--accent)', borderRadius: 12, padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <span style={{ fontSize: 28 }}>👋</span>
+          <span style={{ fontSize: 28 }}>✨</span>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>Antes de empezar, configurá tu marca</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>Analizando tu Instagram con IA...</div>
             <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-              Klar usa esta info para darte análisis y sugerencias personalizadas. Podés usar "Generar con IA" para empezar rápido.
+              Klar está generando tu ADN de Marca automáticamente. Revisá los campos y ajustá lo que quieras.
             </div>
           </div>
         </div>

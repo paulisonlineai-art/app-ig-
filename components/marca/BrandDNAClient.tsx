@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { BrandDNA, BrandDNAFields } from '@/types'
 
 const FIELDS: { key: keyof BrandDNAFields; label: string; placeholder: string }[] = [
@@ -24,6 +24,14 @@ export default function BrandDNAClient({ accountId, initial, isOnboarding }: { a
   const [generating, setGenerating] = useState(false)
   const [genError, setGenError] = useState('')
   const [genWarning, setGenWarning] = useState('')
+
+  const autoTriggered = useRef(false)
+  useEffect(() => {
+    if (isOnboarding && !initial?.content && !autoTriggered.current) {
+      autoTriggered.current = true
+      autoGenerate()
+    }
+  }, [])
 
   const autoGenerate = async () => {
     setGenerating(true)

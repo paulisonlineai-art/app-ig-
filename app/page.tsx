@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+// No external images needed — inline CSS mockups
 
 const STRIPE_LINK = '#'
 const STRIPE_LINK_MONTHLY = '#'
@@ -111,7 +111,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── Platform screenshot ─── */}
+      {/* ─── Platform mockup ─── */}
       <section className="screenshot-section">
         <Reveal>
           <div className="mockup-browser">
@@ -123,8 +123,50 @@ export default function LandingPage() {
               </div>
               <div className="mockup-url">app.klar.la</div>
             </div>
-            <div className="mockup-content">
-              <Image src="/screenshots/dashboard.png" alt="Dashboard de Klar" width={1800} height={1000} style={{ width: '100%', height: 'auto', display: 'block' }} priority />
+            <div className="mockup-content" style={{ padding: '24px 28px', background: '#000' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>Dashboard</div>
+                  <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>Últimos 30 días · 12 reels</div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <span style={{ padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, border: '1px solid #333', background: '#141414', color: '#fff' }}>30 días ▾</span>
+                  <span style={{ padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: '#F7007C', color: '#fff' }}>⟳ Sincronizar</span>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 16 }}>
+                {[
+                  { l: 'VISTAS', v: '24.8K', c: '↑ 34.2%' },
+                  { l: 'ENGAGEMENT', v: '5.2%', c: '↑ 12.8%' },
+                  { l: 'COMENTARIOS', v: '187', c: '↑ 28.1%' },
+                  { l: 'GUARDADOS', v: '342', c: '↑ 45.6%' },
+                ].map(k => (
+                  <div key={k.l} style={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: 10, padding: '14px 16px' }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: '#888', marginBottom: 6 }}>{k.l}</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>{k.v}</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: '#059669', marginTop: 3 }}>{k.c}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: 10, padding: '14px 16px' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 12 }}>Vistas por reel</div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 80 }}>
+                    {[45,72,38,90,55,65,82,48,95,60,70,100].map((h,i) => (
+                      <div key={i} style={{ flex: 1, height: `${h}%`, background: '#F7007C', borderRadius: '3px 3px 0 0', opacity: 0.7 + (h/333) }} />
+                    ))}
+                  </div>
+                </div>
+                <div style={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: 10, padding: '14px 16px' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 12 }}>Engagement trend</div>
+                  <svg viewBox="0 0 400 80" style={{ width: '100%', height: 80 }} preserveAspectRatio="none">
+                    <defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#F7007C" stopOpacity="0.3"/><stop offset="100%" stopColor="#F7007C" stopOpacity="0"/></linearGradient></defs>
+                    <path d="M0,60 Q50,50 100,52 T200,35 T300,25 T400,15 L400,80 L0,80Z" fill="url(#lg)"/>
+                    <path d="M0,60 Q50,50 100,52 T200,35 T300,25 T400,15" fill="none" stroke="#F7007C" strokeWidth="2"/>
+                    <circle cx="400" cy="15" r="3" fill="#F7007C"/>
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
         </Reveal>
@@ -202,39 +244,121 @@ export default function LandingPage() {
         </Reveal>
 
         <div className="features-grid">
-          {[
-            {
-              icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
-              title: 'Detector de caída',
-              desc: 'Analiza la retención frame por frame y marca el segundo exacto donde tu audiencia deja de ver.',
-              screenshot: '/screenshots/retencion.png',
-            },
-            {
-              icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>,
-              title: 'Predictor de viralidad',
-              desc: 'Analiza tu guión y te da un score de 0-100 antes de grabar. Te dice qué mejorar.',
-              screenshot: '/screenshots/predictor.png',
-            },
-            {
-              icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-              title: 'Espía de competidores',
-              desc: 'Trackea hasta 5 competidores. Qué publican, cuándo, qué retención tienen.',
-              screenshot: '/screenshots/competidores.png',
-            },
-          ].map((f, i) => (
-            <Reveal key={i} delay={i * 0.12}>
-              <div className="feature-card">
-                <div className="feature-card-text">
-                  <div className="feature-icon">{f.icon}</div>
-                  <h3 className="feature-title">{f.title}</h3>
-                  <p className="feature-desc">{f.desc}</p>
+          {/* Detector de caída */}
+          <Reveal delay={0}>
+            <div className="feature-card">
+              <div className="feature-card-text">
+                <div className="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+                <h3 className="feature-title">Detector de caída</h3>
+                <p className="feature-desc">Analiza la retención frame por frame y marca el segundo exacto donde tu audiencia deja de ver.</p>
+              </div>
+              <div className="feature-card-img" style={{ background: '#0a0a0a', borderRadius: 10, padding: '16px 18px' }}>
+                <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+                  <div style={{ flex: 1, background: '#141414', borderRadius: 8, padding: '10px 12px', textAlign: 'center' as const }}>
+                    <div style={{ fontSize: 9, color: '#888', textTransform: 'uppercase' as const, fontWeight: 700 }}>Retención</div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: '#fff' }}>47%</div>
+                  </div>
+                  <div style={{ flex: 1, background: '#141414', borderRadius: 8, padding: '10px 12px', textAlign: 'center' as const }}>
+                    <div style={{ fontSize: 9, color: '#888', textTransform: 'uppercase' as const, fontWeight: 700 }}>Mayor caída</div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: '#F7007C' }}>3s</div>
+                  </div>
                 </div>
-                <div className="feature-card-img">
-                  <Image src={f.screenshot} alt={f.title} width={800} height={500} style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 8 }} />
+                <svg viewBox="0 0 300 80" style={{ width: '100%', height: 60 }} preserveAspectRatio="none">
+                  <path d="M0,5 Q30,6 50,10 T100,25 T130,50 T160,52 T200,58 T240,65 T280,72 L300,75 L300,80 L0,80Z" fill="rgba(247,0,124,0.15)"/>
+                  <path d="M0,5 Q30,6 50,10 T100,25 T130,50 T160,52 T200,58 T240,65 T280,72 L300,75" fill="none" stroke="#F7007C" strokeWidth="2"/>
+                  <circle cx="130" cy="50" r="4" fill="#F7007C" stroke="#000" strokeWidth="2"/>
+                </svg>
+                <div style={{ marginTop: 8 }}>
+                  {[
+                    { t: '0:03', d: 'Hook débil', p: 38, c: '#ef4444' },
+                    { t: '0:08', d: 'Transición', p: 12, c: '#f59e0b' },
+                  ].map(x => (
+                    <div key={x.t} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: '#F7007C', width: 32 }}>{x.t}</span>
+                      <span style={{ fontSize: 10, color: '#aaa', flex: 1 }}>{x.d} — {x.p}%</span>
+                      <div style={{ width: 60, height: 4, background: '#222', borderRadius: 2 }}><div style={{ width: `${x.p}%`, height: '100%', background: x.c, borderRadius: 2 }} /></div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </Reveal>
-          ))}
+            </div>
+          </Reveal>
+
+          {/* Predictor de viralidad */}
+          <Reveal delay={0.12}>
+            <div className="feature-card">
+              <div className="feature-card-text">
+                <div className="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg></div>
+                <h3 className="feature-title">Predictor de viralidad</h3>
+                <p className="feature-desc">Analiza tu guión y te da un score de 0-100 antes de grabar. Te dice qué mejorar.</p>
+              </div>
+              <div className="feature-card-img" style={{ background: '#0a0a0a', borderRadius: 10, padding: '16px 18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+                  <div style={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
+                    <svg viewBox="0 0 64 64" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+                      <circle cx="32" cy="32" r="27" fill="none" stroke="#1a1a1a" strokeWidth="5"/>
+                      <circle cx="32" cy="32" r="27" fill="none" stroke="#22c55e" strokeWidth="5" strokeLinecap="round" strokeDasharray="135.1" strokeDashoffset="27"/>
+                    </svg>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color: '#22c55e' }}>78</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: '#22c55e' }}>Bueno</div>
+                    <div style={{ fontSize: 10, color: '#888' }}>Potencial viral alto</div>
+                  </div>
+                </div>
+                {[
+                  { n: 'Hook', s: 9, c: '#22c55e' },
+                  { n: 'Estructura', s: 8, c: '#22c55e' },
+                  { n: 'CTA', s: 6, c: '#f59e0b' },
+                  { n: 'Valor', s: 8.5, c: '#22c55e' },
+                ].map(x => (
+                  <div key={x.n} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}>
+                    <span style={{ fontSize: 11, color: '#888', width: 60 }}>{x.n}</span>
+                    <div style={{ flex: 1, height: 4, background: '#222', borderRadius: 2 }}><div style={{ width: `${x.s * 10}%`, height: '100%', background: x.c, borderRadius: 2 }} /></div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: x.c, width: 30, textAlign: 'right' as const }}>{x.s}/10</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Reveal>
+
+          {/* Espía de competidores */}
+          <Reveal delay={0.24}>
+            <div className="feature-card">
+              <div className="feature-card-text">
+                <div className="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                <h3 className="feature-title">Espía de competidores</h3>
+                <p className="feature-desc">Trackea hasta 5 competidores. Qué publican, cuándo, qué retención tienen.</p>
+              </div>
+              <div className="feature-card-img" style={{ background: '#0a0a0a', borderRadius: 10, padding: '16px 18px' }}>
+                {[
+                  { u: '@marketingpro', f: '125K', e: '4.8%', bg: 'linear-gradient(135deg,#667eea,#764ba2)' },
+                  { u: '@creadordigital', f: '89K', e: '6.2%', bg: 'linear-gradient(135deg,#f093fb,#f5576c)' },
+                  { u: '@socialmentor', f: '210K', e: '3.1%', bg: 'linear-gradient(135deg,#4facfe,#00f2fe)' },
+                ].map(x => (
+                  <div key={x.u} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #1a1a1a' }}>
+                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: x.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{x.u[1].toUpperCase()}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{x.u}</div>
+                      <div style={{ fontSize: 10, color: '#888' }}>{x.f} seguidores</div>
+                    </div>
+                    <div style={{ textAlign: 'right' as const }}>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: '#22c55e' }}>{x.e}</div>
+                      <div style={{ fontSize: 9, color: '#888' }}>Eng. Rate</div>
+                    </div>
+                  </div>
+                ))}
+                <div style={{ marginTop: 10, display: 'flex', gap: 6 }}>
+                  {['52.4K', '38.1K', '29.7K'].map(v => (
+                    <div key={v} style={{ flex: 1, background: '#141414', borderRadius: 6, padding: '8px 6px', textAlign: 'center' as const }}>
+                      <div style={{ fontSize: 10, color: '#aaa', marginBottom: 2 }}>▶</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Reveal>
         </div>
 
         <div className="mini-features-grid">
