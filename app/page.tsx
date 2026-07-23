@@ -74,8 +74,8 @@ export default function LandingPage() {
             <span className="klar-wordmark">klar</span>
           </div>
           <div className="nav-actions">
-            <Link href="/login" className="nav-link-login">Iniciar sesión</Link>
-            <a href={STRIPE_LINK} className="nav-cta">Unirme</a>
+            <Link href="/connect" className="nav-link-login">Iniciar sesión</Link>
+            <a href="#pricing" className="nav-cta">Unirme</a>
           </div>
         </div>
       </nav>
@@ -488,7 +488,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Pricing ─── */}
-      <section className="pricing-section">
+      <section className="pricing-section" id="pricing">
         <div className="pricing-inner">
           <Reveal>
             <div className="spots-badge">

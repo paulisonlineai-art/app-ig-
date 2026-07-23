@@ -41,10 +41,10 @@
 [data-theme="dark"] {
   --bg: #000000;
   --surface: #0a0a0a;
-  --surface-2: #141414;
+  --surface-2: #111111;
   --surface-3: #1a1a1a;
-  --border: #222222;
-  --border-strong: #333333;
+  --border: #1a1a1a;
+  --border-strong: #2a2a2a;
 
   --text: #ffffff;
   --text-muted: #888888;

@@ -1,5 +1,5 @@
 'use client'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Area, AreaChart } from 'recharts'
 
 export default function DashboardCharts({ audienceStats, reels }: { audienceStats: any[]; reels: any[] }) {
   const reachData = audienceStats.map(s => ({
@@ -8,73 +8,60 @@ export default function DashboardCharts({ audienceStats, reels }: { audienceStat
     Impresiones: s.impressions,
   }))
 
-  const byDate: Record<string, { likes: number; comments: number }> = {}
-  for (const r of reels) {
-    const d = new Date(r.timestamp).toLocaleDateString('es', { month: 'short', day: 'numeric' })
-    if (!byDate[d]) byDate[d] = { likes: 0, comments: 0 }
-    byDate[d].likes += r.likes || 0
-    byDate[d].comments += r.comments || 0
-  }
-  const interactData = Object.entries(byDate).map(([date, v]) => ({ date, ...v }))
+  const reelData = reels
+    .filter((r: any) => r.timestamp)
+    .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    .map((r: any) => ({
+      date: new Date(r.timestamp).toLocaleDateString('es', { month: 'short', day: 'numeric' }),
+      views: r.views || 0,
+    }))
 
   const tooltipStyle = {
-    background: 'var(--surface)',
-    border: '1px solid var(--border)',
+    background: '#0a0a0a',
+    border: '1px solid #222',
     borderRadius: 10,
     fontSize: 12,
-    color: 'var(--text)',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    color: '#fff',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
     padding: '8px 12px',
   }
 
   return (
-    <div className="dash-charts-grid">
-      <div className="dash-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div className="dash-card-title" style={{ marginBottom: 0 }}>Alcance & Visibilidad</div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            {[{ color: '#7c3aed', label: 'Alcance' }, { color: '#a78bfa', label: 'Impresiones' }].map(l => (
-              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-muted)' }}>
-                <div style={{ width: 8, height: 3, background: l.color, borderRadius: 2 }} />
-                {l.label}
-              </div>
-            ))}
-          </div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px 8px' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Vistas por reel</div>
         </div>
         <div style={{ padding: '4px 12px 12px' }}>
-          <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={reachData}>
-              <XAxis dataKey="date" tick={{ fill: 'var(--text-faint)', fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={reelData}>
+              <XAxis dataKey="date" tick={{ fill: '#555', fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
               <YAxis hide />
               <Tooltip contentStyle={tooltipStyle} />
-              <Line type="monotone" dataKey="Alcance" stroke="#7c3aed" dot={false} strokeWidth={2} />
-              <Line type="monotone" dataKey="Impresiones" stroke="#a78bfa" dot={false} strokeWidth={1.5} strokeDasharray="4 4" />
-            </LineChart>
+              <Bar dataKey="views" fill="#F7007C" radius={[4, 4, 0, 0]} />
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      <div className="dash-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div className="dash-card-title" style={{ marginBottom: 0 }}>Interacciones</div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            {[{ color: '#7c3aed', label: 'Me gusta' }, { color: '#f59e0b', label: 'Comentarios' }].map(l => (
-              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-muted)' }}>
-                <div style={{ width: 8, height: 8, background: l.color, borderRadius: 2 }} />
-                {l.label}
-              </div>
-            ))}
-          </div>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px 8px' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Engagement trend</div>
         </div>
         <div style={{ padding: '4px 12px 12px' }}>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={interactData}>
-              <XAxis dataKey="date" tick={{ fill: 'var(--text-faint)', fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+          <ResponsiveContainer width="100%" height={160}>
+            <AreaChart data={reachData}>
+              <defs>
+                <linearGradient id="engGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#F7007C" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#F7007C" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="date" tick={{ fill: '#555', fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
               <YAxis hide />
               <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="likes" stackId="a" fill="#7c3aed" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="comments" stackId="a" fill="#f59e0b" radius={[3, 3, 0, 0]} />
-            </BarChart>
+              <Area type="monotone" dataKey="Alcance" stroke="#F7007C" strokeWidth={2} fill="url(#engGrad)" dot={false} />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
