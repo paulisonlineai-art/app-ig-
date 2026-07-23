@@ -15,10 +15,6 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  // A Google session is required — without it there is no way to tie an
-  // Instagram username (just public text, not proof of ownership) to a real
-  // person, and nothing stops one user from "connecting" someone else's
-  // already-connected account and reading their dashboard.
   const authClient = await createAuthServerClient()
   const { data: { user } } = await authClient.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
@@ -26,36 +22,37 @@ export async function POST(req: NextRequest) {
   const { username, sessionCookie } = await req.json()
   if (!username) return NextResponse.json({ error: 'Username requerido' }, { status: 400 })
 
+  const cleanUsername = username.replace('@', '').trim().toLowerCase()
+  if (!cleanUsername || cleanUsername.length < 2) {
+    return NextResponse.json({ error: 'Username inválido' }, { status: 400 })
+  }
+
   try {
-    const profile = await scrapeInstagramUser(username.replace('@', ''), sessionCookie)
-    if (!profile) return NextResponse.json({ error: 'No se pudo obtener el perfil. Verificá el username.' }, { status: 404 })
-
     const db = createServerSupabase()
-    const igUserId = profile.id || profile.username
 
-    // If this Instagram profile is already connected to a DIFFERENT Klar
-    // user, refuse — never let a request silently overwrite someone else's
-    // account_id/access_token just by knowing their public username.
-    const { data: existingByIg } = await db.from('ig_accounts').select('id, user_id').eq('ig_user_id', igUserId).maybeSingle()
-    if (existingByIg && existingByIg.user_id && existingByIg.user_id !== user.id) {
+    // Check if this username is already connected to a different user
+    const { data: existingByUsername } = await db.from('ig_accounts')
+      .select('id, user_id').eq('username', cleanUsername).maybeSingle()
+    if (existingByUsername && existingByUsername.user_id && existingByUsername.user_id !== user.id) {
       return NextResponse.json({ error: 'Esta cuenta de Instagram ya está conectada a otro usuario de Klar.' }, { status: 409 })
     }
 
+    // Try to get profile data (best effort — not required to connect)
+    const profile = await scrapeInstagramUser(cleanUsername, sessionCookie)
+
     const fields = {
-      ig_user_id: igUserId,
-      username: profile.username,
-      name: profile.fullName,
-      profile_picture_url: profile.profilePicUrl,
-      followers_count: profile.followersCount,
-      media_count: profile.postsCount,
-      access_token: sessionCookie || 'apify_no_token',
-      data_source: 'apify',
+      ig_user_id: profile?.id || cleanUsername,
+      username: profile?.username || cleanUsername,
+      name: profile?.fullName || '',
+      profile_picture_url: profile?.profilePicUrl || null,
+      followers_count: profile?.followersCount || 0,
+      media_count: profile?.postsCount || 0,
+      access_token: sessionCookie || 'no_token',
+      data_source: 'scraper',
       apify_session_cookie: sessionCookie || null,
       user_id: user.id,
     }
 
-    // Update this user's own existing row if they have one (lets them
-    // reconnect/change username), otherwise create a new row for them.
     const { data: existingForUser } = await db.from('ig_accounts').select('id').eq('user_id', user.id).maybeSingle()
     const { error } = existingForUser
       ? await db.from('ig_accounts').update(fields).eq('id', existingForUser.id)
@@ -63,10 +60,8 @@ export async function POST(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    // No access_token/apify_session_cookie in the response — those are real
-    // Instagram session credentials and shouldn't ever reach client JS.
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, profileFound: !!profile })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Error conectando con Apify' }, { status: 500 })
+    return NextResponse.json({ error: e.message || 'Error conectando' }, { status: 500 })
   }
 }

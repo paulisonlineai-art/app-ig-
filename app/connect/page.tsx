@@ -64,7 +64,7 @@ export default function ConnectPage() {
         setStep('form')
         return
       }
-      router.push('/marca?onboarding=1')
+      router.push('/marca?onboarding=1' + (data.profileFound === false ? '&pendingProfile=1' : ''))
     } catch (e: any) {
       setError(e.message)
       setStep('form')
@@ -147,7 +147,7 @@ export default function ConnectPage() {
           <div className="card" style={{ padding: 48, textAlign: 'center' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Conectando...</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Estamos obteniendo tu perfil de Instagram.<br />Esto puede tardar unos segundos.</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Conectando tu cuenta de Instagram...<br />Esto puede tardar unos segundos.</div>
             <div style={{ marginTop: 24, height: 4, background: 'var(--surface-2)', borderRadius: 2 }}>
               <div style={{ height: '100%', background: 'var(--accent)', borderRadius: 2, width: '60%', animation: 'pulse 2s infinite' }} />
             </div>
