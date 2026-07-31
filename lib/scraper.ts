@@ -108,20 +108,35 @@ export async function scrapeOwnReels(username: string, limit = 50): Promise<{
   const trialShortCodes = new Set<string>()
 
   try {
-    const items = await runApifyActor('apify/instagram-scraper', {
-      directUrls: [`https://www.instagram.com/${username}/reels/`],
-      resultsType: 'reels',
-      resultsLimit: limit,
-    }, 180)
+    // Fetch reels tab and feed posts in parallel to detect trials
+    const [reelItems, feedItems] = await Promise.all([
+      runApifyActor('apify/instagram-scraper', {
+        directUrls: [`https://www.instagram.com/${username}/reels/`],
+        resultsType: 'reels',
+        resultsLimit: limit,
+      }, 180),
+      runApifyActor('apify/instagram-scraper', {
+        directUrls: [`https://www.instagram.com/${username}/`],
+        resultsType: 'posts',
+        resultsLimit: limit,
+      }, 180).catch(() => [] as any[]),
+    ])
+
+    // Feed shortcodes — reels NOT in feed are trials
+    const feedCodes = new Set(feedItems.map((i: any) => i.shortCode).filter(Boolean))
 
     const reels: ApifyReel[] = []
-    for (const item of items) {
+    for (const item of reelItems) {
       const reel = parseApifyReel(item)
       if (!reel) continue
 
-      // Trial reels: very low views (< 5) or null views
       const views = item.videoViewCount ?? item.videoPlayCount
-      if (views === null || views === undefined || views < 5) {
+      const isTrial =
+        !feedCodes.has(reel.shortCode) ||
+        views === null || views === undefined ||
+        (views < 10 && (item.likesCount ?? 0) > 20)
+
+      if (isTrial) {
         trialShortCodes.add(reel.shortCode)
       }
 
