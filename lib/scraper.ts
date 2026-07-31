@@ -108,15 +108,23 @@ export async function scrapeOwnReels(username: string, limit = 50): Promise<{
 
   try {
     const items = await runApifyActor('apify/instagram-scraper', {
-      directUrls: [`https://www.instagram.com/${username}/`],
-      resultsType: 'posts',
+      directUrls: [`https://www.instagram.com/${username}/reels/`],
+      resultsType: 'reels',
       resultsLimit: limit,
     }, 180)
 
     const reels: ApifyReel[] = []
     for (const item of items) {
       const reel = parseApifyReel(item)
-      if (reel) reels.push(reel)
+      if (!reel) continue
+
+      // Trial reels: very low views (< 5) or null views
+      const views = item.videoViewCount ?? item.videoPlayCount
+      if (views === null || views === undefined || views < 5) {
+        trialShortCodes.add(reel.shortCode)
+      }
+
+      reels.push(reel)
     }
 
     return { reels, trialShortCodes }
