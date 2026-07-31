@@ -14,15 +14,18 @@ export async function syncAccountReels(accountId: string): Promise<{ synced: num
   // Calculate averages for multiplier
   const avgViews = reels.reduce((s, r) => s + r.videoViewCount, 0) / reels.length
 
+  const clamp = (n: number, max = 99999999) => Math.min(Math.max(Math.round(n) || 0, 0), max)
+  const clampRate = (n: number) => Math.min(Math.max(Number(n.toFixed(4)) || 0, 0), 100)
+
   const upserts = reels.map(r => {
-    const views = r.videoViewCount || r.videoPlayCount || 0
-    const likes = r.likesCount || 0
-    const comments = r.commentsCount || 0
-    const multiplier = calcMultiplier(views, avgViews)
+    const views = clamp(r.videoViewCount || r.videoPlayCount || 0)
+    const likes = clamp(r.likesCount || 0)
+    const comments = clamp(r.commentsCount || 0)
+    const multiplier = Number(calcMultiplier(views, avgViews).toFixed(4)) || 1
 
     return {
       account_id: accountId,
-      ig_media_id: r.shortCode || r.id,
+      ig_media_id: r.shortCode || String(r.id),
       media_type: 'VIDEO',
       is_trial: trialShortCodes.has(r.shortCode),
       caption: r.caption || null,
@@ -35,12 +38,12 @@ export async function syncAccountReels(accountId: string): Promise<{ synced: num
       shares: 0,
       saves: 0,
       reach: 0,
-      like_rate: calcRate(likes, views),
+      like_rate: clampRate(calcRate(likes, views)),
       save_rate: 0,
-      comment_rate: calcRate(comments, views),
+      comment_rate: clampRate(calcRate(comments, views)),
       share_rate: 0,
       multiplier,
-      duration_seconds: r.videoDuration ? Math.round(r.videoDuration) : null,
+      duration_seconds: r.videoDuration ? Math.min(Math.round(r.videoDuration), 9999) : null,
       synced_at: new Date().toISOString(),
     }
   })
