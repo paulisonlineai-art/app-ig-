@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Try to get profile data (best effort — not required to connect)
-    const profile = await scrapeInstagramUser(cleanUsername, sessionCookie)
+    const profile = await scrapeInstagramUser(cleanUsername)
 
     const fields = {
       ig_user_id: profile?.id || cleanUsername,

@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   if (!account) return NextResponse.json({ error: 'Cuenta no encontrada' }, { status: 404 })
 
   try {
-    const profile = await scrapeInstagramUser(account.username, account.apify_session_cookie || undefined)
+    const profile = await scrapeInstagramUser(account.username)
     if (!profile) return NextResponse.json({ error: 'No se pudo traer el perfil' }, { status: 500 })
 
     await db.from('ig_accounts').update({
