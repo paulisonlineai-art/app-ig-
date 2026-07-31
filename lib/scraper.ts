@@ -93,7 +93,7 @@ function parseApifyReel(item: any): ApifyReel | null {
       : new Date().toISOString(),
     likesCount: item.likesCount ?? 0,
     commentsCount: item.commentsCount ?? 0,
-    videoViewCount: item.videoViewCount ?? item.videoPlayCount ?? item.playCount ?? 0,
+    videoViewCount: item.videoPlayCount ?? item.playCount ?? item.videoViewCount ?? 0,
     videoPlayCount: item.videoPlayCount ?? item.playCount ?? 0,
     videoDuration: item.videoDuration ?? 0,
     isSponsored: item.isPaidPartnership ?? item.isSponsored ?? false,
