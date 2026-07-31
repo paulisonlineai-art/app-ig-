@@ -32,8 +32,9 @@ const APIFY_TOKEN = process.env.APIFY_API_TOKEN || ''
 const APIFY_BASE = 'https://api.apify.com/v2'
 
 async function runApifyActor(actorId: string, input: Record<string, any>, timeoutSecs = 120): Promise<any[]> {
+  const encodedId = actorId.replace('/', '~')
   const runRes = await fetch(
-    `${APIFY_BASE}/acts/${actorId}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=${timeoutSecs}`,
+    `${APIFY_BASE}/acts/${encodedId}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=${timeoutSecs}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
