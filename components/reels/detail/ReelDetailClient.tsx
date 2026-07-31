@@ -40,7 +40,7 @@ export default function ReelDetailClient({ reelId, existingAnalysis }: { reelId:
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: `Sobre este reel específico (ID: ${reelId}): ${question}` }),
+        body: JSON.stringify({ question, reelId }),
       })
       const data = await res.json()
       if (!res.ok || data.error) {

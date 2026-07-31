@@ -23,9 +23,12 @@ export async function POST(req: NextRequest) {
 
   const db = createServerSupabase()
 
-  const [{ data: reels }, { data: account }] = await Promise.all([
+  const [{ data: reels }, { data: account }, specificReel] = await Promise.all([
     db.from('reels').select('caption,views,multiplier,like_rate,comment_rate,hook,timestamp,is_trial,comments,permalink').eq('account_id', accountId).order('views', { ascending: false }).limit(20),
     db.from('ig_accounts').select('*').eq('id', accountId).single(),
+    reelId
+      ? db.from('reels').select('caption,views,likes,comments,shares,saves,multiplier,like_rate,comment_rate,hook,timestamp,is_trial,permalink,duration_seconds').eq('id', reelId).single().then(r => r.data)
+      : Promise.resolve(null),
   ])
 
   let commentContext = ''
@@ -44,9 +47,14 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  let reelContext = ''
+  if (specificReel) {
+    reelContext = `\n\n**REEL ESPECÍFICO sobre el que pregunta el usuario:**\nCaption: "${specificReel.caption || '(sin caption)'}"\nViews: ${specificReel.views} | Likes: ${specificReel.likes} | Comments: ${specificReel.comments} | Shares: ${specificReel.shares} | Saves: ${specificReel.saves}\nMultiplicador: ${specificReel.multiplier}x | Like rate: ${specificReel.like_rate}% | Comment rate: ${specificReel.comment_rate}%\nDuración: ${specificReel.duration_seconds || '?'}s | Trial: ${specificReel.is_trial ? 'Sí' : 'No'}\nFecha: ${specificReel.timestamp}\nHook: ${specificReel.hook || '(no analizado)'}`
+  }
+
   try {
     const answer = await chatWithKlar({
-      question: commentContext ? `${question}\n\nCONTEXTO ADICIONAL — Comentarios reales scrapeados:${commentContext}` : question,
+      question: commentContext || reelContext ? `${question}${reelContext}${commentContext ? `\n\nCONTEXTO ADICIONAL — Comentarios reales scrapeados:${commentContext}` : ''}` : question,
       reels: reels || [],
       accountStats: {
         followers: account?.followers_count,
