@@ -30,9 +30,9 @@ export async function POST(req: NextRequest) {
     date: new Date(r.timestamp).toLocaleDateString('es'),
   }))
 
-  const competitorSummary = (competitors || []).map((c: any) => ({
+  const competitorSummary = (competitors || []).map((c: { ig_username: string; competitor_reels?: { caption?: string; views?: number; hook?: string }[] }) => ({
     username: c.ig_username,
-    topReels: (c.competitor_reels || []).slice(0, 3).map((r: any) => ({
+    topReels: (c.competitor_reels || []).slice(0, 3).map((r: { caption?: string; views?: number; hook?: string }) => ({
       caption: r.caption?.slice(0, 60),
       views: r.views,
       hook: r.hook,
@@ -69,7 +69,7 @@ Sé directo y accionable. No uses frases genéricas.`,
 
     const result = message.content[0].type === 'text' ? message.content[0].text : ''
     return NextResponse.json({ result })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Error generando ideas' }, { status: 500 })
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Error generando ideas' }, { status: 500 })
   }
 }

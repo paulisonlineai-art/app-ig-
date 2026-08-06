@@ -3,29 +3,31 @@ import { useState } from 'react'
 
 const PROMPT_TEMPLATES = [
   {
-    label: 'Ideas ganadoras 🏆',
+    label: 'Ideas ganadoras',
     prompt: 'Basado en los reels que mejor me funcionaron en los últimos 30 días y en los de mis competidores, dame las 5 mejores ideas de contenido posibles para reels de reputación, sin repetir temas ya tocados, usando los mismos principios que los hicieron funcionar.',
   },
   {
-    label: 'Por qué fallé ❌',
+    label: 'Por qué fallé',
     prompt: '¿Por qué algunos de mis reels no alcanzaron el promedio? ¿Qué tienen en común los que fallaron? Dame 3 patrones específicos con datos.',
   },
   {
-    label: 'Hook ganador 🎣',
+    label: 'Hook ganador',
     prompt: 'Basado en los hooks de mis reels con mayor multiplicador, ¿cuáles son los 3 tipos de hook que mejor funcionan para mi audiencia? Dame ejemplos concretos y explica por qué funcionan.',
   },
   {
-    label: 'Optimizar guardados 🔖',
+    label: 'Optimizar guardados',
     prompt: 'Quiero aumentar mi tasa de guardados. Basado en mis reels que tuvieron más guardados que el promedio, ¿qué tipo de contenido debo crear? Dame una estrategia específica.',
   },
   {
-    label: 'Mejor día para publicar 📅',
+    label: 'Mejor día para publicar',
     prompt: '¿Cuál es el mejor día y hora para publicar mis reels? Basate en los datos de cuándo mis reels generan más engagement.',
   },
 ]
 
+type TopReel = { caption: string | null; views: number; hook: string | null }
+
 export default function IdeasClient({ topReels, competitors, brandDNA, accountId }: {
-  topReels: any[]
+  topReels: TopReel[]
   competitors: string[]
   brandDNA: string
   accountId: string
@@ -70,24 +72,16 @@ export default function IdeasClient({ topReels, competitors, brandDNA, accountId
 
   return (
     <div className="card" style={{ padding: 20 }}>
-      {/* Quick prompts as chips */}
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: 10 }}>PROMPTS RÁPIDOS</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        <div className="section-label-sm" style={{ marginBottom: 10 }}>PROMPTS RÁPIDOS</div>
+        <div className="pill-select">
           {PROMPT_TEMPLATES.map((t, i) => (
             <button
               key={t.label}
               onClick={() => useTemplate(i)}
               disabled={loading}
-              style={{
-                padding: '8px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                background: activeTemplate === i ? 'var(--accent)' : 'var(--surface-2)',
-                color: activeTemplate === i ? 'white' : 'var(--text)',
-                border: activeTemplate === i ? 'none' : '1px solid var(--border)',
-                transition: 'all 0.15s',
-                opacity: loading ? 0.6 : 1,
-              }}
+              className={`pill-option ${activeTemplate === i ? 'pill-option-active' : 'pill-option-inactive'}`}
+              style={{ opacity: loading ? 0.6 : 1 }}
             >
               {t.label}
             </button>
@@ -95,7 +89,6 @@ export default function IdeasClient({ topReels, competitors, brandDNA, accountId
         </div>
       </div>
 
-      {/* Context info */}
       <div style={{ display: 'flex', gap: 16, marginBottom: 16, fontSize: 12, color: 'var(--text-muted)' }}>
         <span>{topReels.length} reels analizados</span>
         <span>{competitors.length} competidores</span>
@@ -103,18 +96,17 @@ export default function IdeasClient({ topReels, competitors, brandDNA, accountId
           {brandDNA ? '✓ ADN de marca' : '⚠ Sin ADN de marca'}
         </span>
         {!brandDNA && (
-          <a href="/marca" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>Configurar →</a>
+          <a href="/marca" className="warning-link">Configurar →</a>
         )}
       </div>
 
-      {/* Custom prompt */}
       <div style={{ marginBottom: 16 }}>
         <textarea
           value={prompt}
           onChange={e => { setPrompt(e.target.value); setActiveTemplate(null) }}
           placeholder="O escribí tu propia pregunta... Ej: 'Dame 5 ideas de reels sobre marketing digital que generen guardados'"
           rows={3}
-          style={{ width: '100%', resize: 'vertical', fontSize: 13, lineHeight: 1.6, padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontFamily: 'inherit' }}
+          style={{ width: '100%', resize: 'vertical', fontSize: 13, lineHeight: 1.6 }}
         />
       </div>
 
@@ -122,16 +114,12 @@ export default function IdeasClient({ topReels, competitors, brandDNA, accountId
         onClick={() => generate()}
         disabled={loading || !prompt.trim()}
         className="btn btn-primary"
-        style={{ width: '100%', justifyContent: 'center', padding: '12px', marginBottom: result || error || loading ? 16 : 0 }}
+        style={{ width: '100%', justifyContent: 'center', padding: 12, marginBottom: result || error || loading ? 16 : 0 }}
       >
         {loading ? '⏳ Klar está pensando...' : '🤖 Generar con Klar AI'}
       </button>
 
-      {error && (
-        <div style={{ padding: 14, background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.15)', borderRadius: 10, color: '#dc2626', fontSize: 13, marginBottom: 16 }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="info-banner-error" style={{ marginBottom: 16 }}>{error}</div>}
 
       {loading && (
         <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>
@@ -143,18 +131,17 @@ export default function IdeasClient({ topReels, competitors, brandDNA, accountId
 
       {result && !loading && (
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 700 }}>Respuesta de Klar AI</div>
+          <div className="section-header-row" style={{ marginBottom: 12 }}>
+            <span style={{ fontSize: 13, fontWeight: 700 }}>Respuesta de Klar AI</span>
             <button
               onClick={() => navigator.clipboard.writeText(result)}
-              style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 6, padding: '5px 10px', fontSize: 11.5, color: 'var(--text-muted)', cursor: 'pointer' }}
+              className="btn btn-ghost"
+              style={{ fontSize: 11.5, padding: '5px 10px' }}
             >
               📋 Copiar
             </button>
           </div>
-          <div style={{ fontSize: 13.5, lineHeight: 1.8, color: 'var(--text)', whiteSpace: 'pre-wrap', background: 'var(--surface-2)', borderRadius: 10, padding: 20, border: '1px solid var(--border)' }}>
-            {result}
-          </div>
+          <div className="ai-result">{result}</div>
         </div>
       )}
     </div>

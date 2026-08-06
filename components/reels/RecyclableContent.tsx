@@ -74,22 +74,21 @@ Sé concreto y accionable.`,
 
   if (recyclable.length === 0) {
     return (
-      <div className="card" style={{ padding: 40, textAlign: 'center' }}>
-        <span style={{ fontSize: 32, display: 'block', marginBottom: 8 }}>♻️</span>
-        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>No hay contenido reciclable</div>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Todos tus reels con buen engagement ya tienen buenas views.</p>
+      <div className="card empty-state">
+        <div className="empty-state-icon">♻️</div>
+        <p className="empty-state-title">No hay contenido reciclable</p>
+        <p className="empty-state-desc">Todos tus reels con buen engagement ya tienen buenas views.</p>
       </div>
     )
   }
 
   return (
     <div>
-      <div style={{ background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.15)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+      <div className="info-banner info-banner-blue">
         <strong style={{ color: '#2563eb' }}>Contenido valioso enterrado.</strong> Estos reels tuvieron alto save rate o comment rate (la gente los valoró) pero pocas views (el algoritmo no los distribuyó). El contenido es bueno — el hook o timing fallaron. Seleccioná los que querés reciclar.
       </div>
 
-      {/* Select all / count */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+      <div className="section-header-row" style={{ marginBottom: 10 }}>
         <button
           onClick={selectAll}
           style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -103,62 +102,41 @@ Sé concreto y accionable.`,
         )}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+      <div className="reel-list" style={{ gap: 8, marginBottom: 16 }}>
         {recyclable.map((r, i) => {
           const isSelected = selected.has(i)
           return (
             <div
               key={i}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: 12,
-                background: isSelected ? 'var(--accent-light)' : 'var(--surface-2)',
-                borderRadius: 10,
-                border: isSelected ? '1px solid var(--accent)' : '1px solid transparent',
-                transition: 'all 0.15s',
-              }}
+              className={`reel-list-item ${isSelected ? 'reel-list-item-selected' : ''}`}
+              style={{ padding: 12, border: isSelected ? undefined : '1px solid transparent' }}
             >
-              {/* Select button */}
               <button
                 onClick={() => toggleSelect(i)}
-                style={{
-                  width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: isSelected ? 'var(--accent)' : 'var(--surface)',
-                  border: isSelected ? 'none' : '2px solid var(--border)',
-                  color: 'white', fontSize: 14, cursor: 'pointer',
-                  transition: 'all 0.15s',
-                }}
+                className={`check-toggle check-toggle-lg ${isSelected ? 'check-toggle-active' : ''}`}
               >
                 {isSelected ? '✓' : ''}
               </button>
 
               {r.thumbnail_url && (
-                <img
-                  src={`/api/proxy-image?url=${encodeURIComponent(r.thumbnail_url)}`}
-                  alt=""
-                  style={{ width: 40, height: 56, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }}
-                />
+                <img src={`/api/proxy-image?url=${encodeURIComponent(r.thumbnail_url)}`} alt="" style={{ width: 40, height: 56, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
               )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {r.caption?.slice(0, 80) || '(sin caption)'}
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                  Hook: "{r.hook || '?'}"
-                </div>
+              <div className="reel-list-text">
+                <div className="reel-list-title">{r.caption?.slice(0, 80) || '(sin caption)'}</div>
+                <div className="reel-list-sub">Hook: &ldquo;{r.hook || '?'}&rdquo;</div>
               </div>
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#dc2626' }}>{r.views.toLocaleString()}</div>
-                  <div style={{ fontSize: 9, color: 'var(--text-faint)' }}>views</div>
+                <div className="mini-metric">
+                  <div className="mini-metric-value" style={{ color: '#dc2626' }}>{r.views.toLocaleString()}</div>
+                  <div className="mini-metric-label">views</div>
                 </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#059669' }}>{r.save_rate.toFixed(1)}%</div>
-                  <div style={{ fontSize: 9, color: 'var(--text-faint)' }}>saves</div>
+                <div className="mini-metric">
+                  <div className="mini-metric-value" style={{ color: '#059669' }}>{r.save_rate.toFixed(1)}%</div>
+                  <div className="mini-metric-label">saves</div>
                 </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#8b5cf6' }}>{r.comment_rate.toFixed(1)}%</div>
-                  <div style={{ fontSize: 9, color: 'var(--text-faint)' }}>comments</div>
+                <div className="mini-metric">
+                  <div className="mini-metric-value" style={{ color: '#8b5cf6' }}>{r.comment_rate.toFixed(1)}%</div>
+                  <div className="mini-metric-label">comments</div>
                 </div>
               </div>
             </div>
@@ -175,11 +153,7 @@ Sé concreto y accionable.`,
         {loading ? '⏳ Generando hooks nuevos...' : selected.size > 0 ? `♻️ Reciclar ${selected.size} reel${selected.size !== 1 ? 's' : ''} seleccionado${selected.size !== 1 ? 's' : ''}` : suggestions ? '🔄 Regenerar sugerencias' : '♻️ Reciclar todos'}
       </button>
 
-      {suggestions && !loading && (
-        <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, fontSize: 13.5, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-          {suggestions}
-        </div>
-      )}
+      {suggestions && !loading && <div className="ai-result">{suggestions}</div>}
     </div>
   )
 }

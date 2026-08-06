@@ -7,8 +7,6 @@ export default function SyncButton() {
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
 
-  // Pick up the message left behind by a sync that just triggered a reload,
-  // so the diagnostic survives the refresh instead of vanishing with it.
   useEffect(() => {
     const pending = sessionStorage.getItem(STORAGE_KEY)
     if (pending) {
@@ -29,19 +27,23 @@ export default function SyncButton() {
         sessionStorage.setItem(STORAGE_KEY, `✓ ${data.synced} reels — trial reels: ${data.trialCodesFound ?? 0}`)
         window.location.reload()
       }
-    } catch { setMsg('Error') }
-    finally { setLoading(false) }
+    } catch {
+      setMsg('Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }
+
+  const isError = msg.startsWith('Error')
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      {msg && <span style={{ fontSize: 12, color: msg.startsWith('Error') ? 'var(--danger)' : 'var(--success)', fontWeight: 600 }}>{msg}</span>}
-      <button
-        onClick={sync}
-        disabled={loading}
-        className="btn btn-ghost"
-        style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-      >
+      {msg && (
+        <span className={`kpi-change ${isError ? 'kpi-change-down' : 'kpi-change-up'}`}>
+          {msg}
+        </span>
+      )}
+      <button onClick={sync} disabled={loading} className="btn btn-ghost">
         <span style={{ fontSize: 13 }}>{loading ? '⏳' : '↻'}</span>
         {loading ? 'Sincronizando...' : 'Sincronizar'}
       </button>

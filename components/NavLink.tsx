@@ -7,12 +7,8 @@ export default function NavLink({ href, label, icon }: { href: string; label: st
   const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
 
   return (
-    <Link
-      href={href}
-      className={`nav-link${active ? ' active' : ''}`}
-      style={{ marginBottom: 2 }}
-    >
-      <span style={{ fontSize: 15, width: 20, textAlign: 'center', opacity: active ? 1 : 0.6 }}>{icon}</span>
+    <Link href={href} className={`nav-link${active ? ' active' : ''}`}>
+      <span className="nav-link-icon" data-active={active || undefined}>{icon}</span>
       {label}
     </Link>
   )

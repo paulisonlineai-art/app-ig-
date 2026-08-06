@@ -39,31 +39,9 @@ export default function AddCompetitorForm({ accountId }: { accountId: string }) 
         value={username}
         onChange={e => setUsername(e.target.value)}
         placeholder="@username del competidor"
-        style={{
-          flex: 1,
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 10,
-          padding: '12px 16px',
-          color: 'var(--text)',
-          fontSize: 14,
-          outline: 'none',
-        }}
+        style={{ flex: 1 }}
       />
-      <button
-        type="submit"
-        disabled={loading || !username.trim()}
-        style={{
-          background: 'var(--accent)',
-          color: 'white',
-          border: 'none',
-          padding: '12px 20px',
-          borderRadius: 10,
-          fontWeight: 600,
-          fontSize: 14,
-          cursor: loading ? 'not-allowed' : 'pointer',
-        }}
-      >
+      <button type="submit" disabled={loading || !username.trim()} className="btn btn-primary" style={{ padding: '12px 20px', fontSize: 14 }}>
         {loading ? 'Agregando...' : '+ Agregar'}
       </button>
       {error && <p style={{ color: 'var(--danger)', fontSize: 13, alignSelf: 'center' }}>{error}</p>}

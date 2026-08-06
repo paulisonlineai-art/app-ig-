@@ -74,8 +74,9 @@ export async function POST(req: NextRequest) {
     }).eq('id', reelId).eq('competitor_id', reel.competitor_id)
 
     return NextResponse.json({ transcript, wordCount })
-  } catch (e: any) {
-    await db.from('competitor_reels').update({ transcribe_status: 'error', error_message: e.message }).eq('id', reelId).eq('competitor_id', reel.competitor_id)
-    return NextResponse.json({ error: e.message }, { status: 500 })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Error al transcribir'
+    await db.from('competitor_reels').update({ transcribe_status: 'error', error_message: msg }).eq('id', reelId).eq('competitor_id', reel.competitor_id)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

@@ -84,10 +84,11 @@ export default function HookLab({ reels }: { reels: Reel[] }) {
     setShowReelPicker(false)
   }
 
+  const multColor = (m: number) => m >= 1.5 ? '#059669' : m >= 1 ? 'var(--text)' : '#dc2626'
+
   return (
     <div>
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--surface-2)', borderRadius: 8, padding: 3 }}>
+      <div className="tab-bar">
         {[
           { key: 'analysis' as const, label: '📊 Análisis de Hooks' },
           { key: 'generate' as const, label: '✨ Generar Variaciones' },
@@ -95,110 +96,95 @@ export default function HookLab({ reels }: { reels: Reel[] }) {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            style={{
-              flex: 1, padding: '8px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              background: tab === t.key ? 'var(--surface)' : 'transparent',
-              color: tab === t.key ? 'var(--text)' : 'var(--text-muted)',
-              border: tab === t.key ? '1px solid var(--border)' : '1px solid transparent',
-              boxShadow: tab === t.key ? 'var(--shadow-sm)' : 'none',
-            }}
+            className={`tab-bar-item ${tab === t.key ? 'tab-bar-item-active' : ''}`}
           >{t.label}</button>
         ))}
       </div>
 
       {tab === 'analysis' && (
         <>
-          {/* Reel hooks list */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: 4 }}>
+          <div className="reel-list" style={{ marginBottom: 20 }}>
+            <div className="section-label-sm" style={{ marginBottom: 4 }}>
               TUS REELS Y SUS HOOKS ({sortedReels.length})
             </div>
-            {sortedReels.map((r, i) => {
-              const multColor = r.multiplier >= 1.5 ? '#059669' : r.multiplier >= 1 ? 'var(--text)' : '#dc2626'
-              return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'var(--surface-2)', borderRadius: 10 }}>
-                  {r.thumbnail_url && (
-                    <img src={`/api/proxy-image?url=${encodeURIComponent(r.thumbnail_url)}`} alt="" style={{ width: 36, height: 50, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {r.hook ? `"${r.hook}"` : r.caption?.slice(0, 60) || '(sin hook)'}
-                    </div>
-                    {r.hook && r.caption && (
-                      <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {r.caption.slice(0, 70)}
-                      </div>
-                    )}
+            {sortedReels.map((r, i) => (
+              <div key={i} className="reel-list-item">
+                {r.thumbnail_url && (
+                  <img src={`/api/proxy-image?url=${encodeURIComponent(r.thumbnail_url)}`} alt="" className="reel-list-thumb" />
+                )}
+                <div className="reel-list-text">
+                  <div className="reel-list-title">
+                    {r.hook ? `"${r.hook}"` : r.caption?.slice(0, 60) || '(sin hook)'}
                   </div>
-                  <div style={{ display: 'flex', gap: 10, flexShrink: 0, alignItems: 'center' }}>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 12, fontWeight: 700 }}>{r.views.toLocaleString()}</div>
-                      <div style={{ fontSize: 9, color: 'var(--text-faint)' }}>views</div>
-                    </div>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: multColor }}>{r.multiplier.toFixed(1)}x</div>
-                    </div>
+                  {r.hook && r.caption && (
+                    <div className="reel-list-sub">{r.caption.slice(0, 70)}</div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 10, flexShrink: 0, alignItems: 'center' }}>
+                  <div className="mini-metric">
+                    <div className="mini-metric-value">{r.views.toLocaleString()}</div>
+                    <div className="mini-metric-label">views</div>
+                  </div>
+                  <div className="mini-metric">
+                    <div className="mini-metric-value" style={{ fontSize: 13, fontWeight: 800, color: multColor(r.multiplier) }}>{r.multiplier.toFixed(1)}x</div>
                   </div>
                 </div>
-              )
-            })}
+              </div>
+            ))}
           </div>
 
-          {/* AI deep analysis */}
           <button onClick={analyze} disabled={loading} className="btn btn-primary" style={{ width: '100%', marginBottom: analysis ? 16 : 0 }}>
             {loading ? '⏳ Analizando patrones...' : analysis ? '🔄 Regenerar análisis IA' : '🪝 Analizar patrones con IA'}
           </button>
 
           {analysis && (
             <>
-              <div style={{ background: 'var(--accent-light)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 13, fontWeight: 600, color: 'var(--accent)' }}>
-                {analysis.summary}
-              </div>
+              <div className="info-banner info-banner-accent">{analysis.summary}</div>
 
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8 }}>RENDIMIENTO POR TIPO DE HOOK</div>
+                <div className="section-label-sm">RENDIMIENTO POR TIPO DE HOOK</div>
                 {analysis.hook_types
                   .sort((a, b) => b.avg_multiplier - a.avg_multiplier)
                   .map((ht, i) => (
-                    <div key={ht.type} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < analysis.hook_types.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 6, background: i === 0 ? '#059669' : i === 1 ? '#d97706' : 'var(--surface-2)', color: i < 2 ? 'white' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+                    <div key={ht.type} className="ranked-item" style={{ borderBottom: i < analysis.hook_types.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                      <div className="ranked-badge" style={{ background: i === 0 ? '#059669' : i === 1 ? '#d97706' : 'var(--surface-2)', color: i < 2 ? 'white' : 'var(--text-muted)' }}>
                         {i + 1}
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="reel-list-text">
                         <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'capitalize' }}>{ht.type.replace(/_/g, ' ')}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{ht.verdict}</div>
+                        <div className="reel-list-sub">{ht.verdict}</div>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: ht.avg_multiplier >= 1.5 ? '#059669' : ht.avg_multiplier >= 1 ? 'var(--text)' : '#dc2626' }}>{ht.avg_multiplier.toFixed(1)}x</div>
-                        <div style={{ fontSize: 10, color: 'var(--text-faint)' }}>{ht.count} reels</div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: multColor(ht.avg_multiplier) }}>{ht.avg_multiplier.toFixed(1)}x</div>
+                        <div className="mini-metric-label">{ht.count} reels</div>
                       </div>
                     </div>
                   ))}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                <div style={{ background: 'rgba(5,150,105,0.06)', border: '1px solid rgba(5,150,105,0.15)', borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', marginBottom: 8 }}>TOP HOOKS</div>
+              <div className="hook-card-grid" style={{ marginBottom: 16 }}>
+                <div className="hook-card hook-card-success">
+                  <div className="section-label-xs" style={{ color: '#059669' }}>TOP HOOKS</div>
                   {analysis.top_hooks.map((h, i) => (
                     <div key={i} style={{ marginBottom: 8 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600 }}>"{h.hook}"</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{h.multiplier.toFixed(1)}x — {h.why}</div>
+                      <div className="hook-quote">&ldquo;{h.hook}&rdquo;</div>
+                      <div className="hook-meta">{h.multiplier.toFixed(1)}x — {h.why}</div>
                     </div>
                   ))}
                 </div>
-                <div style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.15)', borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', marginBottom: 8 }}>HOOKS QUE NO FUNCIONARON</div>
+                <div className="hook-card hook-card-danger">
+                  <div className="section-label-xs" style={{ color: '#dc2626' }}>HOOKS QUE NO FUNCIONARON</div>
                   {analysis.worst_hooks.map((h, i) => (
                     <div key={i} style={{ marginBottom: 8 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600 }}>"{h.hook}"</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{h.multiplier.toFixed(1)}x — {h.why}</div>
+                      <div className="hook-quote">&ldquo;{h.hook}&rdquo;</div>
+                      <div className="hook-meta">{h.multiplier.toFixed(1)}x — {h.why}</div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 14 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8 }}>REGLAS DE ORO DE TUS HOOKS</div>
+              <div className="hook-card-neutral">
+                <div className="section-label-xs">REGLAS DE ORO DE TUS HOOKS</div>
                 {analysis.golden_rules.map((r, i) => (
                   <div key={i} style={{ fontSize: 12, marginBottom: 4 }}>⭐ {r}</div>
                 ))}
@@ -210,90 +196,59 @@ export default function HookLab({ reels }: { reels: Reel[] }) {
 
       {tab === 'generate' && (
         <>
-          {/* Input mode selector */}
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8 }}>¿DE DÓNDE SALE EL HOOK?</div>
+            <div className="section-label-sm">¿DE DÓNDE SALE EL HOOK?</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={() => { setInputMode('write'); setSelectedReel(null); setShowReelPicker(false) }}
-                style={{
-                  flex: 1, padding: '10px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                  background: inputMode === 'write' ? 'var(--accent)' : 'var(--surface-2)',
-                  color: inputMode === 'write' ? 'white' : 'var(--text-muted)',
-                  border: inputMode === 'write' ? 'none' : '1px solid var(--border)',
-                }}
+                className={`mode-btn ${inputMode === 'write' ? 'mode-btn-active' : 'mode-btn-inactive'}`}
               >✍️ Escribir hook</button>
               <button
                 onClick={() => { setInputMode('reel'); setShowReelPicker(true) }}
-                style={{
-                  flex: 1, padding: '10px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                  background: inputMode === 'reel' ? 'var(--accent)' : 'var(--surface-2)',
-                  color: inputMode === 'reel' ? 'white' : 'var(--text-muted)',
-                  border: inputMode === 'reel' ? 'none' : '1px solid var(--border)',
-                }}
+                className={`mode-btn ${inputMode === 'reel' ? 'mode-btn-active' : 'mode-btn-inactive'}`}
               >🎬 Elegir de mis reels</button>
             </div>
           </div>
 
-          {/* Write mode */}
           {inputMode === 'write' && (
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>ESCRIBE TU HOOK</label>
+              <label className="form-label">ESCRIBE TU HOOK</label>
               <textarea
                 value={hookInput}
                 onChange={e => setHookInput(e.target.value)}
                 placeholder="Ej: 'Esto es lo que nadie te dice sobre vender en Instagram...'"
                 rows={3}
-                style={{ width: '100%', padding: '10px 14px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', resize: 'vertical', fontFamily: 'inherit' }}
+                style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit' }}
               />
             </div>
           )}
 
-          {/* Reel picker */}
           {inputMode === 'reel' && selectedReel && !showReelPicker && (
-            <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: 'var(--surface-2)', borderRadius: 10, border: '1px solid var(--border)' }}>
+            <div className="reel-list-item" style={{ marginBottom: 16, border: '1px solid var(--border)' }}>
               {selectedReel.thumbnail_url && (
                 <img src={`/api/proxy-image?url=${encodeURIComponent(selectedReel.thumbnail_url)}`} alt="" style={{ width: 40, height: 56, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
               )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {selectedReel.caption?.slice(0, 80) || '(sin caption)'}
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                  Hook: "{selectedReel.hook || '?'}" · {selectedReel.views.toLocaleString()} views
-                </div>
+              <div className="reel-list-text">
+                <div className="reel-list-title">{selectedReel.caption?.slice(0, 80) || '(sin caption)'}</div>
+                <div className="reel-list-sub">Hook: &ldquo;{selectedReel.hook || '?'}&rdquo; · {selectedReel.views.toLocaleString()} views</div>
               </div>
-              <button onClick={() => setShowReelPicker(true)} style={{ padding: '6px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+              <button onClick={() => setShowReelPicker(true)} className="btn btn-ghost" style={{ padding: '6px 10px', fontSize: 11 }}>
                 Cambiar
               </button>
             </div>
           )}
 
           {inputMode === 'reel' && showReelPicker && (
-            <div style={{ marginBottom: 16, maxHeight: 320, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)' }}>
-              <div style={{ padding: '10px 14px', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1 }}>
-                ELIGE UN REEL PARA ANALIZAR SU HOOK
-              </div>
+            <div className="picker-list" style={{ marginBottom: 16 }}>
+              <div className="picker-list-header">ELIGE UN REEL PARA ANALIZAR SU HOOK</div>
               {reels.filter(r => r.hook || r.caption).map((r, i) => (
-                <button
-                  key={i}
-                  onClick={() => pickReel(r)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', width: '100%',
-                    background: 'none', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
+                <button key={i} onClick={() => pickReel(r)} className="picker-list-item">
                   {r.thumbnail_url && (
-                    <img src={`/api/proxy-image?url=${encodeURIComponent(r.thumbnail_url)}`} alt="" style={{ width: 32, height: 44, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }} />
+                    <img src={`/api/proxy-image?url=${encodeURIComponent(r.thumbnail_url)}`} alt="" className="reel-list-thumb-sm" />
                   )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text)' }}>
-                      {r.caption?.slice(0, 70) || '(sin caption)'}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                      Hook: "{r.hook || '?'}"
-                    </div>
+                  <div className="reel-list-text">
+                    <div className="reel-list-title" style={{ color: 'var(--text)' }}>{r.caption?.slice(0, 70) || '(sin caption)'}</div>
+                    <div className="reel-list-sub">Hook: &ldquo;{r.hook || '?'}&rdquo;</div>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>
                     {r.views.toLocaleString()} views
@@ -303,21 +258,16 @@ export default function HookLab({ reels }: { reels: Reel[] }) {
             </div>
           )}
 
-          {/* Use top hooks from analysis */}
           {!hookInput && !selectedReel && analysis && (
             <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>O USA UN TOP HOOK TUYO</label>
+              <label className="form-label">O USA UN TOP HOOK TUYO</label>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {[0, 1, 2, 3, 4].map(i => (
                   <button
                     key={i}
                     onClick={() => setSelectedHook(i)}
-                    style={{
-                      padding: '6px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                      background: selectedHook === i ? 'var(--accent)' : 'var(--surface-2)',
-                      color: selectedHook === i ? 'white' : 'var(--text-muted)',
-                      border: selectedHook === i ? 'none' : '1px solid var(--border)',
-                    }}
+                    className={`pill ${selectedHook === i ? 'pill-active' : 'pill-inactive'}`}
+                    style={{ fontSize: 11 }}
                   >Top #{i + 1}</button>
                 ))}
               </div>
@@ -325,12 +275,12 @@ export default function HookLab({ reels }: { reels: Reel[] }) {
           )}
 
           <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>TEMA NUEVO (opcional)</label>
+            <label className="form-label">TEMA NUEVO (opcional)</label>
             <input
               value={topic}
               onChange={e => setTopic(e.target.value)}
               placeholder="Ej: cómo conseguir clientes con contenido"
-              style={{ width: '100%', padding: '10px 14px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)' }}
+              style={{ width: '100%' }}
             />
           </div>
 
@@ -343,11 +293,7 @@ export default function HookLab({ reels }: { reels: Reel[] }) {
             {genLoading ? '⏳ Generando variaciones...' : '✨ Generar 10 variaciones'}
           </button>
 
-          {variations && (
-            <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, fontSize: 13, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-              {variations}
-            </div>
-          )}
+          {variations && <div className="ai-result">{variations}</div>}
         </>
       )}
     </div>

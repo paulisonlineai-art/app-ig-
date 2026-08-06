@@ -14,8 +14,15 @@ export default function DateRangeSelect({ current }: { current: string }) {
   }
 
   return (
-    <select value={current} onChange={e => onChange(e.target.value)} style={{ fontSize: 13, padding: '7px 12px', borderRadius: 8 }}>
-      {DATE_RANGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+    <select
+      value={current}
+      onChange={e => onChange(e.target.value)}
+      className="btn btn-ghost"
+      style={{ appearance: 'auto', paddingRight: 8 }}
+    >
+      {DATE_RANGE_OPTIONS.map(o => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
     </select>
   )
 }

@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     }).eq('id', accountId)
 
     return NextResponse.json({ ok: true, profile })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Error actualizando el perfil' }, { status: 500 })
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Error actualizando el perfil' }, { status: 500 })
   }
 }

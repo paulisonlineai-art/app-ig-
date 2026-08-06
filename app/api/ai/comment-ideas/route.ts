@@ -18,7 +18,8 @@ export async function POST(req: NextRequest) {
   let body: { permalinks?: string[] } = {}
   try { body = await req.json() } catch {}
 
-  let topReels: any[]
+  type ReelRow = { caption: string | null; views: number; comments: number; multiplier: number; permalink: string | null; hook: string | null }
+  let topReels: ReelRow[]
   let reelUrls: string[]
 
   if (body.permalinks?.length) {
@@ -108,7 +109,7 @@ Sé específico y basate solo en los comentarios reales. No inventes — usá la
 
     const result = message.content[0].type === 'text' ? message.content[0].text : ''
     return NextResponse.json({ result, commentCount: comments.length, reelCount: reelUrls.length })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Error analizando comentarios' }, { status: 500 })
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Error analizando comentarios' }, { status: 500 })
   }
 }

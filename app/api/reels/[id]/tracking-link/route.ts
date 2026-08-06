@@ -32,7 +32,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       stripeLink: withParam(account?.stripe_payment_link_base, 'client_reference_id'),
       hotmartLink: withParam(account?.hotmart_checkout_url_base, 'sck'),
     })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Error generando el link' }, { status: 500 })
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Error generando el link' }, { status: 500 })
   }
 }

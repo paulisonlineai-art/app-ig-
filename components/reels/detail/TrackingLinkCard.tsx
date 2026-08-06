@@ -21,8 +21,8 @@ export default function TrackingLinkCard({ reelId }: { reelId: string }) {
 
   return (
     <div className="card" style={{ padding: 20 }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 8 }}>🔗 LINK DE VENTA</div>
-      <p style={{ fontSize: 12, color: 'var(--text-faint)', marginBottom: 12 }}>
+      <div className="detail-label" style={{ marginBottom: 8 }}>🔗 LINK DE VENTA</div>
+      <p className="detail-sublabel" style={{ marginBottom: 12 }}>
         Generá un link único de este reel para pegar en tu flow de ManyChat — las ventas que entren por ahí se atribuyen solas a este reel.
       </p>
 
@@ -32,23 +32,19 @@ export default function TrackingLinkCard({ reelId }: { reelId: string }) {
         </button>
       )}
 
-      {error && (
-        <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--danger)' }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="info-banner-error">{error}</div>}
 
       {data && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {data.stripeLink ? (
             <LinkRow label="Stripe" url={data.stripeLink} />
           ) : (
-            <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>Stripe: configurá tu Payment Link en Settings para generar este link.</div>
+            <p className="detail-sublabel">Stripe: configurá tu Payment Link en Settings para generar este link.</p>
           )}
           {data.hotmartLink ? (
             <LinkRow label="Hotmart" url={data.hotmartLink} />
           ) : (
-            <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>Hotmart: configurá tu checkout en Settings para generar este link.</div>
+            <p className="detail-sublabel">Hotmart: configurá tu checkout en Settings para generar este link.</p>
           )}
         </div>
       )}
@@ -59,9 +55,9 @@ export default function TrackingLinkCard({ reelId }: { reelId: string }) {
 function LinkRow({ label, url }: { label: string; url: string }) {
   return (
     <div>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 4 }}>{label}</div>
+      <div className="stat-tile-label" style={{ marginBottom: 4 }}>{label}</div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <input readOnly value={url} style={{ flex: 1, fontSize: 11.5, fontFamily: 'monospace', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', color: 'var(--text-muted)' }} />
+        <input readOnly value={url} className="detail-panel" style={{ flex: 1, fontSize: 11.5, fontFamily: 'monospace', padding: '8px 10px', border: '1px solid var(--border)' }} />
         <button onClick={() => navigator.clipboard.writeText(url)} className="btn btn-ghost" style={{ fontSize: 12, padding: '6px 10px' }}>📋</button>
       </div>
     </div>

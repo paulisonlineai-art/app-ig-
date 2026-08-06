@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
       multiplier: r.multiplier || 0,
       views: r.views || 0,
       hook: r.hook,
-      narrative_type: (r.structure as any)?.narrative_type,
-      desire_appealed: (r.structure as any)?.desire_appealed,
+      narrative_type: (r.structure as Record<string, unknown>)?.narrative_type as string | undefined,
+      desire_appealed: (r.structure as Record<string, unknown>)?.desire_appealed as string | undefined,
     }))
 
     const fields = await autoGenerateBrandDNA({
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       fields,
       ...(profileFetchFailed ? { warning: 'No se pudo traer tu bio de Instagram (Apify falló) — el resultado se generó solo con tus reels.' } : {}),
     })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Error generando ADN de marca' }, { status: 500 })
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Error generando ADN de marca' }, { status: 500 })
   }
 }

@@ -86,77 +86,55 @@ El guión debe sonar natural, no como un robot. Adaptá el tono a la intensidad 
     }
   }
 
-  const pillStyle = (selected: boolean) => ({
-    padding: '6px 14px',
-    borderRadius: 20,
-    fontSize: 12,
-    fontWeight: 600 as const,
-    border: selected ? '2px solid var(--accent)' : '1px solid var(--border)',
-    background: selected ? 'var(--accent-light)' : 'var(--surface-2)',
-    color: selected ? 'var(--accent)' : 'var(--text-muted)',
-    cursor: 'pointer' as const,
-  })
-
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 600, maxHeight: '90vh', overflow: 'auto', padding: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-body" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
           <div>
             <h2 style={{ fontSize: 18, fontWeight: 800 }}>Generador de guiones</h2>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{piece.title}</p>
+            <p className="dash-subtitle" style={{ marginTop: 2 }}>{piece.title}</p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, color: 'var(--text-muted)', cursor: 'pointer' }}>✕</button>
+          <button onClick={onClose} className="modal-close">✕</button>
         </div>
 
-        {/* Format */}
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, display: 'block', letterSpacing: '0.05em' }}>FORMATO</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <label className="form-label" style={{ letterSpacing: '0.05em', fontWeight: 700, marginBottom: 8 }}>FORMATO</label>
+          <div className="pill-select">
             {FORMATS.map(f => (
-              <button key={f.id} onClick={() => setFormat(f.id)} style={pillStyle(format === f.id)}>
+              <button key={f.id} onClick={() => setFormat(f.id)} className={`pill-option ${format === f.id ? 'pill-option-active' : 'pill-option-inactive'}`}>
                 {f.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Objective */}
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, display: 'block', letterSpacing: '0.05em' }}>OBJETIVO</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <label className="form-label" style={{ letterSpacing: '0.05em', fontWeight: 700, marginBottom: 8 }}>OBJETIVO</label>
+          <div className="pill-select">
             {OBJECTIVES.map(o => (
-              <button key={o.id} onClick={() => setObjective(o.id)} style={pillStyle(objective === o.id)}>
+              <button key={o.id} onClick={() => setObjective(o.id)} className={`pill-option ${objective === o.id ? 'pill-option-active' : 'pill-option-inactive'}`}>
                 {o.emoji} {o.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Intensity */}
         <div style={{ marginBottom: 20 }}>
-          <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, display: 'block', letterSpacing: '0.05em' }}>INTENSIDAD</label>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <label className="form-label" style={{ letterSpacing: '0.05em', fontWeight: 700, marginBottom: 8 }}>INTENSIDAD</label>
+          <div className="pill-select">
             {INTENSITIES.map(i => (
-              <button key={i.id} onClick={() => setIntensity(i.id)} style={pillStyle(intensity === i.id)}>
+              <button key={i.id} onClick={() => setIntensity(i.id)} className={`pill-option ${intensity === i.id ? 'pill-option-active' : 'pill-option-inactive'}`}>
                 {i.label}
               </button>
             ))}
           </div>
         </div>
 
-        <button
-          onClick={generate}
-          disabled={loading}
-          style={{ width: '100%', background: 'var(--accent)', color: 'white', border: 'none', padding: '12px', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: loading ? 'wait' : 'pointer', marginBottom: 16 }}
-        >
+        <button onClick={generate} disabled={loading} className="btn btn-primary" style={{ width: '100%', padding: 12, fontSize: 14, marginBottom: 16 }}>
           {loading ? '⏳ Generando guión...' : script ? '🔄 Regenerar guión' : '✨ Generar guión'}
         </button>
 
-        {error && (
-          <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--danger)', marginBottom: 16 }}>
-            {error}
-          </div>
-        )}
+        {error && <div className="info-banner-error" style={{ marginBottom: 16 }}>{error}</div>}
 
         {loading && (
           <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>
@@ -166,13 +144,12 @@ El guión debe sonar natural, no como un robot. Adaptá el tono a la intensidad 
         )}
 
         {script && !loading && (
-          <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
-            <div style={{ fontSize: 13.5, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-              {script}
-            </div>
+          <div className="ai-result">
+            {script}
             <button
               onClick={() => navigator.clipboard.writeText(script)}
-              style={{ marginTop: 12, background: 'var(--surface-3)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              className="btn btn-ghost"
+              style={{ marginTop: 12 }}
             >
               📋 Copiar guión
             </button>
@@ -197,7 +174,7 @@ export default function ContentPipeline({ pieces, stages, accountId }: { pieces:
   const moveStage = async (pieceId: string, newStatus: string) => {
     const prevStatus = items.find(p => p.id === pieceId)?.status
     setError('')
-    setItems(prev => prev.map(p => p.id === pieceId ? { ...p, status: newStatus as any } : p))
+    setItems(prev => prev.map(p => p.id === pieceId ? { ...p, status: newStatus as ContentPiece['status'] } : p))
     try {
       const res = await fetch('/api/content/update', {
         method: 'PATCH',
@@ -205,9 +182,9 @@ export default function ContentPipeline({ pieces, stages, accountId }: { pieces:
         body: JSON.stringify({ id: pieceId, status: newStatus }),
       })
       if (!res.ok) throw new Error('No se pudo mover la pieza')
-    } catch (e: any) {
-      setItems(prev => prev.map(p => p.id === pieceId ? { ...p, status: prevStatus as any } : p))
-      setError(e.message || 'No se pudo mover la pieza')
+    } catch (e: unknown) {
+      setItems(prev => prev.map(p => p.id === pieceId ? { ...p, status: prevStatus as ContentPiece['status'] } : p))
+      setError(e instanceof Error ? e.message : 'No se pudo mover la pieza')
     }
   }
 
@@ -240,17 +217,11 @@ export default function ContentPipeline({ pieces, stages, accountId }: { pieces:
 
   return (
     <div>
-      {error && (
-        <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--danger)', marginBottom: 16 }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="info-banner-error" style={{ marginBottom: 16 }}>{error}</div>}
+
       <div style={{ marginBottom: 16 }}>
         {!showForm ? (
-          <button
-            onClick={() => setShowForm(true)}
-            style={{ background: 'var(--accent)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
-          >
+          <button onClick={() => setShowForm(true)} className="btn btn-primary" style={{ fontSize: 14 }}>
             + Nueva pieza
           </button>
         ) : (
@@ -261,66 +232,58 @@ export default function ContentPipeline({ pieces, stages, accountId }: { pieces:
               onChange={e => setNewTitle(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addPiece()}
               placeholder="Título de la pieza..."
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px', color: 'var(--text)', fontSize: 14, outline: 'none', width: 280 }}
+              style={{ width: 280, fontSize: 14 }}
             />
-            <select value={newType} onChange={e => setNewType(e.target.value)} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px', color: 'var(--text)', fontSize: 14 }}>
+            <select value={newType} onChange={e => setNewType(e.target.value)} style={{ fontSize: 14 }}>
               <option value="reel">Reel</option>
               <option value="trial_reel">Trial Reel</option>
               <option value="story">Historia</option>
               <option value="post">Post</option>
             </select>
-            <button onClick={addPiece} disabled={saving} style={{ background: 'var(--accent)', color: 'white', border: 'none', padding: '10px 16px', borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+            <button onClick={addPiece} disabled={saving} className="btn btn-primary" style={{ fontSize: 14 }}>
               {saving ? '...' : 'Guardar'}
             </button>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-muted)', padding: '10px 14px', borderRadius: 10, fontSize: 14, cursor: 'pointer' }}>
+            <button onClick={() => setShowForm(false)} className="btn btn-ghost" style={{ fontSize: 14 }}>
               Cancelar
             </button>
           </div>
         )}
       </div>
 
-      {/* Kanban board */}
-      <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 16 }}>
+      <div className="kanban-board">
         {stages.map(stage => (
-          <div key={stage.id} style={{ minWidth: 240, flex: '0 0 240px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: stage.color }} />
-              <span style={{ fontSize: 13, fontWeight: 600 }}>{stage.label}</span>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 'auto' }}>{byStage(stage.id).length}</span>
+          <div key={stage.id} className="kanban-column">
+            <div className="kanban-column-header">
+              <div className="kanban-column-dot" style={{ background: stage.color }} />
+              <span className="kanban-column-label">{stage.label}</span>
+              <span className="kanban-column-count">{byStage(stage.id).length}</span>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {byStage(stage.id).map(piece => (
-                <div
-                  key={piece.id}
-                  style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 14 }}
-                >
-                  <div style={{ fontSize: 12, color: stage.color, fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div key={piece.id} className="kanban-card">
+                  <div className="kanban-card-type" style={{ color: stage.color }}>
                     {piece.content_type}
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, lineHeight: 1.4 }}>
-                    {piece.title}
-                  </div>
+                  <div className="kanban-card-title">{piece.title}</div>
                   {piece.target_publish_date && (
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>
+                    <div className="kanban-card-date">
                       📅 {new Date(piece.target_publish_date).toLocaleDateString('es')}
                     </div>
                   )}
 
-                  {/* Script generator button */}
                   <button
                     onClick={() => setScriptPiece(piece)}
-                    style={{ width: '100%', background: 'var(--accent-light)', border: '1px solid transparent', color: 'var(--accent)', padding: '6px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', marginBottom: 8 }}
+                    style={{ width: '100%', background: 'var(--accent-light)', border: '1px solid transparent', color: 'var(--accent)', padding: 6, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', marginBottom: 8 }}
                   >
                     ✨ Generar guión
                   </button>
 
-                  {/* Stage navigation */}
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div className="kanban-card-actions">
                     {stages.findIndex(s => s.id === piece.status) > 0 && (
                       <button
                         onClick={() => moveStage(piece.id, stages[stages.findIndex(s => s.id === piece.status) - 1].id)}
-                        style={{ flex: 1, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text-muted)', padding: '6px', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}
+                        className="btn btn-ghost" style={{ flex: 1, padding: 6, fontSize: 11 }}
                       >
                         ← Atrás
                       </button>
@@ -328,7 +291,7 @@ export default function ContentPipeline({ pieces, stages, accountId }: { pieces:
                     {stages.findIndex(s => s.id === piece.status) < stages.length - 1 && (
                       <button
                         onClick={() => moveStage(piece.id, stages[stages.findIndex(s => s.id === piece.status) + 1].id)}
-                        style={{ flex: 1, background: stage.color, border: 'none', color: 'white', padding: '6px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
+                        style={{ flex: 1, background: stage.color, border: 'none', color: 'white', padding: 6, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
                       >
                         Avanzar →
                       </button>
@@ -341,10 +304,7 @@ export default function ContentPipeline({ pieces, stages, accountId }: { pieces:
         ))}
       </div>
 
-      {/* Script generator modal */}
-      {scriptPiece && (
-        <ScriptGenerator piece={scriptPiece} onClose={() => setScriptPiece(null)} />
-      )}
+      {scriptPiece && <ScriptGenerator piece={scriptPiece} onClose={() => setScriptPiece(null)} />}
     </div>
   )
 }

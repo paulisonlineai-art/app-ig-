@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ acc
     // the webhook signature, so a placeholder API key is fine.
     const stripe = new Stripe('sk_placeholder')
     event = stripe.webhooks.constructEvent(rawBody, sig || '', account.stripe_webhook_secret)
-  } catch (e: any) {
+  } catch {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 

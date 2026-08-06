@@ -62,8 +62,9 @@ export async function POST(req: NextRequest) {
     }).eq('id', refId).eq('account_id', accountId)
 
     return NextResponse.json({ transcript, wordCount })
-  } catch (e: any) {
-    await db.from('reference_videos').update({ status: 'error', error_message: e.message }).eq('id', refId).eq('account_id', accountId)
-    return NextResponse.json({ error: e.message }, { status: 500 })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Error al transcribir'
+    await db.from('reference_videos').update({ status: 'error', error_message: msg }).eq('id', refId).eq('account_id', accountId)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

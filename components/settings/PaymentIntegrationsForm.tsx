@@ -1,21 +1,10 @@
 'use client'
 import { useState } from 'react'
 
-const inputStyle = {
-  background: 'var(--surface-2)',
-  border: '1px solid var(--border)',
-  borderRadius: 10,
-  padding: '10px 12px',
-  color: 'var(--text)',
-  fontSize: 13,
-  outline: 'none',
-  width: '100%',
-}
-
 function WebhookUrlRow({ url }: { url: string }) {
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-      <input readOnly value={url} style={{ ...inputStyle, fontFamily: 'monospace', fontSize: 11.5, color: 'var(--text-muted)' }} />
+      <input readOnly value={url} style={{ fontFamily: 'monospace', fontSize: 11.5, color: 'var(--text-muted)', width: '100%' }} />
       <button type="button" onClick={() => navigator.clipboard.writeText(url)} className="btn btn-ghost" style={{ fontSize: 12, padding: '8px 10px', whiteSpace: 'nowrap' }}>
         📋 Copiar
       </button>
@@ -23,7 +12,16 @@ function WebhookUrlRow({ url }: { url: string }) {
   )
 }
 
-export default function PaymentIntegrationsForm({ accountId, initial }: { accountId: string; initial: any }) {
+interface PaymentConfig {
+  stripe_payment_link_base?: string
+  stripe_webhook_secret?: string
+  hotmart_checkout_url_base?: string
+  hotmart_hottok?: string
+  skool_fixed_price?: string
+  skool_webhook_secret?: string
+}
+
+export default function PaymentIntegrationsForm({ accountId, initial }: { accountId: string; initial: PaymentConfig | null }) {
   const [form, setForm] = useState({
     stripe_payment_link_base: initial?.stripe_payment_link_base || '',
     stripe_webhook_secret: initial?.stripe_webhook_secret || '',
@@ -54,8 +52,8 @@ export default function PaymentIntegrationsForm({ accountId, initial }: { accoun
       }
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
-    } catch (e: any) {
-      setError(e.message || 'No se pudo guardar')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'No se pudo guardar')
     } finally {
       setSaving(false)
     }
@@ -65,7 +63,6 @@ export default function PaymentIntegrationsForm({ accountId, initial }: { accoun
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Stripe */}
       <div>
         <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>💳 Stripe</div>
         <p style={{ fontSize: 11.5, color: 'var(--text-faint)', marginBottom: 8 }}>
@@ -73,12 +70,11 @@ export default function PaymentIntegrationsForm({ accountId, initial }: { accoun
         </p>
         <WebhookUrlRow url={`${origin}/api/webhooks/stripe/${accountId}`} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <input placeholder="https://buy.stripe.com/xxxx" value={form.stripe_payment_link_base} onChange={set('stripe_payment_link_base')} style={inputStyle} />
-          <input placeholder="whsec_..." type="password" value={form.stripe_webhook_secret} onChange={set('stripe_webhook_secret')} style={inputStyle} />
+          <input placeholder="https://buy.stripe.com/xxxx" value={form.stripe_payment_link_base} onChange={set('stripe_payment_link_base')} />
+          <input placeholder="whsec_..." type="password" value={form.stripe_webhook_secret} onChange={set('stripe_webhook_secret')} />
         </div>
       </div>
 
-      {/* Hotmart */}
       <div>
         <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>🔶 Hotmart</div>
         <p style={{ fontSize: 11.5, color: 'var(--text-faint)', marginBottom: 8 }}>
@@ -86,12 +82,11 @@ export default function PaymentIntegrationsForm({ accountId, initial }: { accoun
         </p>
         <WebhookUrlRow url={`${origin}/api/webhooks/hotmart/${accountId}`} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <input placeholder="https://pay.hotmart.com/XXXX" value={form.hotmart_checkout_url_base} onChange={set('hotmart_checkout_url_base')} style={inputStyle} />
-          <input placeholder="Hottok" type="password" value={form.hotmart_hottok} onChange={set('hotmart_hottok')} style={inputStyle} />
+          <input placeholder="https://pay.hotmart.com/XXXX" value={form.hotmart_checkout_url_base} onChange={set('hotmart_checkout_url_base')} />
+          <input placeholder="Hottok" type="password" value={form.hotmart_hottok} onChange={set('hotmart_hottok')} />
         </div>
       </div>
 
-      {/* Skool */}
       <div>
         <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>🟢 Skool</div>
         <p style={{ fontSize: 11.5, color: 'var(--text-faint)', marginBottom: 8 }}>
@@ -99,8 +94,8 @@ export default function PaymentIntegrationsForm({ accountId, initial }: { accoun
         </p>
         <WebhookUrlRow url={`${origin}/api/webhooks/skool/${accountId}`} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <input placeholder="Precio fijo USD" type="number" value={form.skool_fixed_price} onChange={set('skool_fixed_price')} style={inputStyle} />
-          <input placeholder="Secreto compartido" type="password" value={form.skool_webhook_secret} onChange={set('skool_webhook_secret')} style={inputStyle} />
+          <input placeholder="Precio fijo USD" type="number" value={form.skool_fixed_price} onChange={set('skool_fixed_price')} />
+          <input placeholder="Secreto compartido" type="password" value={form.skool_webhook_secret} onChange={set('skool_webhook_secret')} />
         </div>
       </div>
 

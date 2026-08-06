@@ -42,8 +42,6 @@ export default function ReferenciasClient({ references, accountId, brandDNA }: {
       const data = await res.json()
       if (data.error) { setError(data.error); return }
 
-      // Upload the video bytes straight to Supabase Storage — never through
-      // a Vercel function, which caps request bodies well below video size.
       const supabase = createAuthBrowserClient()
       const { error: uploadError } = await supabase.storage
         .from(BUCKET)
@@ -72,8 +70,8 @@ export default function ReferenciasClient({ references, accountId, brandDNA }: {
 
       setRefs(prev => [analyzed.ref, ...prev])
       setProgress('')
-    } catch (e: any) {
-      setError(e.message || 'Error al procesar el video')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error al procesar el video')
       setProgress('')
     } finally {
       setUploading(false)
@@ -95,7 +93,6 @@ export default function ReferenciasClient({ references, accountId, brandDNA }: {
 
   return (
     <div>
-      {/* Upload zone */}
       <div
         onClick={() => !uploading && fileRef.current?.click()}
         onDragOver={e => { e.preventDefault(); setDragOver(true) }}
@@ -137,18 +134,13 @@ export default function ReferenciasClient({ references, accountId, brandDNA }: {
         )}
       </div>
 
-      {error && (
-        <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: 'var(--danger)', marginBottom: 20 }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="info-banner-error" style={{ marginBottom: 20 }}>{error}</div>}
 
-      {/* References list */}
       {refs.length === 0 && !uploading ? (
-        <div className="card" style={{ padding: 48, textAlign: 'center' }}>
-          <div style={{ fontSize: 36, marginBottom: 12 }}>📁</div>
-          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No hay videos de referencia todavía</p>
-          <p style={{ color: 'var(--text-faint)', fontSize: 12, marginTop: 4 }}>Subí el primer video para empezar</p>
+        <div className="card empty-state">
+          <div className="empty-state-icon">📁</div>
+          <p className="empty-state-title">No hay videos de referencia todavía</p>
+          <p className="empty-state-desc">Subí el primer video para empezar</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

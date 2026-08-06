@@ -30,31 +30,26 @@ function formatK(n: number) {
   return String(n)
 }
 
-function SidebarContent({ account, accountId }: { account: any; accountId: string }) {
+function SidebarContent({ account, accountId }: { account: { username?: string; followers_count?: number } | null; accountId: string }) {
   return (
     <>
-      {/* Profile */}
-      <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div className="sidebar-profile">
+        <div className="sidebar-profile-inner">
           <ProfileAvatar accountId={accountId} username={account?.username} size={34} border="2px solid var(--accent-light)" />
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              @{account?.username || 'cuenta'}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-faint)', fontWeight: 500 }}>
+            <div className="sidebar-username">@{account?.username || 'cuenta'}</div>
+            <div className="sidebar-followers">
               {account?.followers_count ? formatK(account.followers_count) + ' seguidores' : 'Klar'}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Nav */}
-      <nav style={{ flex: 1, padding: '8px 10px', overflowY: 'auto' }} aria-label="Navegación principal">
+      <nav className="sidebar-nav" aria-label="Navegación principal">
         {NAV_TOP.map(item => <NavLink key={item.href} {...item} />)}
       </nav>
 
-      {/* Bottom */}
-      <div style={{ padding: '8px 10px 12px', borderTop: '1px solid var(--border)' }}>
+      <div className="sidebar-bottom">
         {NAV_BOTTOM.map(item => <NavLink key={item.href} {...item} />)}
         <LogoutButton />
       </div>
@@ -75,11 +70,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   ])
 
   const r30 = reels30d || []
-  const totalViews = r30.reduce((s: number, x: any) => s + x.views, 0)
-  const totalInteractions = r30.reduce((s: number, x: any) => s + x.likes + x.comments + x.shares + x.saves, 0)
+  const totalViews = r30.reduce((s: number, x: { views: number }) => s + x.views, 0)
+  const totalInteractions = r30.reduce((s: number, x: { likes: number; comments: number; shares: number; saves: number }) =>
+    s + x.likes + x.comments + x.shares + x.saves, 0)
   const engRate = totalViews > 0 ? ((totalInteractions / totalViews) * 100).toFixed(1) : '0'
 
-  const syncedAt = (lastSync as any)?.[0]?.synced_at
+  const syncedAt = (lastSync as { synced_at: string }[] | null)?.[0]?.synced_at
   const syncLabel = syncedAt
     ? (() => {
         const diff = Date.now() - new Date(syncedAt).getTime()
@@ -100,7 +96,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </MobileNav>
 
       <div className="dashboard-main">
-        {/* Header with always-visible KPIs */}
         <header className="dash-topbar">
           <ProfileAvatar accountId={accountId} username={account?.username} size={26} />
           <span className="dash-topbar-user">@{account?.username}</span>

@@ -22,14 +22,15 @@ export async function GET(req: NextRequest) {
   // is what actually exhausts the monthly quota in one burst. If Apify is
   // already out of quota, every remaining account would fail identically,
   // so stop early instead of burning through the whole list for nothing.
-  const results: any[] = []
+  const results: Record<string, unknown>[] = []
   for (const account of accounts) {
     try {
       const result = await syncAccountReels(account.id)
       results.push({ username: account.username, ...result })
-    } catch (e: any) {
-      results.push({ username: account.username, error: e.message })
-      if (/usage.*limit|quota/i.test(e.message || '')) {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Error desconocido'
+      results.push({ username: account.username, error: msg })
+      if (/usage.*limit|quota/i.test(msg)) {
         results.push({ stopped: true, reason: 'Apify usage limit hit — skipping remaining accounts' })
         break
       }

@@ -13,11 +13,11 @@ export default async function MarcaPage({ searchParams }: { searchParams: Promis
   return (
     <div>
       {isOnboarding && !brand?.content && (
-        <div style={{ background: 'var(--accent-light)', border: '1px solid var(--accent)', borderRadius: 12, padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <span style={{ fontSize: 28 }}>✨</span>
+        <div className="onboarding-banner">
+          <span className="onboarding-banner-icon">✨</span>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>Analizando tu Instagram con IA...</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+            <div className="onboarding-banner-title">Analizando tu Instagram con IA...</div>
+            <div className="onboarding-banner-desc">
               Klar está generando tu ADN de Marca automáticamente. Revisá los campos y ajustá lo que quieras.
             </div>
           </div>
@@ -25,8 +25,8 @@ export default async function MarcaPage({ searchParams }: { searchParams: Promis
       )}
 
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 2 }}>ADN de Marca</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+        <h1 className="dash-greeting">ADN de Marca</h1>
+        <p className="dash-subtitle">
           Esta información alimenta la IA de Klar para darte análisis y sugerencias personalizadas.
         </p>
       </div>

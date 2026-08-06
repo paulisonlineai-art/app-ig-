@@ -25,8 +25,8 @@ export default async function PipelinePage() {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 2 }}>Pipeline</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+        <h1 className="dash-greeting">Pipeline</h1>
+        <p className="dash-subtitle">
           Organizá tu contenido desde la idea hasta la publicación.
         </p>
       </div>

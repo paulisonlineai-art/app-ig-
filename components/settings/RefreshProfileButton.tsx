@@ -13,8 +13,8 @@ export default function RefreshProfileButton() {
       const data = await res.json()
       if (!res.ok || data.error) { setMsg(`Error: ${data.error}`); return }
       window.location.reload()
-    } catch (e: any) {
-      setMsg(e.message || 'Error')
+    } catch (e: unknown) {
+      setMsg(e instanceof Error ? e.message : 'Error')
     } finally {
       setLoading(false)
     }

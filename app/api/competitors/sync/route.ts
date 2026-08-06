@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ synced })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Error sincronizando competidor' }, { status: 500 })
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Error sincronizando competidor' }, { status: 500 })
   }
 }

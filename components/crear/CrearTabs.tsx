@@ -14,22 +14,12 @@ export default function CrearTabs({ children }: { children: Record<string, React
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 0 }}>
+      <div className="tab-bar" style={{ marginBottom: 24 }}>
         {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActive(tab.id)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '10px 16px',
-              fontSize: 13, fontWeight: active === tab.id ? 700 : 500,
-              color: active === tab.id ? 'var(--accent)' : 'var(--text-muted)',
-              background: 'none', border: 'none', cursor: 'pointer',
-              borderBottom: active === tab.id ? '2px solid var(--accent)' : '2px solid transparent',
-              marginBottom: -1,
-              transition: 'all 0.15s',
-              whiteSpace: 'nowrap',
-            }}
+            className={`tab-bar-item ${active === tab.id ? 'tab-bar-item-active' : ''}`}
           >
             <span style={{ fontSize: 14 }}>{tab.icon}</span>
             {tab.label}

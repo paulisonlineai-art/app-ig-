@@ -49,25 +49,8 @@ export default function ThemeToggle() {
   const label = mode === 'light' ? 'Claro' : mode === 'dark' ? 'Oscuro' : 'Auto'
 
   return (
-    <button
-      onClick={cycle}
-      title={`Tema: ${label}`}
-      style={{
-        background: 'var(--surface-2)',
-        border: '1px solid var(--border)',
-        borderRadius: 8,
-        padding: '6px 10px',
-        fontSize: 12,
-        fontWeight: 600,
-        color: 'var(--text-muted)',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4,
-        transition: 'all 0.15s',
-      }}
-    >
-      <span style={{ fontSize: 14 }}>{icon}</span>
+    <button onClick={cycle} title={`Tema: ${label}`} className="theme-toggle">
+      <span className="theme-toggle-icon">{icon}</span>
       {label}
     </button>
   )

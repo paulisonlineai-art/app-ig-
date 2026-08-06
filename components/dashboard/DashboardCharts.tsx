@@ -1,54 +1,69 @@
 'use client'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Area, AreaChart } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts'
 
-export default function DashboardCharts({ audienceStats, reels }: { audienceStats: any[]; reels: any[] }) {
+interface ReelData {
+  views: number
+  timestamp: string
+}
+
+interface AudienceStat {
+  date: string
+  reach: number
+  impressions: number
+}
+
+export default function DashboardCharts({ audienceStats, reels }: { audienceStats: AudienceStat[]; reels: ReelData[] }) {
+  const reelData = reels
+    .filter(r => r.timestamp)
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    .map(r => ({
+      date: new Date(r.timestamp).toLocaleDateString('es', { month: 'short', day: 'numeric' }),
+      views: r.views || 0,
+    }))
+
   const reachData = audienceStats.map(s => ({
     date: new Date(s.date).toLocaleDateString('es', { month: 'short', day: 'numeric' }),
     Alcance: s.reach,
     Impresiones: s.impressions,
   }))
 
-  const reelData = reels
-    .filter((r: any) => r.timestamp)
-    .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-    .map((r: any) => ({
-      date: new Date(r.timestamp).toLocaleDateString('es', { month: 'short', day: 'numeric' }),
-      views: r.views || 0,
-    }))
-
   const tooltipStyle = {
-    background: '#0a0a0a',
-    border: '1px solid #222',
+    background: 'var(--chart-tooltip-bg)',
+    border: '1px solid var(--chart-tooltip-border)',
     borderRadius: 10,
     fontSize: 12,
-    color: '#fff',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+    color: 'var(--chart-tooltip-text)',
+    boxShadow: 'var(--shadow-lg)',
     padding: '8px 12px',
   }
 
+  const axisTickProps = { fill: 'var(--text-faint)', fontSize: 10 }
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px 8px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Vistas por reel</div>
+    <div className="chart-grid">
+      <div className="chart-card" style={{ animationDelay: '0.28s' }}>
+        <div className="chart-card-header">
+          <span className="chart-card-title">Vistas por reel</span>
+          {reelData.length > 0 && <span className="chart-card-badge">{reelData.length} reels</span>}
         </div>
-        <div style={{ padding: '4px 12px 12px' }}>
+        <div className="chart-card-body">
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={reelData}>
-              <XAxis dataKey="date" tick={{ fill: '#555', fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <XAxis dataKey="date" tick={axisTickProps} tickLine={false} axisLine={false} interval="preserveStartEnd" />
               <YAxis hide />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="views" fill="#F7007C" radius={[4, 4, 0, 0]} />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'var(--chart-grid)' }} />
+              <Bar dataKey="views" fill="var(--accent)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px 8px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Engagement trend</div>
+      <div className="chart-card" style={{ animationDelay: '0.34s' }}>
+        <div className="chart-card-header">
+          <span className="chart-card-title">Engagement trend</span>
+          {reachData.length > 0 && <span className="chart-card-badge">{reachData.length} días</span>}
         </div>
-        <div style={{ padding: '4px 12px 12px' }}>
+        <div className="chart-card-body">
           <ResponsiveContainer width="100%" height={160}>
             <AreaChart data={reachData}>
               <defs>
@@ -57,9 +72,9 @@ export default function DashboardCharts({ audienceStats, reels }: { audienceStat
                   <stop offset="100%" stopColor="#F7007C" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="date" tick={{ fill: '#555', fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <XAxis dataKey="date" tick={axisTickProps} tickLine={false} axisLine={false} interval="preserveStartEnd" />
               <YAxis hide />
-              <Tooltip contentStyle={tooltipStyle} />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: 'var(--border-strong)' }} />
               <Area type="monotone" dataKey="Alcance" stroke="#F7007C" strokeWidth={2} fill="url(#engGrad)" dot={false} />
             </AreaChart>
           </ResponsiveContainer>

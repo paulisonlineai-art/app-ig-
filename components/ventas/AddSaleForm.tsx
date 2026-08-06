@@ -2,7 +2,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function AddSaleForm({ accountId, reels }: { accountId: string; reels: any[] }) {
+type ReelOption = { id: string; caption: string | null }
+
+export default function AddSaleForm({ accountId, reels }: { accountId: string; reels: ReelOption[] }) {
   const [form, setForm] = useState({ amount: '', installments: '1', closed_at: new Date().toISOString().split('T')[0], reel_id: '', notes: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -38,77 +40,49 @@ export default function AddSaleForm({ accountId, reels }: { accountId: string; r
         const data = await res.json().catch(() => ({}))
         setError(data.error || 'No se pudo guardar la venta')
       }
-    } catch (e: any) {
-      setError(e.message || 'No se pudo guardar la venta')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'No se pudo guardar la venta')
     } finally {
       setLoading(false)
     }
-  }
-
-  const inputStyle = {
-    background: 'var(--surface-2)',
-    border: '1px solid var(--border)',
-    borderRadius: 10,
-    padding: '12px 14px',
-    color: 'var(--text)',
-    fontSize: 14,
-    outline: 'none',
-    width: '100%',
   }
 
   return (
     <form onSubmit={submit}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
         <div>
-          <label style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>Valor total (USD)</label>
-          <input type="number" placeholder="8000" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} style={inputStyle} required />
+          <label className="form-label">Valor total (USD)</label>
+          <input type="number" placeholder="8000" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} required />
         </div>
         <div>
-          <label style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>Cuotas</label>
-          <input type="number" min="1" value={form.installments} onChange={e => setForm(f => ({ ...f, installments: e.target.value }))} style={inputStyle} />
+          <label className="form-label">Cuotas</label>
+          <input type="number" min="1" value={form.installments} onChange={e => setForm(f => ({ ...f, installments: e.target.value }))} />
         </div>
         <div>
-          <label style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>Fecha de cierre</label>
-          <input type="date" value={form.closed_at} onChange={e => setForm(f => ({ ...f, closed_at: e.target.value }))} style={inputStyle} />
+          <label className="form-label">Fecha de cierre</label>
+          <input type="date" value={form.closed_at} onChange={e => setForm(f => ({ ...f, closed_at: e.target.value }))} />
         </div>
       </div>
 
       {amountNum > 0 && installmentsNum > 1 && (
-        <div style={{ padding: '10px 14px', background: 'var(--surface-2)', borderRadius: 8, marginBottom: 12, fontSize: 13, color: 'var(--text-muted)' }}>
+        <div className="info-banner" style={{ marginBottom: 12, fontSize: 13 }}>
           {installmentsNum} cuotas de ${perInstallment.toFixed(0)} — Primer cobro: ${perInstallment.toFixed(0)} — Pendiente: ${(amountNum - perInstallment).toFixed(0)}
         </div>
       )}
 
       <div style={{ marginBottom: 12 }}>
-        <label style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>¿De qué reel vino? (opcional)</label>
-        <select value={form.reel_id} onChange={e => setForm(f => ({ ...f, reel_id: e.target.value }))} style={{ ...inputStyle }}>
+        <label className="form-label">¿De qué reel vino? (opcional)</label>
+        <select value={form.reel_id} onChange={e => setForm(f => ({ ...f, reel_id: e.target.value }))}>
           <option value="">— Sin atribuir —</option>
-          {reels.map((r: any) => (
+          {reels.map(r => (
             <option key={r.id} value={r.id}>{r.caption?.slice(0, 70) || r.id}</option>
           ))}
         </select>
       </div>
 
-      {error && (
-        <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--danger)', marginBottom: 12 }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="info-banner-error" style={{ marginBottom: 12 }}>{error}</div>}
 
-      <button
-        type="submit"
-        disabled={loading || !form.amount}
-        style={{
-          background: loading ? 'var(--border)' : 'var(--accent)',
-          color: 'white',
-          border: 'none',
-          padding: '12px 24px',
-          borderRadius: 10,
-          fontWeight: 700,
-          fontSize: 14,
-          cursor: loading ? 'not-allowed' : 'pointer',
-        }}
-      >
+      <button type="submit" disabled={loading || !form.amount} className="btn btn-primary" style={{ padding: '12px 24px', fontSize: 14 }}>
         {loading ? 'Guardando...' : 'Guardar venta'}
       </button>
     </form>

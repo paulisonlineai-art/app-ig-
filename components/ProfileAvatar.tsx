@@ -1,14 +1,16 @@
 'use client'
 import { useState } from 'react'
 
-export default function ProfileAvatar({ url, accountId, type, username, size = 36, border }: {
+interface Props {
   url?: string | null
   accountId?: string
   type?: 'account' | 'competitor'
   username?: string
   size?: number
   border?: string
-}) {
+}
+
+export default function ProfileAvatar({ url, accountId, type, username, size = 36, border }: Props) {
   const [failed, setFailed] = useState(false)
   const initials = (username || '?')[0].toUpperCase()
 
@@ -18,14 +20,21 @@ export default function ProfileAvatar({ url, accountId, type, username, size = 3
       ? `/api/proxy-image?url=${encodeURIComponent(url)}`
       : null
 
+  const baseStyle = {
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    border: border || undefined,
+    flexShrink: 0 as const,
+  }
+
   if (!src || failed) {
     return (
       <div style={{
-        width: size, height: size, borderRadius: '50%',
+        ...baseStyle,
         background: 'var(--accent-light)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: size * 0.4, fontWeight: 700, color: 'var(--accent)',
-        border: border || undefined, flexShrink: 0,
       }}>
         {initials}
       </div>
@@ -37,10 +46,7 @@ export default function ProfileAvatar({ url, accountId, type, username, size = 3
       src={src}
       alt={username ? `@${username}` : 'Foto de perfil'}
       onError={() => setFailed(true)}
-      style={{
-        width: size, height: size, borderRadius: '50%',
-        objectFit: 'cover', border: border || undefined, flexShrink: 0,
-      }}
+      style={{ ...baseStyle, objectFit: 'cover' }}
     />
   )
 }

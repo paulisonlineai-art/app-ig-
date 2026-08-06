@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     return NextResponse.json({ success: true, profileFound: !!profile })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Error conectando' }, { status: 500 })
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Error conectando' }, { status: 500 })
   }
 }

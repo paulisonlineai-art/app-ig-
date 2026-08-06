@@ -64,64 +64,54 @@ export default function ViralityPredictor() {
 
   return (
     <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: expanded ? 16 : 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 20 }}>🎯</span>
+      <div className="collapse-header" onClick={() => setExpanded(!expanded)} style={{ marginBottom: expanded ? 16 : 0 }}>
+        <div className="collapse-header-left">
+          <span className="collapse-header-icon">🎯</span>
           <div>
-            <h2 style={{ fontSize: 16, fontWeight: 800 }}>Predictor de Viralidad</h2>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Predecí si tu próximo reel va a funcionar antes de grabarlo</p>
+            <div className="collapse-header-title">Predictor de Viralidad</div>
+            <div className="collapse-header-desc">Predecí si tu próximo reel va a funcionar antes de grabarlo</div>
           </div>
         </div>
-        <button onClick={() => setExpanded(!expanded)} style={{ background: 'none', border: 'none', fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer' }}>
-          {expanded ? '▲' : '▼'}
-        </button>
+        <span className="collapse-toggle">{expanded ? '▲' : '▼'}</span>
       </div>
 
       {expanded && (
         <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>HOOK (primeras palabras) *</label>
+              <label className="form-label">HOOK (primeras palabras) *</label>
               <input
                 value={hook}
                 onChange={e => setHook(e.target.value)}
                 placeholder="Ej: 'Esto es lo que nadie te dice sobre...'"
-                style={{ width: '100%', padding: '10px 14px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)' }}
               />
             </div>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>TEMA / CAPTION (opcional)</label>
+              <label className="form-label">TEMA / CAPTION (opcional)</label>
               <input
                 value={caption}
                 onChange={e => setCaption(e.target.value)}
                 placeholder="¿De qué va a hablar el reel?"
-                style={{ width: '100%', padding: '10px 14px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)' }}
               />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>DURACIÓN (seg)</label>
+                <label className="form-label">DURACIÓN (seg)</label>
                 <input
                   value={duration}
                   onChange={e => setDuration(e.target.value)}
                   type="number"
                   placeholder="30"
-                  style={{ width: '100%', padding: '10px 14px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)' }}
                 />
               </div>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>FORMATO</label>
+                <label className="form-label">FORMATO</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {FORMATS.map(f => (
                     <button
                       key={f.value}
                       onClick={() => setFormat(format === f.value ? '' : f.value)}
-                      style={{
-                        padding: '6px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                        background: format === f.value ? 'var(--accent)' : 'var(--surface-2)',
-                        color: format === f.value ? 'white' : 'var(--text-muted)',
-                        border: format === f.value ? 'none' : '1px solid var(--border)',
-                      }}
+                      className={`pill-option ${format === f.value ? 'pill-option-active' : 'pill-option-inactive'}`}
                     >{f.label}</button>
                   ))}
                 </div>
@@ -145,39 +135,35 @@ export default function ViralityPredictor() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 4 }}>{prediction.verdict}</div>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-                    <span style={{ fontSize: 12, background: 'var(--surface-2)', padding: '4px 10px', borderRadius: 6, fontWeight: 600 }}>
-                      Multiplicador estimado: {prediction.predicted_multiplier}
-                    </span>
-                    <span style={{ fontSize: 12, background: 'var(--surface-2)', padding: '4px 10px', borderRadius: 6, fontWeight: 600 }}>
-                      Confianza: {prediction.confidence}
-                    </span>
+                    <span className="pred-meta">Multiplicador estimado: {prediction.predicted_multiplier}</span>
+                    <span className="pred-meta">Confianza: {prediction.confidence}</span>
                   </div>
                   {prediction.similar_to && (
-                    <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Similar a: "{prediction.similar_to}"</p>
+                    <p className="detail-sublabel">Similar a: &quot;{prediction.similar_to}&quot;</p>
                   )}
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                <div style={{ background: 'rgba(5,150,105,0.08)', border: '1px solid rgba(5,150,105,0.2)', borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', marginBottom: 8 }}>FORTALEZAS</div>
+                <div className="pred-panel pred-panel-success">
+                  <div className="pred-panel-label" style={{ color: '#059669' }}>FORTALEZAS</div>
                   {prediction.strengths.map((s, i) => (
-                    <div key={i} style={{ fontSize: 12, marginBottom: 4, color: 'var(--text)' }}>✓ {s}</div>
+                    <div key={i} className="pred-panel-item">✓ {s}</div>
                   ))}
                 </div>
-                <div style={{ background: 'rgba(234,88,12,0.08)', border: '1px solid rgba(234,88,12,0.2)', borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#ea580c', marginBottom: 8 }}>RIESGOS</div>
+                <div className="pred-panel pred-panel-warning">
+                  <div className="pred-panel-label" style={{ color: '#ea580c' }}>RIESGOS</div>
                   {prediction.risks.map((r, i) => (
-                    <div key={i} style={{ fontSize: 12, marginBottom: 4, color: 'var(--text)' }}>⚠ {r}</div>
+                    <div key={i} className="pred-panel-item">⚠ {r}</div>
                   ))}
                 </div>
               </div>
 
               {prediction.suggestions.length > 0 && (
-                <div style={{ background: 'var(--accent-light)', border: '1px solid rgba(247,0,124,0.15)', borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', marginBottom: 8 }}>MEJORAS SUGERIDAS</div>
+                <div className="pred-panel pred-panel-accent">
+                  <div className="pred-panel-label" style={{ color: 'var(--accent)' }}>MEJORAS SUGERIDAS</div>
                   {prediction.suggestions.map((s, i) => (
-                    <div key={i} style={{ fontSize: 12, marginBottom: 4, color: 'var(--text)' }}>→ {s}</div>
+                    <div key={i} className="pred-panel-item">→ {s}</div>
                   ))}
                 </div>
               )}

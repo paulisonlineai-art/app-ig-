@@ -74,7 +74,7 @@ Solo devolvé el guión, sin explicaciones adicionales.`
       messages: [{ role: 'user', content: prompt }],
     })
 
-    const adaptation = (response.content[0] as any).text
+    const adaptation = response.content[0].type === 'text' ? response.content[0].text : ''
 
     // Independent re-check at write time, scoped by account — not just a
     // reuse of the earlier select's trust, so this stays safe even if that
@@ -85,7 +85,7 @@ Solo devolvé el guión, sin explicaciones adicionales.`
     await db.from('competitor_reels').update({ adaptation, last_adapted_angle: angle || null }).eq('id', reelId).eq('competitor_id', reel.competitor_id)
 
     return NextResponse.json({ adaptation, usingTranscript })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Error al adaptar' }, { status: 500 })
   }
 }

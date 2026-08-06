@@ -62,20 +62,20 @@ export default async function CalendarioPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 4, letterSpacing: '-0.03em' }}>Calendario</h1>
-      <p style={{ color: 'var(--text-muted)', marginBottom: 28, fontSize: 13 }}>
+      <h1 className="dash-greeting">Calendario</h1>
+      <p className="dash-subtitle" style={{ marginBottom: 28 }}>
         Tu calendario de publicación de los últimos 90 días
       </p>
 
       <div className="grid-stats-4" style={{ marginBottom: 28 }}>
         {[
-          { label: 'DÍAS ACTIVOS (90D)', value: totalDays, icon: '📅' },
-          { label: 'DÍAS ACTIVOS (30D)', value: daysLast30, icon: '🔥' },
+          { label: 'DÍAS ACTIVOS (90D)', value: totalDays.toString(), icon: '📅' },
+          { label: 'DÍAS ACTIVOS (30D)', value: daysLast30.toString(), icon: '🔥' },
           { label: 'RACHA ACTUAL', value: `${currentStreak}d`, icon: '⚡' },
           { label: 'RACHA MÁXIMA', value: `${maxStreak}d`, icon: '🏆' },
         ].map(s => (
           <div key={s.label} className="metric-card">
-            <div style={{ fontSize: 18, marginBottom: 8 }}>{s.icon}</div>
+            <div className="kpi-icon-sm">{s.icon}</div>
             <div className="stat-label">{s.label}</div>
             <div className="stat-value">{s.value}</div>
           </div>
@@ -84,13 +84,13 @@ export default async function CalendarioPage() {
 
       <div className="grid-stats-3" style={{ marginBottom: 28 }}>
         {[
-          { label: 'REELS PUBLICADOS', value: totalReels },
-          { label: 'STORIES PUBLICADAS', value: totalStories },
+          { label: 'REELS PUBLICADOS', value: totalReels.toString() },
+          { label: 'STORIES PUBLICADAS', value: totalStories.toString() },
           { label: 'FRECUENCIA', value: totalDays > 0 ? `${(totalReels / (totalDays || 1)).toFixed(1)} reels/día activo` : '—' },
         ].map(s => (
           <div key={s.label} className="metric-card">
             <div className="stat-label">{s.label}</div>
-            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em' }}>{s.value}</div>
+            <div className="stat-value">{s.value}</div>
           </div>
         ))}
       </div>

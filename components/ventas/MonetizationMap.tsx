@@ -23,7 +23,6 @@ export default function MonetizationMap({ sales, totalRevenue }: { sales: SaleWi
   const revenueFromContent = salesWithReels.reduce((s, r) => s + r.amount, 0)
   const attributionRate = totalRevenue > 0 ? ((revenueFromContent / totalRevenue) * 100).toFixed(0) : '0'
 
-  // Group by narrative type
   const byType: Record<string, { count: number; revenue: number }> = {}
   for (const s of salesWithReels) {
     const type = s.reel_narrative_type || 'sin_clasificar'
@@ -81,53 +80,51 @@ Sé específico con números reales.`,
 
   return (
     <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: expanded ? 16 : 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 20 }}>💰</span>
+      <div className="collapse-header" style={{ marginBottom: expanded ? 16 : 0 }}>
+        <div className="collapse-header-left">
+          <span className="collapse-header-icon">💰</span>
           <div>
-            <h2 style={{ fontSize: 16, fontWeight: 800 }}>Mapa de Monetización</h2>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Qué contenido genera ventas reales, no solo views</p>
+            <h2 className="collapse-header-title">Mapa de Monetización</h2>
+            <p className="collapse-header-desc">Qué contenido genera ventas reales, no solo views</p>
           </div>
         </div>
-        <button onClick={() => setExpanded(!expanded)} style={{ background: 'none', border: 'none', fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer' }}>
+        <button onClick={() => setExpanded(!expanded)} className="collapse-toggle">
           {expanded ? '▲' : '▼'}
         </button>
       </div>
 
       {expanded && (
         <>
-          {/* Quick stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
-            <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 12, textAlign: 'center' }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#059669' }}>{attributionRate}%</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500 }}>revenue atribuido</div>
+          <div className="grid-stats-3" style={{ marginBottom: 16, gap: 10 }}>
+            <div className="mini-stat-card">
+              <div className="mini-stat-value" style={{ color: '#059669' }}>{attributionRate}%</div>
+              <div className="mini-stat-label">revenue atribuido</div>
             </div>
-            <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 12, textAlign: 'center' }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--accent)' }}>{salesWithReels.length}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500 }}>ventas con reel</div>
+            <div className="mini-stat-card">
+              <div className="mini-stat-value" style={{ color: 'var(--accent)' }}>{salesWithReels.length}</div>
+              <div className="mini-stat-label">ventas con reel</div>
             </div>
-            <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 12, textAlign: 'center' }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#2563eb' }}>{sales.length - salesWithReels.length}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500 }}>sin atribución</div>
+            <div className="mini-stat-card">
+              <div className="mini-stat-value" style={{ color: '#2563eb' }}>{sales.length - salesWithReels.length}</div>
+              <div className="mini-stat-label">sin atribución</div>
             </div>
           </div>
 
-          {/* Revenue by content type */}
           {Object.keys(byType).length > 0 && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, letterSpacing: '0.05em' }}>REVENUE POR TIPO DE CONTENIDO</div>
+              <div className="section-label-xs" style={{ letterSpacing: '0.05em' }}>REVENUE POR TIPO DE CONTENIDO</div>
               {Object.entries(byType)
                 .sort((a, b) => b[1].revenue - a[1].revenue)
                 .map(([type, data]) => {
                   const pct = revenueFromContent > 0 ? (data.revenue / revenueFromContent) * 100 : 0
                   return (
                     <div key={type} style={{ marginBottom: 8 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                        <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'capitalize' }}>{type.replace(/_/g, ' ')}</span>
-                        <span style={{ fontSize: 12, fontWeight: 700 }}>${data.revenue.toLocaleString()} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({data.count})</span></span>
+                      <div className="engagement-row-header">
+                        <span className="engagement-label" style={{ textTransform: 'capitalize' }}>{type.replace(/_/g, ' ')}</span>
+                        <span className="engagement-value">${data.revenue.toLocaleString()} <span className="engagement-pct">({data.count})</span></span>
                       </div>
-                      <div style={{ height: 6, background: 'var(--surface-2)', borderRadius: 3 }}>
-                        <div style={{ height: '100%', background: '#059669', borderRadius: 3, width: `${pct}%`, transition: 'width 0.5s' }} />
+                      <div className="engagement-bar-track">
+                        <div className="engagement-bar-fill" style={{ background: '#059669', width: `${pct}%` }} />
                       </div>
                     </div>
                   )
@@ -135,20 +132,17 @@ Sé específico con números reales.`,
             </div>
           )}
 
-          {/* Top selling reels */}
           {salesWithReels.length > 0 && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, letterSpacing: '0.05em' }}>REELS QUE GENERARON VENTAS</div>
+              <div className="section-label-xs" style={{ letterSpacing: '0.05em' }}>REELS QUE GENERARON VENTAS</div>
               {salesWithReels.slice(0, 5).map((s, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < Math.min(salesWithReels.length, 5) - 1 ? '1px solid var(--border)' : 'none' }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#059669', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+                <div key={i} className="ranked-item" style={{ borderBottom: i < Math.min(salesWithReels.length, 5) - 1 ? '1px solid var(--border)' : 'none' }}>
+                  <div className="ranked-badge" style={{ background: '#059669', borderRadius: '50%' }}>
                     ${s.amount >= 1000 ? `${(s.amount / 1000).toFixed(0)}K` : s.amount}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {s.reel_caption?.slice(0, 70) || '(sin caption)'}
-                    </div>
-                    <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                  <div className="reel-list-text">
+                    <div className="reel-list-title">{s.reel_caption?.slice(0, 70) || '(sin caption)'}</div>
+                    <div className="reel-list-sub" style={{ whiteSpace: 'normal' }}>
                       {s.reel_views?.toLocaleString() || '?'} views · {s.reel_multiplier?.toFixed(1) || '?'}x · {new Date(s.closed_at).toLocaleDateString('es')}
                     </div>
                   </div>
@@ -168,11 +162,7 @@ Sé específico con números reales.`,
               : loading ? '⏳ Analizando patrones de conversión...' : analysis ? '🔄 Regenerar análisis' : '💰 Analizar qué contenido vende'}
           </button>
 
-          {analysis && !loading && (
-            <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, fontSize: 13.5, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-              {analysis}
-            </div>
-          )}
+          {analysis && !loading && <div className="ai-result">{analysis}</div>}
         </>
       )}
     </div>

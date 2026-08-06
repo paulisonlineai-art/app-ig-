@@ -55,11 +55,11 @@ export default function CommentInsights({ reels }: { reels: Reel[] }) {
 
   return (
     <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-        <span style={{ fontSize: 20 }}>💬</span>
+      <div className="collapse-header-left" style={{ marginBottom: 16 }}>
+        <span className="collapse-header-icon">💬</span>
         <div>
-          <h2 style={{ fontSize: 16, fontWeight: 800 }}>Ideas desde Comentarios</h2>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+          <h2 className="collapse-header-title">Ideas desde Comentarios</h2>
+          <p className="collapse-header-desc">
             Elegí de qué reels querés analizar los comentarios
           </p>
         </div>
@@ -67,10 +67,9 @@ export default function CommentInsights({ reels }: { reels: Reel[] }) {
 
       {reelsWithComments.length > 0 ? (
         <>
-          {/* Reel selector */}
           <div style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
+            <div className="section-header-row" style={{ marginBottom: 8 }}>
+              <span className="section-label-sm" style={{ marginBottom: 0, letterSpacing: '0.08em' }}>
                 SELECCIONÁ REELS ({selected.size} de {Math.min(10, reelsWithComments.length)})
               </span>
               <button
@@ -80,42 +79,27 @@ export default function CommentInsights({ reels }: { reels: Reel[] }) {
                 {selected.size === reelsWithComments.length ? 'Deseleccionar todo' : 'Seleccionar todo'}
               </button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 280, overflowY: 'auto' }}>
+            <div className="reel-list" style={{ maxHeight: 280, overflowY: 'auto' }}>
               {reelsWithComments.map(r => {
                 const isSelected = selected.has(r.permalink)
                 return (
                   <button
                     key={r.permalink}
                     onClick={() => toggle(r.permalink)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      background: isSelected ? 'var(--accent-light)' : 'var(--surface-2)',
-                      border: isSelected ? '1.5px solid var(--accent)' : '1.5px solid var(--border)',
-                      borderRadius: 10, padding: '8px 12px',
-                      cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
-                    }}
+                    className={`reel-list-item ${isSelected ? 'reel-list-item-selected' : ''}`}
+                    style={{ cursor: 'pointer', textAlign: 'left', border: isSelected ? undefined : '1.5px solid var(--border)' }}
                   >
-                    <div style={{
-                      width: 20, height: 20, borderRadius: 5, flexShrink: 0,
-                      background: isSelected ? 'var(--accent)' : 'var(--surface)',
-                      border: isSelected ? 'none' : '2px solid var(--border-strong)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#fff', fontSize: 12, fontWeight: 700,
-                    }}>
+                    <div className={`check-toggle ${isSelected ? 'check-toggle-active' : ''}`}>
                       {isSelected && '✓'}
                     </div>
                     {r.thumbnail_url && (
-                      <img
-                        src={`/api/proxy-image?url=${encodeURIComponent(r.thumbnail_url)}`}
-                        style={{ width: 36, height: 48, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }}
-                        alt=""
-                      />
+                      <img src={`/api/proxy-image?url=${encodeURIComponent(r.thumbnail_url)}`} className="reel-list-thumb" alt="" />
                     )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text)' }}>
+                    <div className="reel-list-text">
+                      <div className="reel-list-title" style={{ color: 'var(--text)' }}>
                         {r.caption?.split('\n')[0]?.slice(0, 70) || '(sin caption)'}
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                      <div className="reel-list-sub">
                         {r.comments} comentarios · {r.views?.toLocaleString()} views
                       </div>
                     </div>
@@ -152,29 +136,23 @@ export default function CommentInsights({ reels }: { reels: Reel[] }) {
         </div>
       )}
 
-      {error && (
-        <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--danger)' }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="info-banner-error">{error}</div>}
 
       {result && !loading && (
         <>
           {meta && (
             <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-              <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 14px', fontSize: 12 }}>
+              <div className="mini-stat-card" style={{ padding: '8px 14px', fontSize: 12 }}>
                 <span style={{ fontWeight: 700 }}>{meta.commentCount}</span>
                 <span style={{ color: 'var(--text-muted)' }}> comentarios analizados</span>
               </div>
-              <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 14px', fontSize: 12 }}>
+              <div className="mini-stat-card" style={{ padding: '8px 14px', fontSize: 12 }}>
                 <span style={{ fontWeight: 700 }}>{meta.reelCount}</span>
                 <span style={{ color: 'var(--text-muted)' }}> reels escaneados</span>
               </div>
             </div>
           )}
-          <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, fontSize: 13.5, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-            {result}
-          </div>
+          <div className="ai-result">{result}</div>
         </>
       )}
     </div>

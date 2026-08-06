@@ -1,7 +1,10 @@
 'use client'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts'
 
-export default function BenchmarkChart({ reel, avgs }: { reel: any; avgs: any }) {
+interface ReelData { like_rate: number; comment_rate: number }
+interface Averages { avg_like_rate: number; avg_comment_rate: number }
+
+export default function BenchmarkChart({ reel, avgs }: { reel: ReelData; avgs: Averages }) {
   const data = [
     { name: 'Likes', actual: reel.like_rate, bench: avgs.avg_like_rate },
     { name: 'Comments', actual: reel.comment_rate, bench: avgs.avg_comment_rate },
@@ -27,7 +30,7 @@ export default function BenchmarkChart({ reel, avgs }: { reel: any; avgs: any })
           <YAxis tickFormatter={v => `${v.toFixed(1)}%`} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} width={36} />
           <Tooltip
             contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text)' }}
-            formatter={(v: any) => [`${Number(v).toFixed(2)}%`]}
+            formatter={(v) => [`${Number(v).toFixed(2)}%`]}
           />
           <Bar dataKey="actual" fill="#7c3aed" radius={[4, 4, 0, 0]} maxBarSize={40}>
             {data.map((entry, i) => (

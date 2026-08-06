@@ -64,7 +64,7 @@ Devolvé un JSON con esta estructura exacta (sin markdown, solo JSON válido):
       messages: [{ role: 'user', content: analysisPrompt }],
     })
 
-    const text = (response.content[0] as any).text
+    const text = response.content[0].type === 'text' ? response.content[0].text : ''
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error('Claude no devolvió un análisis con formato válido — probá de nuevo')
     const structure = JSON.parse(jsonMatch[0])
@@ -78,8 +78,9 @@ Devolvé un JSON con esta estructura exacta (sin markdown, solo JSON válido):
     const { data: updatedRef } = await db.from('reference_videos').select('*').eq('id', refId).eq('account_id', accountId).single()
 
     return NextResponse.json({ ref: updatedRef })
-  } catch (e: any) {
-    await db.from('reference_videos').update({ status: 'error', error_message: e.message }).eq('id', refId).eq('account_id', accountId)
-    return NextResponse.json({ error: e.message }, { status: 500 })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Error al analizar'
+    await db.from('reference_videos').update({ status: 'error', error_message: msg }).eq('id', refId).eq('account_id', accountId)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

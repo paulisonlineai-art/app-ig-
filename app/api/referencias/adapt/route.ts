@@ -72,12 +72,12 @@ Solo devolvé el guión, sin explicaciones adicionales.`
       messages: [{ role: 'user', content: prompt }],
     })
 
-    const adaptation = (response.content[0] as any).text
+    const adaptation = response.content[0].type === 'text' ? response.content[0].text : ''
 
     await db.from('reference_videos').update({ adaptation, last_adapted_angle: angle || null }).eq('id', refId).eq('account_id', accountId)
 
     return NextResponse.json({ adaptation })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Error al adaptar' }, { status: 500 })
   }
 }

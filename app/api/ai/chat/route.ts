@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       },
     })
     return NextResponse.json({ answer })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Error consultando a Klar' }, { status: 500 })
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Error consultando a Klar' }, { status: 500 })
   }
 }

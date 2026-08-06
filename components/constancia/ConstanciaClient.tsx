@@ -31,27 +31,14 @@ export default function ConstanciaClient({ publishDates }: { publishDates: Recor
     <div>
       <div className="card" style={{ padding: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <button
-            onClick={() => setMonthOffset(p => p - 1)}
-            style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 14px', fontSize: 13, cursor: 'pointer', color: 'var(--text)' }}
-          >
-            ←
-          </button>
+          <button onClick={() => setMonthOffset(p => p - 1)} className="btn btn-ghost">←</button>
           <span style={{ fontSize: 16, fontWeight: 700, textTransform: 'capitalize' }}>{monthName}</span>
-          <button
-            onClick={() => setMonthOffset(p => p + 1)}
-            disabled={!canGoForward}
-            style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 14px', fontSize: 13, cursor: canGoForward ? 'pointer' : 'not-allowed', opacity: canGoForward ? 1 : 0.3, color: 'var(--text)' }}
-          >
-            →
-          </button>
+          <button onClick={() => setMonthOffset(p => p + 1)} disabled={!canGoForward} className="btn btn-ghost" style={{ opacity: canGoForward ? 1 : 0.3 }}>→</button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, textAlign: 'center' }}>
+        <div className="calendar-grid">
           {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(d => (
-            <div key={d} style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-faint)', padding: '4px 0', letterSpacing: '0.05em' }}>
-              {d}
-            </div>
+            <div key={d} className="calendar-day-label">{d}</div>
           ))}
 
           {cells.map((cell, i) => {
@@ -61,56 +48,39 @@ export default function ConstanciaClient({ publishDates }: { publishDates: Recor
             const hasContent = !!cell.data
             const isFuture = new Date(cell.key) > today
 
+            const cls = [
+              'calendar-cell',
+              hasContent ? 'calendar-cell-active' : '',
+              isToday && !hasContent ? 'calendar-cell-today' : '',
+              isFuture && !hasContent ? 'calendar-cell-future' : '',
+            ].filter(Boolean).join(' ')
+
             return (
               <div
                 key={cell.key}
+                className={cls}
                 title={hasContent ? `${cell.data!.reels} reel(s), ${cell.data!.stories} historia(s)` : undefined}
-                style={{
-                  aspectRatio: '1',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 10,
-                  fontSize: 14,
-                  fontWeight: hasContent ? 700 : 400,
-                  position: 'relative',
-                  background: hasContent
-                    ? 'var(--accent)'
-                    : isToday
-                      ? 'var(--surface-2)'
-                      : 'transparent',
-                  color: hasContent
-                    ? 'white'
-                    : isFuture
-                      ? 'var(--text-faint)'
-                      : 'var(--text)',
-                  border: isToday && !hasContent ? '2px solid var(--accent)' : '2px solid transparent',
-                  cursor: hasContent ? 'default' : 'default',
-                }}
               >
                 {cell.day}
                 {hasContent && cell.data!.reels > 1 && (
-                  <span style={{ fontSize: 9, fontWeight: 600, opacity: 0.8 }}>
-                    x{cell.data!.reels}
-                  </span>
+                  <span className="calendar-cell-multiplier">x{cell.data!.reels}</span>
                 )}
               </div>
             )
           })}
         </div>
 
-        <div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginTop: 20, fontSize: 12, color: 'var(--text-muted)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 12, height: 12, borderRadius: 4, background: 'var(--accent)' }} />
+        <div className="calendar-legend">
+          <div className="calendar-legend-item">
+            <div className="calendar-legend-dot" style={{ background: 'var(--accent)' }} />
             <span>Publicaste</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 12, height: 12, borderRadius: 4, border: '2px solid var(--accent)', background: 'transparent' }} />
+          <div className="calendar-legend-item">
+            <div className="calendar-legend-dot" style={{ border: '2px solid var(--accent)', background: 'transparent' }} />
             <span>Hoy</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 12, height: 12, borderRadius: 4, background: 'var(--surface-2)' }} />
+          <div className="calendar-legend-item">
+            <div className="calendar-legend-dot" style={{ background: 'var(--surface-2)' }} />
             <span>Sin publicar</span>
           </div>
         </div>

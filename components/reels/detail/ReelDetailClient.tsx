@@ -59,10 +59,10 @@ export default function ReelDetailClient({ reelId, existingAnalysis }: { reelId:
     <div className="grid-detail-charts-2">
       {/* AI Analysis */}
       <div className="card" style={{ padding: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div className="section-header-row" style={{ marginBottom: 14 }}>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>ANÁLISIS DE KLAR AI</div>
-            <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 2 }}>Por qué funcionó este reel</div>
+            <div className="detail-label">ANÁLISIS DE KLAR AI</div>
+            <div className="detail-sublabel" style={{ marginTop: 2 }}>Por qué funcionó este reel</div>
           </div>
           <button
             onClick={analyze}
@@ -74,28 +74,22 @@ export default function ReelDetailClient({ reelId, existingAnalysis }: { reelId:
           </button>
         </div>
 
-        {error && (
-          <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--danger)', marginBottom: 14 }}>
-            {error}
-          </div>
-        )}
+        {error && <div className="info-banner-error" style={{ marginBottom: 14 }}>{error}</div>}
 
         {analysis ? (
-          <div style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-wrap', maxHeight: 320, overflowY: 'auto' }}>
-            {analysis}
-          </div>
+          <div className="ai-result" style={{ maxHeight: 320, overflowY: 'auto' }}>{analysis}</div>
         ) : !error && (
-          <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-faint)' }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
-            <p style={{ fontSize: 13 }}>Hacé clic en "Analizar con Klar" para obtener un análisis completo de este reel</p>
+          <div className="empty-state" style={{ padding: 32 }}>
+            <div className="empty-state-icon">🤖</div>
+            <p className="empty-state-desc">Hacé clic en &quot;Analizar con Klar&quot; para obtener un análisis completo de este reel</p>
           </div>
         )}
       </div>
 
       {/* Preguntale a Klar */}
       <div className="card" style={{ padding: 20 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 4 }}>PREGUNTALE A KLAR 🔥</div>
-        <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 14 }}>Hacé cualquier pregunta sobre este reel</div>
+        <div className="detail-label" style={{ marginBottom: 4 }}>PREGUNTALE A KLAR 🔥</div>
+        <div className="detail-sublabel" style={{ marginBottom: 14 }}>Hacé cualquier pregunta sobre este reel</div>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           <input
@@ -103,20 +97,15 @@ export default function ReelDetailClient({ reelId, existingAnalysis }: { reelId:
             onChange={e => setQuestion(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && askKlar()}
             placeholder="¿Por qué funcionó tan bien este reel?"
-            style={{ flex: 1, fontSize: 13 }}
+            style={{ flex: 1 }}
           />
           <button onClick={askKlar} disabled={chatLoading || !question.trim()} className="btn btn-primary" style={{ fontSize: 13 }} aria-label="Enviar pregunta">
             {chatLoading ? '⏳' : '→'}
           </button>
         </div>
 
-        {chatError && (
-          <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--danger)', marginBottom: 12 }}>
-            {chatError}
-          </div>
-        )}
+        {chatError && <div className="info-banner-error" style={{ marginBottom: 12 }}>{chatError}</div>}
 
-        {/* Suggested questions */}
         {!chatAnswer && !chatError && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
@@ -124,7 +113,7 @@ export default function ReelDetailClient({ reelId, existingAnalysis }: { reelId:
               '¿Qué hizo diferente el hook vs mis otros reels?',
               '¿Cómo puedo replicar el éxito de este reel?',
             ].map(q => (
-              <button key={q} onClick={() => { setQuestion(q); }} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'left' }}>
+              <button key={q} onClick={() => setQuestion(q)} className="suggested-q">
                 {q}
               </button>
             ))}
@@ -132,9 +121,7 @@ export default function ReelDetailClient({ reelId, existingAnalysis }: { reelId:
         )}
 
         {chatAnswer && (
-          <div style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-wrap', maxHeight: 280, overflowY: 'auto', background: 'var(--surface-2)', borderRadius: 10, padding: 14 }}>
-            {chatAnswer}
-          </div>
+          <div className="ai-result" style={{ maxHeight: 280, overflowY: 'auto' }}>{chatAnswer}</div>
         )}
       </div>
     </div>

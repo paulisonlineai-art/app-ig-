@@ -43,12 +43,9 @@ export default function BrandDNAClient({ accountId, initial, isOnboarding }: { a
       if (!res.ok || data.error) { setGenError(data.error || 'Error generando ADN de marca'); return }
       setFields(prev => ({ ...prev, ...data.fields }))
       setTab('guided')
-      // A partial success (e.g. Apify's bio fetch failed but reels-based
-      // generation still worked) isn't a failure — showing it as a red error
-      // makes a user think nothing happened when the fields did get filled.
       if (data.warning) setGenWarning(data.warning)
-    } catch (e: any) {
-      setGenError(e.message || 'Error generando ADN de marca')
+    } catch (e: unknown) {
+      setGenError(e instanceof Error ? e.message : 'Error generando ADN de marca')
     } finally {
       setGenerating(false)
     }
@@ -74,8 +71,8 @@ export default function BrandDNAClient({ accountId, initial, isOnboarding }: { a
       }
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
-    } catch (e: any) {
-      setSaveError(e.message || 'No se pudo guardar')
+    } catch (e: unknown) {
+      setSaveError(e instanceof Error ? e.message : 'No se pudo guardar')
     } finally {
       setSaving(false)
     }
@@ -83,20 +80,14 @@ export default function BrandDNAClient({ accountId, initial, isOnboarding }: { a
 
   return (
     <div style={{ maxWidth: 800 }}>
-      {/* Tabs */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
-        <div style={{ display: 'flex', gap: 4, background: 'var(--surface-2)', borderRadius: 10, padding: 4, width: 'fit-content' }}>
-          {[['guided', '📋 Guiado'], ['free', '✏️ Libre']].map(([t, l]) => (
+        <div className="tab-bar" style={{ marginBottom: 0, width: 'fit-content' }}>
+          {([['guided', '📋 Guiado'], ['free', '✏️ Libre']] as const).map(([t, l]) => (
             <button
               key={t}
-              onClick={() => setTab(t as any)}
-              style={{
-                padding: '7px 16px', borderRadius: 7, border: 'none',
-                fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                background: tab === t ? 'var(--surface)' : 'transparent',
-                color: tab === t ? 'var(--accent)' : 'var(--text-muted)',
-                boxShadow: tab === t ? 'var(--shadow-sm)' : 'none',
-              }}
+              onClick={() => setTab(t as 'guided' | 'free')}
+              className={`tab-bar-item ${tab === t ? 'tab-bar-item-active' : ''}`}
+              style={{ padding: '7px 16px', fontSize: 13 }}
             >{l}</button>
           ))}
         </div>
@@ -104,19 +95,15 @@ export default function BrandDNAClient({ accountId, initial, isOnboarding }: { a
           onClick={autoGenerate}
           disabled={generating}
           className="btn btn-ghost"
-          style={{ fontSize: 13, fontWeight: 600 }}
           title="Analiza tu bio y tus reels con mejor desempeño para pre-llenar los campos — revisá y ajustá antes de guardar"
         >
           {generating ? '⏳ Analizando tu perfil...' : '🪄 Generar con IA'}
         </button>
       </div>
-      {genError && (
-        <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--danger)', marginBottom: 16 }}>
-          {genError}
-        </div>
-      )}
+
+      {genError && <div className="info-banner-error" style={{ marginBottom: 16 }}>{genError}</div>}
       {genWarning && (
-        <div style={{ background: 'var(--accent-light)', border: '1px solid var(--accent)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--accent-dark)', marginBottom: 16 }}>
+        <div className="info-banner info-banner-accent" style={{ border: '1px solid var(--accent)', color: 'var(--accent-dark)' }}>
           ✓ Se generó el ADN de marca. {genWarning}
         </div>
       )}
@@ -138,7 +125,7 @@ export default function BrandDNAClient({ accountId, initial, isOnboarding }: { a
         </div>
       ) : (
         <div className="card" style={{ padding: 20 }}>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+          <p className="dash-subtitle" style={{ marginBottom: 12 }}>
             Escribí libremente todo sobre tu marca, audiencia, estrategia y contexto. Esta información va directamente a la IA de Klar.
           </p>
           <textarea
@@ -152,12 +139,7 @@ export default function BrandDNAClient({ accountId, initial, isOnboarding }: { a
       )}
 
       <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button
-          onClick={save}
-          disabled={saving}
-          className="btn btn-primary"
-          style={{ padding: '12px 28px', fontSize: 14 }}
-        >
+        <button onClick={save} disabled={saving} className="btn btn-primary" style={{ padding: '12px 28px', fontSize: 14 }}>
           {saving ? 'Guardando...' : '💾 Guardar ADN de Marca'}
         </button>
         {saved && <span style={{ fontSize: 13, color: 'var(--success)', fontWeight: 600 }}>✓ Guardado. Klar ya usa este contexto.</span>}
@@ -165,25 +147,13 @@ export default function BrandDNAClient({ accountId, initial, isOnboarding }: { a
       </div>
 
       {isOnboarding && saved && (
-        <a
-          href="/dashboard"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            marginTop: 16, padding: '14px 28px', borderRadius: 12,
-            background: 'var(--accent)', color: 'white',
-            fontSize: 15, fontWeight: 700, textDecoration: 'none',
-            transition: 'opacity 0.15s',
-          }}
-        >
+        <a href="/dashboard" className="btn btn-primary" style={{ display: 'flex', justifyContent: 'center', marginTop: 16, padding: '14px 28px', borderRadius: 12, fontSize: 15 }}>
           Ir al Dashboard →
         </a>
       )}
 
       {isOnboarding && !saved && (
-        <a
-          href="/dashboard"
-          style={{ display: 'block', marginTop: 12, fontSize: 13, color: 'var(--text-muted)', textDecoration: 'none', textAlign: 'center' }}
-        >
+        <a href="/dashboard" style={{ display: 'block', marginTop: 12, fontSize: 13, color: 'var(--text-muted)', textAlign: 'center' }}>
           Saltar por ahora →
         </a>
       )}

@@ -65,8 +65,8 @@ export default function ConnectPage() {
         return
       }
       router.push('/marca?onboarding=1' + (data.profileFound === false ? '&pendingProfile=1' : ''))
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error conectando')
       setStep('form')
     } finally {
       setLoading(false)

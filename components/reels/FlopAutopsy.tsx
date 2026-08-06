@@ -45,22 +45,20 @@ Sé directo, no endulces. Los datos no mienten.`,
 
   return (
     <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: expanded ? 16 : 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 20 }}>🔬</span>
+      <div className="collapse-header" onClick={() => setExpanded(!expanded)} style={{ marginBottom: expanded ? 16 : 0 }}>
+        <div className="collapse-header-left">
+          <span className="collapse-header-icon">🔬</span>
           <div>
-            <h2 style={{ fontSize: 16, fontWeight: 800 }}>Autopsia de Flops</h2>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Descubrí por qué fallaron tus peores reels y cómo no repetirlo</p>
+            <div className="collapse-header-title">Autopsia de Flops</div>
+            <div className="collapse-header-desc">Descubrí por qué fallaron tus peores reels y cómo no repetirlo</div>
           </div>
         </div>
-        <button onClick={() => setExpanded(!expanded)} style={{ background: 'none', border: 'none', fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer' }}>
-          {expanded ? '▲' : '▼'}
-        </button>
+        <span className="collapse-toggle">{expanded ? '▲' : '▼'}</span>
       </div>
 
       {expanded && (
         <>
-          <div style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.15)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+          <div className="flop-warning" style={{ marginBottom: 16 }}>
             <strong style={{ color: '#dc2626' }}>Análisis sin filtro.</strong> Klar compara tus peores reels contra los mejores y te dice exactamente qué salió mal. Los datos no mienten — usá esta info para dejar de repetir errores.
           </div>
 
@@ -74,16 +72,14 @@ Sé directo, no endulces. Los datos no mienten.`,
           </button>
 
           {loading && (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)' }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>🔬</div>
-              <p style={{ fontSize: 13 }}>Analizando qué salió mal en tus peores reels...</p>
+            <div className="loading-state">
+              <div className="loading-state-icon">🔬</div>
+              <p className="loading-state-text">Analizando qué salió mal en tus peores reels...</p>
             </div>
           )}
 
           {analysis && !loading && (
-            <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, fontSize: 13.5, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-              {analysis}
-            </div>
+            <div className="ai-result">{analysis}</div>
           )}
         </>
       )}
