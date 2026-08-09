@@ -1,72 +1,169 @@
 import { createServerSupabase } from '@/lib/supabase'
-import { scrapeOwnReels } from '@/lib/scraper'
+import {
+  getInstagramMedia,
+  getMediaInsights,
+  refreshLongLivedToken,
+  IGExpiredTokenError,
+  IGRateLimitError,
+} from '@/lib/instagram'
 import { calcMultiplier, calcRate } from '@/lib/utils'
 
-export async function syncAccountReels(accountId: string): Promise<{ synced: number; message?: string; trialCodesFound?: number }> {
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+
+export async function syncAccountReels(accountId: string): Promise<{
+  synced: number
+  message?: string
+  token_refreshed?: boolean
+  error?: string
+}> {
   const db = createServerSupabase()
-  const { data: account } = await db.from('ig_accounts').select('*').eq('id', accountId).single()
+  const { data: account } = await db
+    .from('ig_accounts')
+    .select('id, username, ig_access_token, ig_token_expires_at')
+    .eq('id', accountId)
+    .single()
+
   if (!account) throw new Error('Cuenta no encontrada')
-
-  const { reels, trialShortCodes } = await scrapeOwnReels(account.username)
-
-  if (!reels.length) return { synced: 0, message: 'No se encontraron reels', trialCodesFound: trialShortCodes.size }
-
-  // Calculate averages for multiplier
-  const avgViews = reels.reduce((s, r) => s + r.videoViewCount, 0) / reels.length
-
-  const clamp = (n: number, max = 99999999) => Math.min(Math.max(Math.round(n) || 0, 0), max)
-  const clampRate = (n: number) => Math.min(Math.max(Number(n.toFixed(4)) || 0, 0), 100)
-
-  const upserts = reels.map(r => {
-    const views = clamp(r.videoViewCount || r.videoPlayCount || 0)
-    const likes = clamp(r.likesCount || 0)
-    const comments = clamp(r.commentsCount || 0)
-    const multiplier = Number(calcMultiplier(views, avgViews).toFixed(4)) || 1
-
-    return {
-      account_id: accountId,
-      ig_media_id: r.shortCode || String(r.id),
-      media_type: 'VIDEO',
-      is_trial: trialShortCodes.has(r.shortCode),
-      caption: r.caption || null,
-      thumbnail_url: r.displayUrl || null,
-      permalink: r.url,
-      timestamp: r.timestamp,
-      views,
-      likes,
-      comments,
-      shares: 0,
-      saves: 0,
-      reach: 0,
-      like_rate: clampRate(calcRate(likes, views)),
-      save_rate: 0,
-      comment_rate: clampRate(calcRate(comments, views)),
-      share_rate: 0,
-      multiplier,
-      duration_seconds: r.videoDuration ? Math.min(Math.round(r.videoDuration), 9999) : null,
-      synced_at: new Date().toISOString(),
-    }
-  })
-
-  const { error } = await db.from('reels').upsert(upserts, { onConflict: 'account_id,ig_media_id' })
-  if (error) throw new Error(error.message)
-
-  // Recalculate multipliers with real average — batch by multiplier value to reduce queries
-  const { data: allReels } = await db.from('reels').select('id, views').eq('account_id', accountId)
-  if (allReels && allReels.length > 0) {
-    const realAvg = allReels.reduce((s, r) => s + (r.views || 0), 0) / allReels.length
-    const byMultiplier: Record<string, string[]> = {}
-    for (const r of allReels) {
-      const m = calcMultiplier(r.views || 0, realAvg).toFixed(4)
-      if (!byMultiplier[m]) byMultiplier[m] = []
-      byMultiplier[m].push(r.id)
-    }
-    await Promise.all(
-      Object.entries(byMultiplier).map(([m, ids]) =>
-        db.from('reels').update({ multiplier: parseFloat(m) }).in('id', ids)
-      )
-    )
+  if (!account.ig_access_token) {
+    return { synced: 0, error: 'token_missing', message: 'Cuenta no autenticada con Instagram Graph API. Por favor reconectá tu cuenta.' }
   }
 
-  return { synced: reels.length, trialCodesFound: trialShortCodes.size }
+  let token = account.ig_access_token as string
+  let tokenRefreshed = false
+
+  // Auto-refresh token if expiring within 7 days
+  if (account.ig_token_expires_at) {
+    const expiresAt = new Date(account.ig_token_expires_at).getTime()
+    const msRemaining = expiresAt - Date.now()
+
+    if (msRemaining < 0) {
+      return { synced: 0, error: 'token_expired', message: 'El token de Instagram expiró. Por favor reconectá tu cuenta.' }
+    }
+
+    if (msRemaining < SEVEN_DAYS_MS) {
+      try {
+        const refreshed = await refreshLongLivedToken(token)
+        token = refreshed.access_token
+        const newExpiry = new Date(Date.now() + refreshed.expires_in * 1000).toISOString()
+        await db.from('ig_accounts').update({
+          ig_access_token: token,
+          ig_token_expires_at: newExpiry,
+        }).eq('id', accountId)
+        tokenRefreshed = true
+        console.log(`[sync] Token refreshed for account ${accountId}`)
+      } catch (e) {
+        if (e instanceof IGExpiredTokenError) {
+          return { synced: 0, error: 'token_expired', message: 'El token de Instagram expiró. Por favor reconectá tu cuenta.' }
+        }
+        console.warn(`[sync] Token refresh failed for ${accountId}:`, e)
+        // Continue with old token — it's still valid for now
+      }
+    }
+  }
+
+  try {
+    // Fetch media list
+    const mediaItems = await getInstagramMedia(token, 50)
+    if (!mediaItems.length) {
+      return { synced: 0, message: 'No se encontraron reels', token_refreshed: tokenRefreshed }
+    }
+
+    // Fetch insights for each reel in sequence (avoid rate limit bursts)
+    const clamp = (n: number, max = 99999999) => Math.min(Math.max(Math.round(n) || 0, 0), max)
+    const clampRate = (n: number) => Math.min(Math.max(Number(n.toFixed(4)) || 0, 0), 100)
+
+    const enrichedReels: Array<{
+      media: (typeof mediaItems)[number]
+      insights: Awaited<ReturnType<typeof getMediaInsights>>
+    }> = []
+
+    for (const media of mediaItems) {
+      try {
+        const insights = await getMediaInsights(token, media.id)
+        enrichedReels.push({ media, insights })
+      } catch (e) {
+        if (e instanceof IGRateLimitError) {
+          console.warn(`[sync] Rate limit hit fetching insights for ${media.id} — stopping insights fetch`)
+          // Still include media with zero insights rather than drop it
+          enrichedReels.push({ media, insights: { plays: 0, reach: 0, saved: 0, shares: 0, total_interactions: 0, likes: 0, comments: 0 } })
+        } else {
+          console.warn(`[sync] Could not fetch insights for ${media.id}:`, e)
+          enrichedReels.push({ media, insights: { plays: 0, reach: 0, saved: 0, shares: 0, total_interactions: 0, likes: 0, comments: 0 } })
+        }
+      }
+    }
+
+    // Calculate average views (plays) for multiplier baseline
+    const avgViews =
+      enrichedReels.reduce((s, { insights }) => s + (insights.plays || 0), 0) /
+      (enrichedReels.length || 1)
+
+    const upserts = enrichedReels.map(({ media, insights }) => {
+      // Graph API metric mapping:
+      //   plays         → views
+      //   saved         → saves
+      //   shares        → shares
+      //   reach         → reach
+      //   likes/comments from insights take precedence over basic fields
+      const views = clamp(insights.plays || 0)
+      const likes = clamp(insights.likes || media.like_count || 0)
+      const comments = clamp(insights.comments || media.comments_count || 0)
+      const saves = clamp(insights.saved || 0)
+      const shares = clamp(insights.shares || 0)
+      const reach = clamp(insights.reach || 0)
+      const multiplier = Number(calcMultiplier(views, avgViews).toFixed(4)) || 1
+
+      return {
+        account_id: accountId,
+        ig_media_id: media.id,
+        media_type: 'VIDEO' as const,
+        // Trial reel detection is not available via Graph API — default false
+        is_trial: false,
+        caption: media.caption || null,
+        thumbnail_url: media.thumbnail_url || null,
+        permalink: media.permalink,
+        timestamp: media.timestamp,
+        views,
+        likes,
+        comments,
+        shares,
+        saves,
+        reach,
+        like_rate: clampRate(calcRate(likes, views)),
+        save_rate: clampRate(calcRate(saves, views)),
+        comment_rate: clampRate(calcRate(comments, views)),
+        share_rate: clampRate(calcRate(shares, views)),
+        multiplier,
+        duration_seconds: null,
+        synced_at: new Date().toISOString(),
+      }
+    })
+
+    const { error } = await db.from('reels').upsert(upserts, { onConflict: 'account_id,ig_media_id' })
+    if (error) throw new Error(error.message)
+
+    // Recalculate multipliers with real account-wide average
+    const { data: allReels } = await db.from('reels').select('id, views').eq('account_id', accountId)
+    if (allReels && allReels.length > 0) {
+      const realAvg = allReels.reduce((s, r) => s + (r.views || 0), 0) / allReels.length
+      const byMultiplier: Record<string, string[]> = {}
+      for (const r of allReels) {
+        const m = calcMultiplier(r.views || 0, realAvg).toFixed(4)
+        if (!byMultiplier[m]) byMultiplier[m] = []
+        byMultiplier[m].push(r.id)
+      }
+      await Promise.all(
+        Object.entries(byMultiplier).map(([m, ids]) =>
+          db.from('reels').update({ multiplier: parseFloat(m) }).in('id', ids),
+        ),
+      )
+    }
+
+    return { synced: enrichedReels.length, token_refreshed: tokenRefreshed }
+  } catch (e) {
+    if (e instanceof IGExpiredTokenError) {
+      return { synced: 0, error: 'token_expired', message: 'El token de Instagram expiró. Por favor reconectá tu cuenta.' }
+    }
+    throw e
+  }
 }

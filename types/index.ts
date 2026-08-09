@@ -7,10 +7,12 @@ export interface IGAccount {
   profile_picture_url: string
   followers_count: number
   media_count: number
-  access_token: string
-  token_expires_at: string
-  data_source: string
-  apify_session_cookie: string | null
+  /** @deprecated Use ig_access_token. Kept for backward compatibility during migration. */
+  legacy_access_token: string | null
+  ig_access_token: string | null
+  ig_token_expires_at: string | null
+  ig_user_id_numeric: string | null
+  ig_account_type: 'BUSINESS' | 'CREATOR' | 'PERSONAL' | null
   stripe_webhook_secret: string | null
   hotmart_hottok: string | null
   skool_webhook_secret: string | null

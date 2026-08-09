@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase'
-import { scrapeInstagramUser } from '@/lib/scraper'
+import { getInstagramProfile } from '@/lib/instagram'
 import { autoGenerateBrandDNA } from '@/lib/ai'
 import { checkRateLimit } from '@/lib/rateLimit'
 
@@ -13,16 +13,23 @@ export async function POST(req: NextRequest) {
 
   const db = createServerSupabase()
 
-  const { data: account } = await db.from('ig_accounts').select('username, name').eq('id', accountId).single()
+  const { data: account } = await db.from('ig_accounts').select('username, name, ig_access_token').eq('id', accountId).single()
   if (!account) return NextResponse.json({ error: 'Cuenta no encontrada' }, { status: 404 })
 
   try {
     let profileFetchFailed = false
+    // Fetch biography from Graph API if we have a token; skip gracefully for legacy accounts
+    const profilePromise = account.ig_access_token
+      ? getInstagramProfile(account.ig_access_token).catch(() => { profileFetchFailed = true; return null })
+      : Promise.resolve(null)
+
     const [profile, { data: reels }, { data: competitors }] = await Promise.all([
-      scrapeInstagramUser(account.username).catch(() => { profileFetchFailed = true; return null }),
+      profilePromise,
       db.from('reels').select('caption, multiplier, views, hook, structure').eq('account_id', accountId).order('multiplier', { ascending: false }).limit(15),
       db.from('competitors').select('ig_username').eq('account_id', accountId),
     ])
+
+    if (!account.ig_access_token) profileFetchFailed = true
 
     const topReels = (reels || []).map(r => ({
       caption: r.caption,
@@ -43,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       fields,
-      ...(profileFetchFailed ? { warning: 'No se pudo traer tu bio de Instagram (Apify falló) — el resultado se generó solo con tus reels.' } : {}),
+      ...(profileFetchFailed ? { warning: 'No se pudo traer tu bio de Instagram — el resultado se generó solo con tus reels.' } : {}),
     })
   } catch (e: unknown) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'Error generando ADN de marca' }, { status: 500 })

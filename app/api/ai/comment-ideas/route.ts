@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase'
-import { scrapeReelComments } from '@/lib/scraper'
+import { scrapeReelComments } from '@/lib/scraper-legacy'
 import { checkRateLimit } from '@/lib/rateLimit'
 import Anthropic from '@anthropic-ai/sdk'
 

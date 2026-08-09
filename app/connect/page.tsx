@@ -1,34 +1,42 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createAuthBrowserClient } from '@/lib/supabase-browser'
 
 export default function ConnectPage() {
   const router = useRouter()
-  const [username, setUsername] = useState('')
-  const [sessionCookie, setSessionCookie] = useState('')
-  const [showCookieHelp, setShowCookieHelp] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const searchParams = useSearchParams()
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [igLoading, setIgLoading] = useState(false)
   const [error, setError] = useState('')
-  const [step, setStep] = useState<'checking' | 'google' | 'form' | 'connecting'>('checking')
+  const [step, setStep] = useState<'checking' | 'google' | 'connect_instagram'>('checking')
 
   useEffect(() => {
+    // Surface any error from OAuth callback (e.g. user denied, conflict)
+    const callbackError = searchParams.get('error')
+    if (callbackError) {
+      const clean = callbackError.startsWith('instagram_denied:')
+        ? 'Cancelaste la conexión con Instagram. Podés intentarlo de nuevo.'
+        : callbackError
+      setError(clean)
+    }
+
     const supabase = createAuthBrowserClient()
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        fetch('/api/apify/connect', { method: 'GET' }).then(r => {
+        fetch('/api/instagram/connect', { method: 'GET' }).then(r => {
           if (r.status === 200) {
+            // Already connected and token valid
             router.replace('/dashboard')
           } else {
-            setStep('form')
+            setStep('connect_instagram')
           }
-        }).catch(() => setStep('form'))
+        }).catch(() => setStep('connect_instagram'))
       } else {
         setStep('google')
       }
     })
-  }, [router])
+  }, [router, searchParams])
 
   const handleGoogle = async () => {
     setGoogleLoading(true)
@@ -43,34 +51,11 @@ export default function ConnectPage() {
     if (error) { setError(error.message); setGoogleLoading(false) }
   }
 
-  const handleConnect = async () => {
-    if (!username.trim()) { setError('Ingresá tu @username de Instagram'); return }
-    setLoading(true)
-    setStep('connecting')
+  const handleConnectInstagram = () => {
+    setIgLoading(true)
     setError('')
-
-    try {
-      const res = await fetch('/api/apify/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: username.replace('@', '').trim(),
-          sessionCookie: sessionCookie.trim() || null,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok || data.error) {
-        setError(data.error || 'Error conectando')
-        setStep('form')
-        return
-      }
-      router.push('/marca?onboarding=1' + (data.profileFound === false ? '&pendingProfile=1' : ''))
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Error conectando')
-      setStep('form')
-    } finally {
-      setLoading(false)
-    }
+    // Redirect to OAuth initiation — the server will build the Meta OAuth URL
+    window.location.href = '/api/auth/instagram'
   }
 
   if (step === 'checking') {
@@ -93,7 +78,7 @@ export default function ConnectPage() {
           <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
             {step === 'google'
               ? 'Tu sistema de analytics de Instagram con IA'
-              : 'Sin OAuth, sin permisos de Meta. Solo tu username.'}
+              : 'Conectate vía OAuth oficial de Meta para acceder a tus métricas completas.'}
           </p>
         </div>
 
@@ -111,6 +96,7 @@ export default function ConnectPage() {
             </p>
 
             <button
+              id="google-signin-btn"
               onClick={handleGoogle}
               disabled={googleLoading}
               style={{
@@ -143,88 +129,53 @@ export default function ConnectPage() {
           </div>
         )}
 
-        {step === 'connecting' && (
-          <div className="card" style={{ padding: 48, textAlign: 'center' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Conectando...</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Conectando tu cuenta de Instagram...<br />Esto puede tardar unos segundos.</div>
-            <div style={{ marginTop: 24, height: 4, background: 'var(--surface-2)', borderRadius: 2 }}>
-              <div style={{ height: '100%', background: 'var(--accent)', borderRadius: 2, width: '60%', animation: 'pulse 2s infinite' }} />
-            </div>
-          </div>
-        )}
-
-        {step === 'form' && (
+        {step === 'connect_instagram' && (
           <div className="card" style={{ padding: 32 }}>
-
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 8 }}>
-                Username de Instagram <span style={{ color: 'var(--danger)' }}>*</span>
-              </label>
-              <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 15, fontWeight: 600 }}>@</span>
-                <input
-                  value={username}
-                  onChange={e => setUsername(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleConnect()}
-                  placeholder="tuusuario"
-                  style={{ paddingLeft: 28, fontSize: 15, fontWeight: 600, width: '100%' }}
-                  autoFocus
-                />
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <div style={{
+                width: 64, height: 64, borderRadius: '50%', margin: '0 auto 16px',
+                background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28,
+              }}>
+                📸
               </div>
-              <p style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 6 }}>
-                Solo necesitás el username. Por ahora funciona con cuentas públicas — las cuentas privadas todavía no pueden sincronizar reels.
+              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Conectar Instagram</h2>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                Autorizá a Klar vía la API oficial de Meta para acceder a tus métricas de reels:
+                vistas, alcance, guardados y más.
               </p>
             </div>
 
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <label style={{ fontSize: 13, fontWeight: 700 }}>
-                  Session Cookie <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-muted)' }}>(opcional)</span>
-                </label>
-                <button
-                  onClick={() => setShowCookieHelp(h => !h)}
-                  style={{ fontSize: 12, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
-                >
-                  {showCookieHelp ? 'Cerrar ayuda' : '¿Cómo obtenerla?'}
-                </button>
-              </div>
-
-              {showCookieHelp && (
-                <div style={{ background: 'var(--accent-light)', borderRadius: 10, padding: 14, marginBottom: 12, fontSize: 12.5, lineHeight: 1.7 }}>
-                  <strong style={{ color: 'var(--accent)' }}>Cómo obtener tu session cookie:</strong>
-                  <ol style={{ margin: '8px 0 0 16px', padding: 0 }}>
-                    <li>Abrí Instagram en Chrome y logueate</li>
-                    <li>Presioná <code style={{ background: 'var(--surface-2)', padding: '1px 5px', borderRadius: 4 }}>F12</code> → pestaña <strong>Application</strong></li>
-                    <li>En la barra izquierda: <strong>Cookies → instagram.com</strong></li>
-                    <li>Buscá la cookie llamada <code style={{ background: 'var(--surface-2)', padding: '1px 5px', borderRadius: 4 }}>sessionid</code></li>
-                    <li>Copiá el valor y pegalo acá</li>
-                  </ol>
-                  <p style={{ marginTop: 8, color: 'var(--text-muted)' }}>
-                    Opcional: si tu cuenta es privada, esto ayuda a traer tu foto de perfil y tu cantidad de seguidores. Todavía no habilita sincronizar reels de cuentas privadas, y no expone guardados ni alcance — Instagram no comparte esos datos públicamente con nadie.
-                  </p>
-                </div>
-              )}
-
-              <input
-                value={sessionCookie}
-                onChange={e => setSessionCookie(e.target.value)}
-                placeholder="Pegá el valor de tu cookie 'sessionid'..."
-                style={{ fontSize: 12, fontFamily: 'monospace', width: '100%' }}
-              />
+            <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 14, marginBottom: 24, fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.7 }}>
+              <strong style={{ color: 'var(--text)', display: 'block', marginBottom: 6 }}>Permisos que se solicitarán:</strong>
+              <ul style={{ margin: 0, paddingLeft: 16 }}>
+                <li>Ver tu perfil e información básica</li>
+                <li>Acceder a las métricas de tus reels (plays, alcance, guardados)</li>
+                <li>Leer insights de tu página de Facebook vinculada</li>
+              </ul>
+              <p style={{ marginTop: 8, color: 'var(--text-faint)', fontSize: 12 }}>
+                ⚠️ Requiere una cuenta de Instagram Business o Creator.
+              </p>
             </div>
 
             <button
-              onClick={handleConnect}
-              disabled={loading || !username.trim()}
-              className="btn btn-primary"
-              style={{ width: '100%', fontSize: 15, padding: '14px 0', fontWeight: 700 }}
+              id="instagram-connect-btn"
+              onClick={handleConnectInstagram}
+              disabled={igLoading}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+                border: 'none', borderRadius: 12,
+                padding: '14px 20px', fontSize: 15, fontWeight: 700, cursor: igLoading ? 'default' : 'pointer',
+                color: '#fff', transition: 'opacity 0.15s',
+                opacity: igLoading ? 0.7 : 1,
+              }}
             >
-              {loading ? '⏳ Conectando...' : 'Conectar Instagram'}
+              {igLoading ? 'Redirigiendo a Meta...' : 'Conectar con Instagram'}
             </button>
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginTop: 20 }}>
-              {['Sin OAuth de Meta', 'Sin permisos de app', 'Datos seguros'].map(b => (
+              {['API Oficial de Meta', 'OAuth Seguro', 'Analytics completos'].map(b => (
                 <span key={b} style={{ fontSize: 11, background: 'var(--surface-2)', color: 'var(--text-muted)', padding: '4px 10px', borderRadius: 20, fontWeight: 500 }}>{b}</span>
               ))}
             </div>
