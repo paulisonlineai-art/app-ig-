@@ -103,20 +103,7 @@ export async function GET(req: NextRequest) {
 
     const db = createServerSupabase()
 
-    // Check if this IG account is already connected to a different user
-    const { data: existingByIgId } = await db
-      .from('ig_accounts')
-      .select('id, user_id')
-      .eq('ig_user_id', profile.id)
-      .maybeSingle()
-
-    if (existingByIgId && existingByIgId.user_id && existingByIgId.user_id !== user.id) {
-      const redirectUrl = new URL('/connect', req.url)
-      redirectUrl.searchParams.set('error', 'Esta cuenta de Instagram ya está conectada a otro usuario de Klar.')
-      return NextResponse.redirect(redirectUrl)
-    }
-
-    // Step 4: Upsert ig_accounts
+    // Step 4: Upsert ig_accounts (on conflict by ig_user_id)
     const igAccountFields = {
       user_id: user.id,
       ig_user_id: profile.id,
@@ -129,17 +116,12 @@ export async function GET(req: NextRequest) {
       media_count: profile.media_count,
       ig_access_token: longLivedToken,
       ig_token_expires_at: tokenExpiresAt,
+      legacy_access_token: 'oauth',
     }
 
-    const { data: existingForUser } = await db
+    const { error: upsertError } = await db
       .from('ig_accounts')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    const { error: upsertError } = existingForUser
-      ? await db.from('ig_accounts').update(igAccountFields).eq('id', existingForUser.id)
-      : await db.from('ig_accounts').insert(igAccountFields)
+      .upsert(igAccountFields, { onConflict: 'ig_user_id' })
 
     if (upsertError) {
       console.error('[ig-callback] DB upsert failed:', upsertError)
