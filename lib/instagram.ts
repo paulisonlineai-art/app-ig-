@@ -188,8 +188,12 @@ export async function getInstagramMedia(accessToken: string, limit = 50): Promis
  */
 export async function getMediaInsights(accessToken: string, mediaId: string): Promise<IGMediaInsights> {
   try {
+    // IMPORTANT: Only request metrics valid for reels/video insights.
+    // "likes" and "comments" are NOT valid insight metrics — they're only
+    // available as basic fields (like_count, comments_count) on the media object.
+    // Including invalid metrics causes the entire API call to fail with an error.
     const data = await graphFetch(`/${mediaId}/insights`, accessToken, {
-      metric: 'plays,reach,saved,shares,total_interactions,likes,comments',
+      metric: 'plays,reach,saved,shares,total_interactions',
     })
 
     const metrics: Record<string, number> = {}
@@ -203,12 +207,13 @@ export async function getMediaInsights(accessToken: string, mediaId: string): Pr
       saved: metrics.saved ?? 0,
       shares: metrics.shares ?? 0,
       total_interactions: metrics.total_interactions ?? 0,
-      likes: metrics.likes ?? 0,
-      comments: metrics.comments ?? 0,
+      // likes and comments come from the media object's basic fields, not insights
+      likes: 0,
+      comments: 0,
     }
   } catch (e) {
-    // Insights may not be available for older media — return zeroed object
-    if (e instanceof IGPermissionError || (e instanceof Error && e.message.includes('insights'))) {
+    // Insights may not be available for older media or stories — return zeroed object
+    if (e instanceof IGPermissionError || (e instanceof Error && (e.message.includes('insights') || e.message.includes('not supported') || e.message.includes('(#100)')))) {
       console.warn(`[instagram] insights not available for media ${mediaId}:`, e.message)
       return { plays: 0, reach: 0, saved: 0, shares: 0, total_interactions: 0, likes: 0, comments: 0 }
     }

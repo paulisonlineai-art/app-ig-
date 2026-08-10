@@ -80,10 +80,16 @@ export async function syncAccountReels(accountId: string): Promise<{
       insights: Awaited<ReturnType<typeof getMediaInsights>>
     }> = []
 
+    let insightsSuccessCount = 0
+    let insightsFailCount = 0
+
     for (const media of mediaItems) {
       try {
         const insights = await getMediaInsights(token, media.id)
         enrichedReels.push({ media, insights })
+        insightsSuccessCount++
+        // Small delay between insight calls to avoid rate limits
+        if (mediaItems.length > 10) await sleep(200)
       } catch (e) {
         if (e instanceof IGRateLimitError) {
           console.warn(`[sync] Rate limit hit fetching insights for ${media.id} — waiting 60s and retrying once`)
@@ -91,16 +97,20 @@ export async function syncAccountReels(accountId: string): Promise<{
           try {
             const insights = await getMediaInsights(token, media.id)
             enrichedReels.push({ media, insights })
+            insightsSuccessCount++
           } catch (e2) {
-            console.warn(`[sync] Insights retry failed for ${media.id} — skipping insights for this reel:`, e2)
+            console.warn(`[sync] Insights retry failed for ${media.id} — skipping:`, e2)
             enrichedReels.push({ media, insights: ZERO_INSIGHTS })
+            insightsFailCount++
           }
         } else {
           console.warn(`[sync] Could not fetch insights for ${media.id}:`, e)
           enrichedReels.push({ media, insights: ZERO_INSIGHTS })
+          insightsFailCount++
         }
       }
     }
+    console.log(`[sync] Insights fetched: ${insightsSuccessCount} OK, ${insightsFailCount} failed out of ${mediaItems.length} reels`)
 
     // Calculate average views (plays) for multiplier baseline
     const avgViews =
@@ -109,14 +119,14 @@ export async function syncAccountReels(accountId: string): Promise<{
 
     const upserts = enrichedReels.map(({ media, insights }) => {
       // Graph API metric mapping:
-      //   plays         → views
-      //   saved         → saves
-      //   shares        → shares
-      //   reach         → reach
-      //   likes/comments from insights take precedence over basic fields
+      //   plays         → views  (from insights)
+      //   saved         → saves  (from insights)
+      //   shares        → shares (from insights)
+      //   reach         → reach  (from insights)
+      //   likes/comments come from media basic fields (NOT available as insights metrics)
       const views = clamp(insights.plays || 0)
-      const likes = clamp(insights.likes || media.like_count || 0)
-      const comments = clamp(insights.comments || media.comments_count || 0)
+      const likes = clamp(media.like_count || 0)
+      const comments = clamp(media.comments_count || 0)
       const saves = clamp(insights.saved || 0)
       const shares = clamp(insights.shares || 0)
       const reach = clamp(insights.reach || 0)
