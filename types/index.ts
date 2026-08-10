@@ -100,6 +100,7 @@ export interface Competitor {
   ig_username: string
   ig_user_id: string | null
   name: string | null
+  bio: string | null
   profile_picture_url: string | null
   followers_count: number | null
   last_synced_at: string | null
@@ -129,6 +130,7 @@ export interface CompetitorReel {
   transcribe_status: 'none' | 'transcribing' | 'transcribed' | 'error'
   error_message: string | null
   ai_analysis: string | null
+  cta_type: import('@/lib/cta-classifier').CTAType
   saved: boolean
   created_at: string
 }

@@ -10,21 +10,23 @@ const DEFAULT_PERIODS = [
 interface Props {
   current: string
   options?: { value: string; label: string }[]
+  paramName?: string
+  label?: string
 }
 
-export default function PeriodToggle({ current, options = DEFAULT_PERIODS }: Props) {
+export default function PeriodToggle({ current, options = DEFAULT_PERIODS, paramName = 'range', label = 'Período' }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
   const onChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString())
-    params.set('range', value)
+    params.set(paramName, value)
     router.push(`${pathname}?${params.toString()}`)
   }
 
   return (
-    <div className="period-toggle" role="group" aria-label="Período">
+    <div className="period-toggle" role="group" aria-label={label}>
       {options.map((p) => (
         <button
           key={p.value}

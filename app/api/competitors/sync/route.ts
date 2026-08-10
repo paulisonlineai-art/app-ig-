@@ -3,6 +3,7 @@ import { createServerSupabase } from '@/lib/supabase'
 import { getCompetitorProfile, IGPermissionError } from '@/lib/instagram'
 import { scrapeCompetitorReels, scrapeInstagramUser } from '@/lib/scraper-legacy'
 import { checkRateLimit } from '@/lib/rateLimit'
+import { classifyCTA } from '@/lib/cta-classifier'
 
 export async function POST(req: NextRequest) {
   const accountId = req.cookies.get('ig_account_id')?.value
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
       ig_user_id?: string
       profile_picture_url?: string | null
       followers_count?: number
+      bio?: string | null
     } = {}
 
     // Try Business Discovery API first (requires Business/Creator account + token)
@@ -83,6 +85,7 @@ export async function POST(req: NextRequest) {
           ig_user_id: competitorData.id,
           profile_picture_url: competitorData.profile_picture_url ?? null,
           followers_count: competitorData.followers_count,
+          bio: competitorData.biography ?? null,
         }
 
         reels = competitorData.media.slice(0, fetchLimit).map((m) => ({
@@ -120,6 +123,7 @@ export async function POST(req: NextRequest) {
           ig_user_id: profile.id,
           profile_picture_url: profile.profilePicUrl ?? null,
           followers_count: profile.followersCount,
+          bio: profile.biography || null,
         }
       }
 
@@ -160,6 +164,7 @@ export async function POST(req: NextRequest) {
           views: r.views,
           likes: r.likes,
           comments: r.comments,
+          cta_type: classifyCTA(r.caption),
         },
         { onConflict: 'competitor_id,ig_media_id' },
       )

@@ -117,6 +117,7 @@ export interface IGCompetitorProfile {
   id: string
   username: string
   name: string
+  biography: string | null
   profile_picture_url: string | null
   followers_count: number
   media_count: number
@@ -237,7 +238,7 @@ export async function getCompetitorProfile(
 ): Promise<IGCompetitorProfile> {
   const fields = [
     'business_discovery.fields(',
-    'id,username,name,profile_picture_url,followers_count,media_count,',
+    'id,username,name,biography,profile_picture_url,followers_count,media_count,',
     'media.limit(20){id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count}',
     ')',
   ].join('')
@@ -269,6 +270,7 @@ export async function getCompetitorProfile(
     id: biz.id,
     username: biz.username ?? competitorUsername,
     name: biz.name ?? '',
+    biography: biz.biography ?? null,
     profile_picture_url: biz.profile_picture_url ?? null,
     followers_count: biz.followers_count ?? 0,
     media_count: biz.media_count ?? 0,
