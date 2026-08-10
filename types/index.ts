@@ -39,6 +39,7 @@ export interface Reel {
   shares: number
   saves: number
   reach: number
+  total_interactions: number
   // Computed rates (per 100 views)
   like_rate: number
   save_rate: number

@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 
 // Paths that never require a Google session at all.
-const PUBLIC_PATHS = new Set(['/', '/login', '/connect', '/auth/callback'])
+const PUBLIC_PATHS = new Set(['/', '/login', '/auth/callback'])
 const PUBLIC_PREFIXES = ['/api/webhooks/', '/api/cron/', '/api/auth/instagram']
 
 export async function proxy(req: NextRequest) {
@@ -37,6 +37,9 @@ export async function proxy(req: NextRequest) {
 
   if (!user) {
     if (isApi) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+    // /connect is the Google sign-in entrypoint — it must stay reachable
+    // for logged-out users instead of redirecting to itself.
+    if (pathname === '/connect') return NextResponse.next()
     return NextResponse.redirect(new URL('/connect', req.url))
   }
 

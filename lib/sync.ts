@@ -9,6 +9,9 @@ import {
 import { calcMultiplier, calcRate } from '@/lib/utils'
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+const ZERO_INSIGHTS = { plays: 0, reach: 0, saved: 0, shares: 0, total_interactions: 0, likes: 0, comments: 0 }
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export async function syncAccountReels(accountId: string): Promise<{
   synced: number
@@ -83,12 +86,18 @@ export async function syncAccountReels(accountId: string): Promise<{
         enrichedReels.push({ media, insights })
       } catch (e) {
         if (e instanceof IGRateLimitError) {
-          console.warn(`[sync] Rate limit hit fetching insights for ${media.id} — stopping insights fetch`)
-          // Still include media with zero insights rather than drop it
-          enrichedReels.push({ media, insights: { plays: 0, reach: 0, saved: 0, shares: 0, total_interactions: 0, likes: 0, comments: 0 } })
+          console.warn(`[sync] Rate limit hit fetching insights for ${media.id} — waiting 60s and retrying once`)
+          await sleep(60000)
+          try {
+            const insights = await getMediaInsights(token, media.id)
+            enrichedReels.push({ media, insights })
+          } catch (e2) {
+            console.warn(`[sync] Insights retry failed for ${media.id} — skipping insights for this reel:`, e2)
+            enrichedReels.push({ media, insights: ZERO_INSIGHTS })
+          }
         } else {
           console.warn(`[sync] Could not fetch insights for ${media.id}:`, e)
-          enrichedReels.push({ media, insights: { plays: 0, reach: 0, saved: 0, shares: 0, total_interactions: 0, likes: 0, comments: 0 } })
+          enrichedReels.push({ media, insights: ZERO_INSIGHTS })
         }
       }
     }
@@ -111,6 +120,7 @@ export async function syncAccountReels(accountId: string): Promise<{
       const saves = clamp(insights.saved || 0)
       const shares = clamp(insights.shares || 0)
       const reach = clamp(insights.reach || 0)
+      const totalInteractions = clamp(insights.total_interactions || 0)
       const multiplier = Number(calcMultiplier(views, avgViews).toFixed(4)) || 1
 
       return {
@@ -129,6 +139,7 @@ export async function syncAccountReels(accountId: string): Promise<{
         shares,
         saves,
         reach,
+        total_interactions: totalInteractions,
         like_rate: clampRate(calcRate(likes, views)),
         save_rate: clampRate(calcRate(saves, views)),
         comment_rate: clampRate(calcRate(comments, views)),
