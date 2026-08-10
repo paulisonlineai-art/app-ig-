@@ -3,19 +3,18 @@ import { createServerSupabase } from '@/lib/supabase'
 import { formatNumber, formatCurrency, calcAverages } from '@/lib/utils'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { ArrowLeft, ExternalLink, Eye, Heart, MessageCircle, Bookmark } from 'lucide-react'
 import ReelDetailClient from '@/components/reels/detail/ReelDetailClient'
 import BenchmarkChart from '@/components/reels/detail/BenchmarkChart'
+import PerformanceVsAvg from '@/components/reels/detail/PerformanceVsAvg'
 import TrackingLinkCard from '@/components/reels/detail/TrackingLinkCard'
+import Card from '@/components/ui/Card'
+import Badge from '@/components/ui/Badge'
+import KPICard from '@/components/ui/KPICard'
 
-function DeltaBadge({ actual, benchmark }: { actual: number; benchmark: number }) {
-  if (!benchmark) return null
-  const pct = ((actual - benchmark) / benchmark) * 100
-  const up = pct >= 0
-  return (
-    <div style={{ marginTop: 4, fontSize: 11, fontWeight: 600, color: up ? 'var(--success)' : 'var(--danger)' }}>
-      {up ? '↑' : '↓'} {Math.abs(pct).toFixed(0)}% más {up ? 'alto' : 'bajo'}
-    </div>
-  )
+function extractHashtags(caption: string | null): string[] {
+  if (!caption) return []
+  return Array.from(new Set(caption.match(/#[\p{L}\p{N}_]+/gu) || [])).slice(0, 10)
 }
 
 export default async function ReelDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -26,17 +25,28 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
   const db = createServerSupabase()
   const [{ data: reel }, { data: allReels }, { data: sales }] = await Promise.all([
     db.from('reels').select('*').eq('id', id).eq('account_id', accountId).single(),
-    db.from('reels').select('views,like_rate,comment_rate,words_per_minute,timestamp').eq('account_id', accountId),
+    db.from('reels').select('views,likes,comments,shares,saves,like_rate,comment_rate,words_per_minute,timestamp').eq('account_id', accountId),
     db.from('sales').select('amount,cash_collected').eq('account_id', accountId).eq('reel_id', id),
   ])
 
   if (!reel) notFound()
 
-  const avgs = calcAverages(allReels || [])
+  const others = allReels || []
+  const n = others.length || 1
+  const avgs = calcAverages(others)
+  const avgLikes = others.reduce((s, r) => s + r.likes, 0) / n
+  const avgComments = others.reduce((s, r) => s + r.comments, 0) / n
+  const avgSaves = others.reduce((s, r) => s + r.saves, 0) / n
   const totalSales = (sales || []).reduce((s: number, x: { amount: number }) => s + x.amount, 0)
 
+  const totalViewsAll = others.reduce((s, r) => s + r.views, 0)
+  const totalInteractionsAll = others.reduce((s, r) => s + r.likes + r.comments + r.shares + r.saves, 0)
+  const accountEngRate = totalViewsAll > 0 ? (totalInteractionsAll / totalViewsAll) * 100 : 0
+  const reelEngRate = reel.views > 0 ? ((reel.likes + reel.comments + reel.shares + reel.saves) / reel.views) * 100 : 0
+  const engColor = reelEngRate >= accountEngRate * 1.1 ? 'var(--success)' : reelEngRate <= accountEngRate * 0.9 ? 'var(--danger)' : 'var(--warning)'
+
   const dayViews: Record<number, number[]> = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] }
-  for (const r of allReels || []) {
+  for (const r of others) {
     const day = new Date(r.timestamp).getDay()
     dayViews[day].push(r.views)
   }
@@ -47,19 +57,26 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
 
   const reelDay = new Date(reel.timestamp).getDay()
   const bestDay = dayAvg.reduce((best, d) => d.avg > best.avg ? d : best, dayAvg[0])
+  const hashtags = extractHashtags(reel.caption)
+  const captionFirstLine = reel.caption?.split('\n')[0] || 'Sin título'
 
   return (
     <div>
-      <Link href="/reels" className="warning-link" style={{ marginBottom: 20, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-        ← Volver a Reels
+      <Link href="/reels" style={{ marginBottom: 16, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>
+        <ArrowLeft size={15} /> Volver a Reels
       </Link>
 
+      <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 20, lineHeight: 1.3 }}>
+        {captionFirstLine}
+      </h1>
+
       <div className="grid-detail">
-        {/* Left — video preview */}
+        {/* Left column (60%) */}
         <div>
           <div className="video-preview">
             {reel.thumbnail_url && (
-              <img src={`/api/proxy-image?url=${encodeURIComponent(reel.thumbnail_url)}`} alt={reel.caption?.split('\n')[0]?.slice(0, 80) || 'Miniatura del reel'} className="video-preview-img" />
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={`/api/proxy-image?url=${encodeURIComponent(reel.thumbnail_url)}`} alt={captionFirstLine.slice(0, 80)} className="video-preview-img" />
             )}
             <div className="video-overlay-tl">
               <span className={`badge-multiplier ${reel.multiplier >= 2 ? 'badge-up' : reel.multiplier >= 0.7 ? 'badge-avg' : 'badge-down'}`}>
@@ -68,63 +85,77 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
             </div>
             {reel.duration_seconds && (
               <div className="video-overlay-tr">
-                ⏱ {Math.floor(reel.duration_seconds / 60)}:{String(reel.duration_seconds % 60).padStart(2, '0')}
+                {Math.floor(reel.duration_seconds / 60)}:{String(reel.duration_seconds % 60).padStart(2, '0')}
               </div>
             )}
           </div>
-          <a href={reel.permalink} target="_blank" rel="noopener noreferrer" className="btn btn-ghost" style={{ display: 'flex', justifyContent: 'center', marginTop: 10, fontSize: 13 }}>
-            📱 Abrir en Instagram ↗
-          </a>
-        </div>
 
-        {/* Right — metrics */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="card" style={{ padding: 20 }}>
-            <h1 style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8, lineHeight: 1.3 }}>
-              {reel.caption?.split('\n')[0] || 'Sin título'}
-            </h1>
-            {reel.caption && reel.caption.split('\n').length > 1 && (
-              <p className="dash-subtitle" style={{ marginBottom: 10, lineHeight: 1.5 }}>
-                {reel.caption.split('\n').slice(1).join(' ').slice(0, 140)}
-              </p>
-            )}
-            <div className="detail-sublabel">
+          <a href={reel.permalink} target="_blank" rel="noopener noreferrer" className="btn btn-ghost" style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 10, fontSize: 13 }}>
+            Abrir en Instagram <ExternalLink size={13} />
+          </a>
+
+          <Card style={{ marginTop: 16 }}>
+            <div className="detail-label" style={{ marginBottom: 8 }}>Caption completo</div>
+            <p style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+              {reel.caption || 'Sin descripción'}
+            </p>
+            <div className="detail-sublabel" style={{ marginTop: 10 }}>
               Publicado el {new Date(reel.timestamp).toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' })}
               {reel.is_trial && <span className="pill pill-active" style={{ marginLeft: 8, fontSize: 11 }}>Trial Reel</span>}
             </div>
+            {hashtags.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+                {hashtags.map((h) => (
+                  <Badge key={h} variant="default" size="sm">{h}</Badge>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* Right column (40%) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="grid-stats-4" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+            <KPICard label="Vistas" value={formatNumber(reel.views)} accentColor="var(--kpi-blue)" icon={<Eye size={16} strokeWidth={1.75} color="var(--kpi-blue)" />} />
+            <KPICard label="Likes" value={formatNumber(reel.likes)} accentColor="var(--kpi-pink)" icon={<Heart size={16} strokeWidth={1.75} color="var(--kpi-pink)" />} />
+            <KPICard label="Comentarios" value={formatNumber(reel.comments)} accentColor="var(--kpi-green)" icon={<MessageCircle size={16} strokeWidth={1.75} color="var(--kpi-green)" />} />
+            <KPICard label="Guardados" value={formatNumber(reel.saves)} accentColor="var(--kpi-purple)" icon={<Bookmark size={16} strokeWidth={1.75} color="var(--kpi-purple)" />} />
           </div>
 
-          <div className="grid-stats-4">
-            {[
-              { label: 'Me gusta', value: formatNumber(reel.likes), rate: reel.like_rate, benchmark: avgs.avg_like_rate },
-              { label: 'Comentarios', value: formatNumber(reel.comments), rate: reel.comment_rate, benchmark: avgs.avg_comment_rate },
-              { label: 'Multiplicador', value: `×${reel.multiplier.toFixed(2)}`, rate: null, benchmark: null },
-              { label: 'Ventas', value: totalSales > 0 ? formatCurrency(totalSales) : '—', rate: null, benchmark: null },
-            ].map(m => (
-              <div key={m.label} className="metric-card" style={{ padding: 14 }}>
-                <div className="stat-tile-label" style={{ marginBottom: 6 }}>{m.label}</div>
-                <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>{m.value}</div>
-                {m.rate !== null && <div className="stat-tile-sub" style={{ fontSize: 11.5 }}>{m.rate!.toFixed(2)}% de vistas</div>}
-                {m.benchmark !== null && <DeltaBadge actual={m.rate!} benchmark={m.benchmark!} />}
-              </div>
-            ))}
-          </div>
+          <Card>
+            <div className="detail-label" style={{ marginBottom: 4 }}>Rendimiento vs Promedio</div>
+            <div className="detail-sublabel" style={{ marginBottom: 8 }}>% respecto al promedio de tu cuenta</div>
+            <PerformanceVsAvg
+              metrics={[
+                { label: 'Vistas', value: reel.views, avg: avgs.avg_views },
+                { label: 'Likes', value: reel.likes, avg: avgLikes },
+                { label: 'Comentarios', value: reel.comments, avg: avgComments },
+                { label: 'Guardados', value: reel.saves, avg: avgSaves },
+              ]}
+            />
+          </Card>
 
-          <div className="card grid-detail-bottom-6" style={{ padding: 16 }}>
-            {[
-              { label: 'VISTAS', value: formatNumber(reel.views) },
-              { label: 'ALCANCE', value: formatNumber(reel.reach) },
-              { label: 'ENGAGEMENT', value: `${((reel.likes + reel.comments + reel.shares + reel.saves) / Math.max(reel.views, 1) * 100).toFixed(1)}%` },
-              { label: 'ORGÁNICO', value: `${reel.organic_percentage}%` },
-              { label: 'WPM', value: reel.words_per_minute ? `${reel.words_per_minute}` : '—' },
-              { label: 'MULTIPLICADOR', value: `×${reel.multiplier.toFixed(2)}` },
-            ].map(s => (
-              <div key={s.label} style={{ textAlign: 'center' }}>
-                <div className="stat-tile-label" style={{ letterSpacing: '0.06em', marginBottom: 4 }}>{s.label}</div>
-                <div className="stat-tile-value" style={{ fontSize: 16 }}>{s.value}</div>
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div className="detail-label">Engagement Rate</div>
+                <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', marginTop: 4 }}>{reelEngRate.toFixed(1)}%</div>
               </div>
-            ))}
-          </div>
+              <span style={{ width: 12, height: 12, borderRadius: '50%', background: engColor, flexShrink: 0 }} />
+            </div>
+            <div className="detail-sublabel" style={{ marginTop: 6 }}>Promedio de cuenta: {accountEngRate.toFixed(1)}%</div>
+
+            <div style={{ display: 'flex', gap: 20, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+              <div>
+                <div className="detail-sublabel">Alcance</div>
+                <div style={{ fontSize: 16, fontWeight: 700 }}>{formatNumber(reel.reach || 0)}</div>
+              </div>
+              <div>
+                <div className="detail-sublabel">Compartidos</div>
+                <div style={{ fontSize: 16, fontWeight: 700 }}>{formatNumber(reel.shares || 0)}</div>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
 
@@ -132,8 +163,8 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
       <div className="grid-detail-charts-2" style={{ marginTop: 20 }}>
         <BenchmarkChart reel={reel} avgs={avgs} />
 
-        <div className="card" style={{ padding: 20 }}>
-          <div className="detail-label" style={{ marginBottom: 4 }}>VIEWS POR DÍA DE SEMANA</div>
+        <Card>
+          <div className="detail-label" style={{ marginBottom: 4 }}>Views por día de semana</div>
           <div className="detail-sublabel" style={{ marginBottom: 16 }}>Distribución de views de tu cuenta</div>
           <div className="day-bar-chart">
             {dayAvg.map((d) => {
@@ -142,28 +173,28 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
               const isBest = d.day === bestDay.day
               return (
                 <div key={d.day} className="day-bar-col">
-                  <div className="day-bar" style={{ background: isReel ? 'var(--accent)' : isBest ? 'var(--accent-light)' : 'var(--surface-2)', height: `${(d.avg / maxAvg) * 64}px`, border: isBest ? '1.5px solid var(--accent)' : undefined }} />
-                  <div className="day-bar-label" style={{ color: isReel ? 'var(--accent)' : undefined, fontWeight: isReel ? 700 : undefined }}>{d.day}</div>
+                  <div className="day-bar" style={{ background: isReel ? 'var(--primary)' : isBest ? 'var(--primary-light)' : 'var(--surface-2)', height: `${(d.avg / maxAvg) * 64}px`, border: isBest ? '1.5px solid var(--primary)' : undefined }} />
+                  <div className="day-bar-label" style={{ color: isReel ? 'var(--primary)' : undefined, fontWeight: isReel ? 700 : undefined }}>{d.day}</div>
                 </div>
               )
             })}
           </div>
           {bestDay && (
             <div className="detail-highlight" style={{ marginTop: 12, display: 'flex', gap: 6, fontSize: 12 }}>
-              <span style={{ color: 'var(--accent)', fontWeight: 600 }}>📅 Día con más views: {bestDay.day}</span>
+              <span style={{ color: 'var(--primary)', fontWeight: 600 }}>Día con más views: {bestDay.day}</span>
               <span style={{ color: 'var(--text-muted)' }}>— {formatNumber(Math.round(bestDay.avg))} views promedio</span>
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* VS Benchmark + Ratios + Transcript */}
       <div className="grid-detail-3col" style={{ marginTop: 16 }}>
-        <div className="card" style={{ padding: 20 }}>
-          <div className="detail-label" style={{ marginBottom: 16 }}>VS BENCHMARK 90D</div>
+        <Card>
+          <div className="detail-label" style={{ marginBottom: 16 }}>VS Benchmark 90d</div>
           {[
-            { label: 'Me gusta', actual: reel.likes, rate: reel.like_rate, bRate: avgs.avg_like_rate, color: '#7c3aed' },
-            { label: 'Comentarios', actual: reel.comments, rate: reel.comment_rate, bRate: avgs.avg_comment_rate, color: '#f59e0b' },
+            { label: 'Me gusta', actual: reel.likes, rate: reel.like_rate, bRate: avgs.avg_like_rate, color: 'var(--kpi-pink)' },
+            { label: 'Comentarios', actual: reel.comments, rate: reel.comment_rate, bRate: avgs.avg_comment_rate, color: 'var(--kpi-green)' },
           ].map(m => {
             const pct = m.bRate > 0 ? ((m.rate - m.bRate) / m.bRate) * 100 : 0
             const up = pct >= 0
@@ -182,14 +213,14 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
               </div>
             )
           })}
-        </div>
+        </Card>
 
-        <div className="card" style={{ padding: 20 }}>
-          <div className="detail-label" style={{ marginBottom: 16 }}>RATIOS CLAVE</div>
+        <Card>
+          <div className="detail-label" style={{ marginBottom: 16 }}>Ratios clave</div>
           <p className="detail-sublabel" style={{ marginBottom: 12 }}>Proporciones con denominador real</p>
           {[
-            { label: 'Interacciones / Views', value: `${((reel.likes + reel.comments + reel.shares + reel.saves) / Math.max(reel.views, 1) * 100).toFixed(2)}%`, sub: `${formatNumber(reel.likes + reel.comments + reel.shares + reel.saves)} de ${formatNumber(reel.views)}`, note: 'engagement bruto' },
-            { label: 'Shares / Views', value: reel.shares ? `${((reel.shares / Math.max(reel.views,1)) * 100).toFixed(2)}%` : '—', sub: reel.shares ? `${formatNumber(reel.shares)} de ${formatNumber(reel.views)}` : 'No disponible vía scraping público', note: 'compartidos sobre reproducciones' },
+            { label: 'Interacciones / Views', value: `${reelEngRate.toFixed(2)}%`, sub: `${formatNumber(reel.likes + reel.comments + reel.shares + reel.saves)} de ${formatNumber(reel.views)}`, note: 'engagement bruto' },
+            { label: 'Shares / Views', value: reel.shares ? `${((reel.shares / Math.max(reel.views, 1)) * 100).toFixed(2)}%` : '—', sub: reel.shares ? `${formatNumber(reel.shares)} de ${formatNumber(reel.views)}` : 'No disponible', note: 'compartidos sobre reproducciones' },
             { label: 'Likes / Views', value: `${reel.like_rate.toFixed(2)}%`, sub: `${formatNumber(reel.likes)} de ${formatNumber(reel.views)}`, note: 'likes sobre reproducciones' },
             { label: 'Comments / Views', value: `${reel.comment_rate.toFixed(2)}%`, sub: `${formatNumber(reel.comments)} de ${formatNumber(reel.views)}`, note: 'comentarios sobre reproducciones' },
           ].map(r => (
@@ -201,14 +232,14 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
               <div className="stat-tile-sub" style={{ fontSize: 11, marginTop: 2 }}>{r.sub} — {r.note}</div>
             </div>
           ))}
-        </div>
+        </Card>
 
-        <div className="card" style={{ padding: 20 }}>
-          <div className="detail-label" style={{ marginBottom: 12 }}>TRANSCRIPCIÓN & ESTRUCTURA</div>
+        <Card>
+          <div className="detail-label" style={{ marginBottom: 12 }}>Transcripción & Estructura</div>
           {reel.hook && (
             <div className="detail-highlight" style={{ marginBottom: 10 }}>
               <div className="detail-highlight-label">HOOK</div>
-              <p style={{ fontSize: 12, color: 'var(--accent-dark)', lineHeight: 1.5 }}>{reel.hook}</p>
+              <p style={{ fontSize: 12, color: 'var(--primary-dark)', lineHeight: 1.5 }}>{reel.hook}</p>
             </div>
           )}
           {reel.cta && (
@@ -219,7 +250,7 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
           )}
           {reel.words_per_minute && (
             <div className="detail-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', marginBottom: 10 }}>
-              <span className="detail-sublabel">🗣 Velocidad de habla</span>
+              <span className="detail-sublabel">Velocidad de habla</span>
               <span style={{ fontSize: 14, fontWeight: 700 }}>{reel.words_per_minute} wpm</span>
             </div>
           )}
@@ -230,8 +261,15 @@ export default async function ReelDetailPage({ params }: { params: Promise<{ id:
           ) : (
             <p className="detail-sublabel" style={{ fontStyle: 'italic' }}>Sin transcripción disponible</p>
           )}
-        </div>
+        </Card>
       </div>
+
+      {totalSales > 0 && (
+        <Card style={{ marginTop: 16 }}>
+          <div className="detail-label" style={{ marginBottom: 4 }}>Ventas atribuidas</div>
+          <div style={{ fontSize: 22, fontWeight: 700 }}>{formatCurrency(totalSales)}</div>
+        </Card>
+      )}
 
       <div style={{ marginTop: 16 }}>
         <TrackingLinkCard reelId={reel.id} />

@@ -1,10 +1,18 @@
 import { cookies } from 'next/headers'
 import { createServerSupabase } from '@/lib/supabase'
-import { calcAverages, getRangeBounds } from '@/lib/utils'
+import { getRangeBounds } from '@/lib/utils'
 import ReelsGrid from '@/components/reels/ReelsGrid'
 import SyncButton from '@/components/dashboard/SyncButton'
-import DateRangeSelect from '@/components/dashboard/DateRangeSelect'
+import PeriodToggle from '@/components/dashboard/PeriodToggle'
+import Badge from '@/components/ui/Badge'
 import type { Reel } from '@/types'
+
+const PERIOD_OPTIONS = [
+  { value: '7d', label: '7d' },
+  { value: '30d', label: '30d' },
+  { value: '90d', label: '90d' },
+  { value: 'all', label: 'Todo' },
+]
 
 export default async function ReelsPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const cookieStore = await cookies()
@@ -16,23 +24,33 @@ export default async function ReelsPage({ searchParams }: { searchParams: Promis
   let query = db.from('reels').select('*').eq('account_id', accountId).order('timestamp', { ascending: false }).limit(200)
   if (start) query = query.gte('timestamp', start.toISOString())
   if (end) query = query.lt('timestamp', end.toISOString())
-  const { data: reels } = await query
+  const [{ data: reels }, { data: lastSync }] = await Promise.all([
+    query,
+    db.from('reels').select('synced_at').eq('account_id', accountId).order('synced_at', { ascending: false }).limit(1),
+  ])
 
   const allReels = (reels || []) as Reel[]
-  const averages = calcAverages(allReels)
-  const totalLikes = allReels.reduce((s, r) => s + r.likes, 0)
-  const totalViews = allReels.reduce((s, r) => s + r.views, 0)
+
+  const syncedAt = (lastSync as { synced_at: string }[] | null)?.[0]?.synced_at
+  const syncLabel = syncedAt
+    ? (() => {
+        const diff = Date.now() - new Date(syncedAt).getTime()
+        if (diff < 3600_000) return `hace ${Math.round(diff / 60_000)}m`
+        if (diff < 86400_000) return `hace ${Math.round(diff / 3600_000)}h`
+        return `hace ${Math.round(diff / 86400_000)}d`
+      })()
+    : null
 
   return (
     <div className="dash-pro">
       <div className="dash-header">
-        <div>
-          <h1 className="dash-greeting">Reels</h1>
-          <p className="dash-subtitle">Todos tus reels sincronizados.</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <h1 className="dash-greeting">Mis Reels</h1>
+          <Badge variant="primary" size="md">{allReels.length}</Badge>
         </div>
         <div className="dash-header-actions">
-          <DateRangeSelect current={range} />
-          <SyncButton />
+          <PeriodToggle current={range} options={PERIOD_OPTIONS} />
+          <SyncButton lastSyncLabel={syncLabel} />
         </div>
       </div>
 
@@ -43,7 +61,7 @@ export default async function ReelsPage({ searchParams }: { searchParams: Promis
           <p className="empty-state-desc">Hacé clic en &quot;Sincronizar&quot; para importar tus reels de Instagram</p>
         </div>
       ) : (
-        <ReelsGrid reels={allReels} averages={averages} totalLikes={totalLikes} totalViews={totalViews} />
+        <ReelsGrid reels={allReels} />
       )}
     </div>
   )

@@ -1,13 +1,18 @@
 'use client'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 
-const PERIODS = [
+const DEFAULT_PERIODS = [
   { value: '7d', label: '7d' },
   { value: '30d', label: '30d' },
   { value: '90d', label: '90d' },
-] as const
+]
 
-export default function PeriodToggle({ current }: { current: string }) {
+interface Props {
+  current: string
+  options?: { value: string; label: string }[]
+}
+
+export default function PeriodToggle({ current, options = DEFAULT_PERIODS }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -20,7 +25,7 @@ export default function PeriodToggle({ current }: { current: string }) {
 
   return (
     <div className="period-toggle" role="group" aria-label="Período">
-      {PERIODS.map((p) => (
+      {options.map((p) => (
         <button
           key={p.value}
           onClick={() => onChange(p.value)}
