@@ -2,47 +2,68 @@
 
 /* ═══ Theme tokens ═══ */
 :root, [data-theme="light"] {
-  --bg: #f8f8fa;
-  --surface: #ffffff;
-  --surface-2: #f0f0f3;
-  --surface-3: #e8e8ec;
-  --border: #e0e0e4;
-  --border-strong: #c8c8cd;
+  /* Backgrounds */
+  --bg: #FAFBFC;
+  --surface: #FFFFFF;
+  --surface-2: #F4F5F7;
+  --surface-3: #EBECF0;
+  --surface-hover: #F8F9FB;
+  --border: #E1E4E8;
+  --border-strong: #D1D5DA;
 
-  --accent: #F7007C;
-  --accent-light: rgba(247,0,124,0.08);
-  --accent-mid: #f94da0;
-  --accent-dark: #c50063;
+  /* Brand — deep blue primary, electric blue accent */
+  --primary: #1A56DB;
+  --primary-light: rgba(26,86,219,0.08);
+  --primary-mid: #3B82F6;
+  --primary-dark: #1E40AF;
+  --primary-text: #FFFFFF;
 
-  --text: #111111;
-  --text-muted: #666666;
-  --text-faint: #999999;
+  --accent: #6366F1;  /* indigo for secondary actions */
+  --accent-light: rgba(99,102,241,0.08);
+  --accent-mid: #818CF8;
+  --accent-dark: #4338CA;
 
+  /* Text */
+  --text: #1F2937;
+  --text-secondary: #4B5563;
+  --text-muted: #6B7280;
+  --text-faint: #9CA3AF;
+
+  /* Status */
   --success: #059669;
   --success-bg: rgba(5,150,105,0.08);
-  --warning: #d97706;
+  --success-light: #D1FAE5;
+  --warning: #D97706;
   --warning-bg: rgba(217,119,6,0.08);
-  --danger: #dc2626;
+  --danger: #DC2626;
   --danger-bg: rgba(220,38,38,0.06);
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --shadow: 0 4px 12px rgba(0,0,0,0.08);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+  /* Shadows — layered for depth */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -1px rgba(0,0,0,0.04);
+  --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.03);
+  --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.08), 0 10px 10px -5px rgba(0,0,0,0.03);
 
-  --radius: 10px;
+  /* Radius */
   --radius-sm: 6px;
-  --radius-lg: 14px;
+  --radius: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* Legacy tokens kept for pages not yet migrated to the new system */
   --landing-nav-bg: rgba(255,255,255,0.7);
   --landing-nav-border: rgba(0,0,0,0.06);
   --google-btn-color: #333;
-
-  /* Surface glass (light) */
   --surface-glass: rgba(255,255,255,0.7);
   --surface-glass-border: rgba(0,0,0,0.06);
-  --kpi-hover-glow: rgba(247,0,124,0.06);
-
-  /* Chart */
+  --kpi-hover-glow: rgba(26,86,219,0.06);
   --chart-tooltip-bg: #1a1a1a;
   --chart-tooltip-border: #333;
   --chart-tooltip-text: #fff;
@@ -50,41 +71,48 @@
 }
 
 [data-theme="dark"] {
-  --bg: #000000;
-  --surface: #0a0a0a;
-  --surface-2: #111111;
-  --surface-3: #1a1a1a;
-  --border: #1a1a1a;
-  --border-strong: #2a2a2a;
+  --bg: #0F1117;
+  --surface: #1A1D27;
+  --surface-2: #22252F;
+  --surface-3: #2A2D37;
+  --surface-hover: #1E2130;
+  --border: #2D3039;
+  --border-strong: #3D4049;
 
-  --text: #ffffff;
-  --text-muted: #888888;
-  --text-faint: #555555;
+  --primary: #3B82F6;
+  --primary-light: rgba(59,130,246,0.12);
+  --primary-dark: #2563EB;
 
-  --success: #34d399;
+  --accent: #818CF8;
+  --accent-light: rgba(129,140,248,0.12);
+  --accent-mid: #A5B4FC;
+  --accent-dark: #6366F1;
+
+  --text: #F3F4F6;
+  --text-secondary: #D1D5DB;
+  --text-muted: #9CA3AF;
+  --text-faint: #6B7280;
+
+  --success: #34D399;
   --success-bg: rgba(52,211,153,0.1);
-  --warning: #fbbf24;
+  --success-light: rgba(52,211,153,0.16);
+  --warning: #FBBF24;
   --warning-bg: rgba(251,191,36,0.1);
-  --danger: #ef4444;
+  --danger: #F87171;
   --danger-bg: rgba(239,68,68,0.1);
 
-  --accent-light: rgba(247,0,124,0.12);
-  --accent-dark: #ff1a8c;
-
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-  --shadow: 0 4px 12px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,0.5);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow: 0 4px 6px rgba(0,0,0,0.4);
+  --shadow-md: 0 10px 15px rgba(0,0,0,0.4);
+  --shadow-lg: 0 20px 25px rgba(0,0,0,0.4);
 
   --landing-nav-bg: rgba(20,20,20,0.6);
   --landing-nav-border: rgba(255,255,255,0.06);
   --google-btn-color: #111;
-
-  /* Surface glass (dark) */
   --surface-glass: rgba(15,15,15,0.7);
   --surface-glass-border: rgba(255,255,255,0.06);
-  --kpi-hover-glow: rgba(247,0,124,0.1);
-
-  /* Chart */
+  --kpi-hover-glow: rgba(59,130,246,0.1);
   --chart-tooltip-bg: #0a0a0a;
   --chart-tooltip-border: #222;
   --chart-tooltip-text: #fff;
@@ -114,13 +142,22 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 14px;
+  font-weight: 400;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
 a { text-decoration: none; color: inherit; }
+
+/* ─── Typography scale ─── */
+h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+h3 { font-size: 15px; font-weight: 600; }
+.text-body { font-size: 14px; font-weight: 400; }
+.text-small { font-size: 12px; font-weight: 400; }
+.text-caption { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -2083,4 +2120,62 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   .hero-title { font-size: 36px; }
   .pricing-card { padding: 28px 20px; }
   .landing-nav { left: 8px; right: 8px; top: 8px; }
+}
+
+/* ═══════════════════════════════════════════
+   UI component system (components/ui/*)
+   ═══════════════════════════════════════════ */
+@keyframes ui-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes ui-skeleton-pulse {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Card */
+.ui-card-elevated { box-shadow: var(--shadow-sm); }
+.ui-card-elevated:hover { box-shadow: var(--shadow); }
+.ui-card-interactive:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+
+/* Button */
+.ui-btn-primary:hover:not(:disabled) { filter: brightness(1.08); box-shadow: var(--shadow-sm); }
+.ui-btn-secondary:hover:not(:disabled) { border-color: var(--border-strong); background: var(--surface-hover); }
+.ui-btn-ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.ui-btn-danger:hover:not(:disabled) { filter: brightness(1.08); box-shadow: var(--shadow-sm); }
+.ui-btn-outline:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-light); }
+
+/* Table */
+.ui-table-wrap { overflow-x: auto; }
+.ui-table { width: 100%; border-collapse: collapse; }
+.ui-table-th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--surface);
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--text-muted);
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.ui-table-td {
+  font-size: 13px; color: var(--text);
+  padding: 12px 14px; border-bottom: 1px solid var(--border);
+  transition: background var(--transition-fast);
+}
+.ui-table-row:hover .ui-table-td { background: var(--surface-hover); }
+.ui-table-row:last-child .ui-table-td { border-bottom: none; }
+.ui-table-striped tbody tr:nth-child(even) .ui-table-td { background: var(--surface-2); }
+.ui-table-striped tbody tr:nth-child(even):hover .ui-table-td { background: var(--surface-hover); }
+
+/* KPICard */
+.ui-kpi-card { transition: box-shadow var(--transition), border-color var(--transition); }
+.ui-kpi-card:hover {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kpi-accent, var(--primary)) 15%, transparent);
+  border-color: var(--kpi-accent, var(--primary));
+}
+
+/* Skeleton */
+.ui-skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: ui-skeleton-pulse 1.4s ease infinite;
 }
