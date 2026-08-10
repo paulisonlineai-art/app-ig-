@@ -5,11 +5,8 @@ const META_APP_ID = process.env.META_APP_ID || ''
 const REDIRECT_URI = process.env.INSTAGRAM_REDIRECT_URI || 'http://localhost:3000/api/auth/instagram/callback'
 
 const SCOPES = [
-  'instagram_basic',
-  'instagram_manage_insights',
-  'pages_show_list',
-  'pages_read_engagement',
-  'business_management',
+  'instagram_business_basic',
+  'instagram_business_manage_insights',
 ].join(',')
 
 /**
