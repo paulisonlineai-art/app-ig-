@@ -1,82 +1,100 @@
 'use client'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts'
 
-interface ReelData {
+interface ReelPoint {
+  id: string
   views: number
   timestamp: string
 }
 
-interface AudienceStat {
-  date: string
-  reach: number
-  impressions: number
+interface EngagementTotals {
+  likes: number
+  comments: number
+  saves: number
+  shares: number
 }
 
-export default function DashboardCharts({ audienceStats, reels }: { audienceStats: AudienceStat[]; reels: ReelData[] }) {
-  const reelData = reels
-    .filter(r => r.timestamp)
+const tooltipStyle = {
+  background: 'var(--surface)',
+  border: '1px solid var(--border)',
+  borderRadius: 10,
+  fontSize: 12,
+  color: 'var(--text)',
+  boxShadow: 'var(--shadow-sm)',
+  padding: '8px 12px',
+}
+
+const axisTickProps = { fill: 'var(--text-faint)', fontSize: 10 }
+
+export default function DashboardCharts({ recentReels, engagementAvg }: { recentReels: ReelPoint[]; engagementAvg: EngagementTotals }) {
+  const performanceData = recentReels
+    .slice()
     .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-    .map(r => ({
+    .map((r) => ({
       date: new Date(r.timestamp).toLocaleDateString('es', { month: 'short', day: 'numeric' }),
       views: r.views || 0,
     }))
 
-  const reachData = audienceStats.map(s => ({
-    date: new Date(s.date).toLocaleDateString('es', { month: 'short', day: 'numeric' }),
-    Alcance: s.reach,
-    Impresiones: s.impressions,
-  }))
+  const avgViews = performanceData.length
+    ? performanceData.reduce((s, d) => s + d.views, 0) / performanceData.length
+    : 0
 
-  const tooltipStyle = {
-    background: 'var(--chart-tooltip-bg)',
-    border: '1px solid var(--chart-tooltip-border)',
-    borderRadius: 10,
-    fontSize: 12,
-    color: 'var(--chart-tooltip-text)',
-    boxShadow: 'var(--shadow-lg)',
-    padding: '8px 12px',
-  }
-
-  const axisTickProps = { fill: 'var(--text-faint)', fontSize: 10 }
+  const engagementData = [
+    { tipo: 'Likes', valor: Math.round(engagementAvg.likes) },
+    { tipo: 'Comentarios', valor: Math.round(engagementAvg.comments) },
+    { tipo: 'Guardados', valor: Math.round(engagementAvg.saves) },
+    { tipo: 'Compartidos', valor: Math.round(engagementAvg.shares) },
+  ]
 
   return (
     <div className="chart-grid">
-      <div className="chart-card" style={{ animationDelay: '0.28s' }}>
+      <div className="chart-card">
         <div className="chart-card-header">
-          <span className="chart-card-title">Vistas por reel</span>
-          {reelData.length > 0 && <span className="chart-card-badge">{reelData.length} reels</span>}
+          <span className="chart-card-title">Rendimiento de Reels</span>
+          {performanceData.length > 0 && <span className="chart-card-badge">Últimos {performanceData.length}</span>}
+        </div>
+        <div style={{ padding: '0 20px 4px', fontSize: 11, color: 'var(--text-faint)' }}>
+          <span style={{ color: 'var(--success)', fontWeight: 600 }}>●</span> Sobre el promedio&nbsp;&nbsp;
+          <span style={{ color: 'var(--danger)', fontWeight: 600 }}>●</span> Bajo el promedio
         </div>
         <div className="chart-card-body">
-          <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={reelData}>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={performanceData}>
+              <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.5} />
               <XAxis dataKey="date" tick={axisTickProps} tickLine={false} axisLine={false} interval="preserveStartEnd" />
               <YAxis hide />
-              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'var(--chart-grid)' }} />
-              <Bar dataKey="views" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'var(--surface-2)' }} />
+              <Bar dataKey="views" radius={[4, 4, 0, 0]} maxBarSize={28}>
+                {performanceData.map((d, i) => (
+                  <Cell key={i} fill={d.views >= avgViews ? 'var(--success)' : 'var(--danger)'} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      <div className="chart-card" style={{ animationDelay: '0.34s' }}>
+      <div className="chart-card">
         <div className="chart-card-header">
-          <span className="chart-card-title">Engagement trend</span>
-          {reachData.length > 0 && <span className="chart-card-badge">{reachData.length} días</span>}
+          <span className="chart-card-title">Engagement por Tipo</span>
+          <span className="chart-card-badge">Promedio</span>
         </div>
         <div className="chart-card-body">
-          <ResponsiveContainer width="100%" height={160}>
-            <AreaChart data={reachData}>
-              <defs>
-                <linearGradient id="engGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#F7007C" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#F7007C" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="date" tick={axisTickProps} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-              <YAxis hide />
-              <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: 'var(--border-strong)' }} />
-              <Area type="monotone" dataKey="Alcance" stroke="#F7007C" strokeWidth={2} fill="url(#engGrad)" dot={false} />
-            </AreaChart>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={engagementData} layout="vertical" margin={{ left: 8 }}>
+              <CartesianGrid horizontal={false} stroke="var(--border)" strokeOpacity={0.5} />
+              <XAxis type="number" hide />
+              <YAxis
+                type="category"
+                dataKey="tipo"
+                tick={axisTickProps}
+                tickLine={false}
+                axisLine={false}
+                width={80}
+              />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'var(--surface-2)' }} />
+              <Bar dataKey="valor" fill="var(--primary)" radius={[0, 4, 4, 0]} maxBarSize={20} />
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>

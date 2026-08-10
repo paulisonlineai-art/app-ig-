@@ -1,0 +1,34 @@
+'use client'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+
+const PERIODS = [
+  { value: '7d', label: '7d' },
+  { value: '30d', label: '30d' },
+  { value: '90d', label: '90d' },
+] as const
+
+export default function PeriodToggle({ current }: { current: string }) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const onChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('range', value)
+    router.push(`${pathname}?${params.toString()}`)
+  }
+
+  return (
+    <div className="period-toggle" role="group" aria-label="Período">
+      {PERIODS.map((p) => (
+        <button
+          key={p.value}
+          onClick={() => onChange(p.value)}
+          className={`period-toggle-btn${current === p.value ? ' active' : ''}`}
+        >
+          {p.label}
+        </button>
+      ))}
+    </div>
+  )
+}

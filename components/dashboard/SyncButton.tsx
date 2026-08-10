@@ -1,52 +1,41 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { RefreshCw } from 'lucide-react'
+import Button from '@/components/ui/Button'
 
-const STORAGE_KEY = 'klar_sync_msg'
-
-export default function SyncButton() {
+export default function SyncButton({ lastSyncLabel }: { lastSyncLabel?: string | null }) {
   const [loading, setLoading] = useState(false)
-  const [msg, setMsg] = useState('')
-
-  useEffect(() => {
-    const pending = sessionStorage.getItem(STORAGE_KEY)
-    if (pending) {
-      setMsg(pending)
-      sessionStorage.removeItem(STORAGE_KEY)
-    }
-  }, [])
+  const [error, setError] = useState('')
 
   const sync = async () => {
     setLoading(true)
-    setMsg('')
+    setError('')
     try {
-      const res = await fetch('/api/apify/sync', { method: 'POST' })
+      const res = await fetch('/api/instagram/sync', { method: 'POST' })
       const data = await res.json()
       if (data.error) {
-        setMsg(`Error: ${data.error}`)
+        setError(data.error)
       } else {
-        sessionStorage.setItem(STORAGE_KEY, `✓ ${data.synced} reels — trial reels: ${data.trialCodesFound ?? 0}`)
         window.location.reload()
       }
     } catch {
-      setMsg('Error de conexión')
+      setError('Error de conexión')
     } finally {
       setLoading(false)
     }
   }
 
-  const isError = msg.startsWith('Error')
-
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      {msg && (
-        <span className={`kpi-change ${isError ? 'kpi-change-down' : 'kpi-change-up'}`}>
-          {msg}
-        </span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      {error ? (
+        <span style={{ fontSize: 12, color: 'var(--danger)' }}>{error}</span>
+      ) : (
+        lastSyncLabel && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Última sync: {lastSyncLabel}</span>
       )}
-      <button onClick={sync} disabled={loading} className="btn btn-ghost">
-        <span style={{ fontSize: 13 }}>{loading ? '⏳' : '↻'}</span>
-        {loading ? 'Sincronizando...' : 'Sincronizar'}
-      </button>
+      <Button variant="outline" size="sm" onClick={sync} disabled={loading}>
+        <RefreshCw size={14} strokeWidth={2} style={{ animation: loading ? 'ui-spin 0.8s linear infinite' : undefined }} />
+        {loading ? 'Sincronizando…' : 'Sincronizar'}
+      </Button>
     </div>
   )
 }
