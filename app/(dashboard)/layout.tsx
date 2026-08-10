@@ -2,60 +2,47 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createServerSupabase } from '@/lib/supabase'
 import KlarChat from '@/components/MokaChat'
-import NavLink from '@/components/NavLink'
-import LogoutButton from '@/components/LogoutButton'
+import Sidebar from '@/components/dashboard/Sidebar'
 import MobileNav from '@/components/MobileNav'
+import TopbarTitle from '@/components/dashboard/TopbarTitle'
+import TopbarSync from '@/components/dashboard/TopbarSync'
+import NotificationBell from '@/components/dashboard/NotificationBell'
+import PageTransition from '@/components/dashboard/PageTransition'
 import ThemeToggle from '@/components/ThemeToggle'
-import ProfileAvatar from '@/components/ProfileAvatar'
+import type { NavSection } from '@/components/dashboard/SidebarBody'
 
-const NAV_TOP = [
-  { href: '/dashboard', label: 'Inicio', icon: '⊞' },
-  { href: '/reels', label: 'Mis Reels', icon: '▶' },
-  { href: '/rayos-x', label: 'Análisis', icon: '📊' },
-  { href: '/crear', label: 'Crear', icon: '✨' },
-  { href: '/pipeline', label: 'Pipeline', icon: '📋' },
-  { href: '/espia', label: 'Espía', icon: '👁' },
-  { href: '/calendario', label: 'Calendario', icon: '📅' },
-  { href: '/ventas', label: 'Ventas', icon: '💰' },
+const NAV_SECTIONS: NavSection[] = [
+  {
+    label: null,
+    items: [
+      { href: '/dashboard', label: 'Inicio', icon: 'Home' },
+      { href: '/reels', label: 'Mis Reels', icon: 'Play' },
+      { href: '/rayos-x', label: 'Análisis', icon: 'BarChart3' },
+    ],
+  },
+  {
+    label: 'Contenido',
+    items: [
+      { href: '/crear', label: 'Crear', icon: 'Sparkles' },
+      { href: '/pipeline', label: 'Pipeline', icon: 'Kanban' },
+      { href: '/calendario', label: 'Calendario', icon: 'Calendar' },
+    ],
+  },
+  {
+    label: 'Negocio',
+    items: [
+      { href: '/radar', label: 'Radar IG', icon: 'Target' },
+      { href: '/llamadas', label: 'Llamadas', icon: 'Phone' },
+      { href: '/clientes', label: 'Clientes', icon: 'Users' },
+      { href: '/ventas', label: 'Ventas', icon: 'DollarSign' },
+    ],
+  },
 ]
 
 const NAV_BOTTOM = [
-  { href: '/marca', label: 'Mi Marca', icon: '◈' },
-  { href: '/configuracion', label: 'Configuración', icon: '⚙' },
+  { href: '/marca', label: 'Mi Marca', icon: 'Fingerprint' },
+  { href: '/configuracion', label: 'Configuración', icon: 'Settings' },
 ]
-
-function formatK(n: number) {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`
-  return String(n)
-}
-
-function SidebarContent({ account, accountId }: { account: { username?: string; followers_count?: number } | null; accountId: string }) {
-  return (
-    <>
-      <div className="sidebar-profile">
-        <div className="sidebar-profile-inner">
-          <ProfileAvatar accountId={accountId} username={account?.username} size={34} border="2px solid var(--accent-light)" />
-          <div style={{ minWidth: 0 }}>
-            <div className="sidebar-username">@{account?.username || 'cuenta'}</div>
-            <div className="sidebar-followers">
-              {account?.followers_count ? formatK(account.followers_count) + ' seguidores' : 'Klar'}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <nav className="sidebar-nav" aria-label="Navegación principal">
-        {NAV_TOP.map(item => <NavLink key={item.href} {...item} />)}
-      </nav>
-
-      <div className="sidebar-bottom">
-        {NAV_BOTTOM.map(item => <NavLink key={item.href} {...item} />)}
-        <LogoutButton />
-      </div>
-    </>
-  )
-}
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
@@ -63,17 +50,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!accountId) redirect('/connect')
 
   const db = createServerSupabase()
-  const [{ data: account }, { data: reels30d }, { data: lastSync }] = await Promise.all([
+  const [{ data: account }, { data: lastSync }] = await Promise.all([
     db.from('ig_accounts').select('username, profile_picture_url, followers_count').eq('id', accountId).single(),
-    db.from('reels').select('views,likes,comments,shares,saves').eq('account_id', accountId).gte('timestamp', new Date(Date.now() - 30 * 864e5).toISOString()),
     db.from('reels').select('synced_at').eq('account_id', accountId).order('synced_at', { ascending: false }).limit(1),
   ])
-
-  const r30 = reels30d || []
-  const totalViews = r30.reduce((s: number, x: { views: number }) => s + x.views, 0)
-  const totalInteractions = r30.reduce((s: number, x: { likes: number; comments: number; shares: number; saves: number }) =>
-    s + x.likes + x.comments + x.shares + x.saves, 0)
-  const engRate = totalViews > 0 ? ((totalInteractions / totalViews) * 100).toFixed(1) : '0'
 
   const syncedAt = (lastSync as { synced_at: string }[] | null)?.[0]?.synced_at
   const syncLabel = syncedAt
@@ -85,48 +65,32 @@ export default async function DashboardLayout({ children }: { children: React.Re
       })()
     : null
 
+  const sidebarProps = {
+    accountId,
+    username: account?.username,
+    followersCount: account?.followers_count,
+    sections: NAV_SECTIONS,
+    bottomItems: NAV_BOTTOM,
+  }
+
   return (
     <div className="dashboard-layout">
-      <aside className="dashboard-sidebar">
-        <SidebarContent account={account} accountId={accountId} />
-      </aside>
-
-      <MobileNav>
-        <SidebarContent account={account} accountId={accountId} />
-      </MobileNav>
+      <Sidebar {...sidebarProps} />
+      <MobileNav {...sidebarProps} />
 
       <div className="dashboard-main">
         <header className="dash-topbar">
-          <ProfileAvatar accountId={accountId} username={account?.username} size={26} />
-          <span className="dash-topbar-user">@{account?.username}</span>
+          <TopbarTitle />
 
-          <div className="dash-topbar-right">
-            <div className="dash-topbar-kpis">
-              <div className="dash-topbar-kpi">
-                <span className="dash-topbar-kpi-value">{formatK(totalViews)}</span>
-                <span className="dash-topbar-kpi-label">Views</span>
-              </div>
-              <div className="dash-topbar-kpi">
-                <span className="dash-topbar-kpi-value">{formatK(account?.followers_count || 0)}</span>
-                <span className="dash-topbar-kpi-label">Followers</span>
-              </div>
-              <div className="dash-topbar-kpi">
-                <span className="dash-topbar-kpi-value">{engRate}%</span>
-                <span className="dash-topbar-kpi-label">Eng. Rate</span>
-              </div>
-            </div>
-            {syncLabel && (
-              <span className="dash-topbar-sync">
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--success)', display: 'inline-block' }} />
-                {syncLabel}
-              </span>
-            )}
+          <div className="topbar-right">
+            <TopbarSync initialLabel={syncLabel} />
+            <NotificationBell />
             <ThemeToggle />
           </div>
         </header>
 
         <main className="dashboard-content">
-          {children}
+          <PageTransition>{children}</PageTransition>
         </main>
       </div>
 

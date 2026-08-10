@@ -57,3 +57,22 @@ export const NAV_ICONS = {
 } as const
 
 export type NavIconKey = keyof typeof NAV_ICONS
+
+/** Lookup by the Lucide component's own name — for nav data that stores icon: 'Home' etc. */
+export const ICON_MAP: Record<string, LucideIcon> = {
+  Home,
+  Play,
+  BarChart3,
+  Sparkles,
+  Kanban,
+  Eye,
+  Calendar,
+  DollarSign,
+  Fingerprint,
+  Settings,
+  Users,
+  Phone,
+  Target,
+  Bell,
+  LogOut,
+}
