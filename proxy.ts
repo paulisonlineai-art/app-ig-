@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 
 // Paths that never require a Google session at all.
 const PUBLIC_PATHS = new Set(['/', '/login', '/connect', '/auth/callback'])
-const PUBLIC_PREFIXES = ['/api/webhooks/', '/api/cron/', '/api/apify/connect']
+const PUBLIC_PREFIXES = ['/api/webhooks/', '/api/cron/', '/api/auth/instagram']
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
@@ -45,7 +45,7 @@ export async function proxy(req: NextRequest) {
 
   // These are how a not-yet-connected but already-logged-in user creates
   // their ig_accounts row — they must NOT be gated behind "already has one".
-  if (pathname === '/connect' || pathname === '/api/apify/connect') {
+  if (pathname === '/connect' || pathname.startsWith('/api/auth/instagram') || pathname.startsWith('/api/instagram/connect')) {
     if (pathname === '/connect' && account) return NextResponse.redirect(new URL('/dashboard', req.url))
     return response
   }
