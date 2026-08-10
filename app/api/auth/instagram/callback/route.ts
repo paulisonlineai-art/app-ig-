@@ -103,7 +103,7 @@ export async function GET(req: NextRequest) {
 
     const db = createServerSupabase()
 
-    // Step 4: Upsert ig_accounts (on conflict by ig_user_id)
+    // Step 4: Upsert ig_accounts — delete existing first to avoid constraint issues
     const igAccountFields = {
       user_id: user.id,
       ig_user_id: profile.id,
@@ -119,9 +119,13 @@ export async function GET(req: NextRequest) {
       legacy_access_token: 'oauth',
     }
 
+    // Remove any existing row for this IG user or this Supabase user
+    await db.from('ig_accounts').delete().eq('ig_user_id', profile.id)
+    await db.from('ig_accounts').delete().eq('user_id', user.id)
+
     const { error: upsertError } = await db
       .from('ig_accounts')
-      .upsert(igAccountFields, { onConflict: 'ig_user_id' })
+      .insert(igAccountFields)
 
     if (upsertError) {
       console.error('[ig-callback] DB upsert failed:', upsertError)
