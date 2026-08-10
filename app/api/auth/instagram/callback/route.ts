@@ -103,33 +103,24 @@ export async function GET(req: NextRequest) {
 
     const db = createServerSupabase()
 
-    // Step 4: Upsert ig_accounts — delete existing first to avoid constraint issues
-    const igAccountFields = {
-      user_id: user.id,
-      ig_user_id: profile.id,
-      ig_user_id_numeric: parseInt(igUserId, 10) || null,
-      ig_account_type: profile.account_type as 'BUSINESS' | 'CREATOR' | 'PERSONAL',
-      username: profile.username,
-      name: profile.name || '',
-      profile_picture_url: profile.profile_picture_url || null,
-      followers_count: profile.followers_count,
-      media_count: profile.media_count,
-      ig_access_token: longLivedToken,
-      ig_token_expires_at: tokenExpiresAt,
-      legacy_access_token: 'oauth',
-    }
+    // Step 4: Upsert ig_accounts — use raw SQL to bypass PostgREST schema cache
+    const { error: rpcError } = await db.rpc('upsert_ig_account', {
+      p_user_id: user.id,
+      p_ig_user_id: profile.id,
+      p_ig_user_id_numeric: parseInt(igUserId, 10) || null,
+      p_ig_account_type: profile.account_type || 'PERSONAL',
+      p_username: profile.username,
+      p_name: profile.name || '',
+      p_profile_picture_url: profile.profile_picture_url || null,
+      p_followers_count: profile.followers_count || 0,
+      p_media_count: profile.media_count || 0,
+      p_ig_access_token: longLivedToken,
+      p_ig_token_expires_at: tokenExpiresAt,
+    })
 
-    // Remove any existing row for this IG user or this Supabase user
-    await db.from('ig_accounts').delete().eq('ig_user_id', profile.id)
-    await db.from('ig_accounts').delete().eq('user_id', user.id)
-
-    const { error: upsertError } = await db
-      .from('ig_accounts')
-      .insert(igAccountFields)
-
-    if (upsertError) {
-      console.error('[ig-callback] DB upsert failed:', upsertError)
-      throw new Error(upsertError.message)
+    if (rpcError) {
+      console.error('[ig-callback] DB upsert failed:', rpcError)
+      throw new Error(rpcError.message)
     }
 
     // Success — redirect to onboarding
