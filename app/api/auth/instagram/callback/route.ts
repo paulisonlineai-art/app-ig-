@@ -10,14 +10,6 @@ const REDIRECT_URI = process.env.INSTAGRAM_REDIRECT_URI || 'http://localhost:300
 /**
  * GET /api/auth/instagram/callback
  * Handles the Meta OAuth callback after user grants permissions.
- *
- * Flow:
- *  1. Validate state param (Supabase user ID) to prevent CSRF
- *  2. Exchange `code` for a short-lived token
- *  3. Exchange short-lived → long-lived token (60-day TTL)
- *  4. Fetch IG profile (id, username, name, etc.)
- *  5. Upsert ig_accounts row with token + profile data
- *  6. Redirect to /marca?onboarding=1
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
@@ -38,7 +30,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing authorization code' }, { status: 400 })
   }
 
-  // Validate state — must match the logged-in user's Supabase UID
   const authClient = await createAuthServerClient()
   const {
     data: { user },
@@ -95,35 +86,38 @@ export async function GET(req: NextRequest) {
     }
 
     const longLivedToken: string = longTokenData.access_token
-    const expiresInSeconds: number = longTokenData.expires_in ?? 5183944 // ~60 days
+    const expiresInSeconds: number = longTokenData.expires_in ?? 5183944
     const tokenExpiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString()
 
     // Step 3: Fetch IG profile
     const profile = await getInstagramProfile(longLivedToken)
 
+    // Step 4: Upsert ig_accounts
     const db = createServerSupabase()
 
-    // Step 4: Upsert ig_accounts — use raw SQL to bypass PostgREST schema cache
-    const { error: rpcError } = await db.rpc('upsert_ig_account', {
-      p_user_id: user.id,
-      p_ig_user_id: profile.id,
-      p_ig_user_id_numeric: parseInt(igUserId, 10) || null,
-      p_ig_account_type: profile.account_type || 'PERSONAL',
-      p_username: profile.username,
-      p_name: profile.name || '',
-      p_profile_picture_url: profile.profile_picture_url || null,
-      p_followers_count: profile.followers_count || 0,
-      p_media_count: profile.media_count || 0,
-      p_ig_access_token: longLivedToken,
-      p_ig_token_expires_at: tokenExpiresAt,
+    await db.from('ig_accounts').delete().eq('ig_user_id', profile.id)
+    await db.from('ig_accounts').delete().eq('user_id', user.id)
+
+    const { error: insertError } = await db.from('ig_accounts').insert({
+      user_id: user.id,
+      ig_user_id: profile.id,
+      ig_user_id_numeric: parseInt(igUserId, 10) || null,
+      ig_account_type: profile.account_type as 'BUSINESS' | 'CREATOR' | 'PERSONAL',
+      username: profile.username,
+      name: profile.name || '',
+      profile_picture_url: profile.profile_picture_url || null,
+      followers_count: profile.followers_count,
+      media_count: profile.media_count,
+      ig_access_token: longLivedToken,
+      ig_token_expires_at: tokenExpiresAt,
+      legacy_access_token: 'oauth',
     })
 
-    if (rpcError) {
-      console.error('[ig-callback] DB upsert failed:', rpcError)
-      throw new Error(rpcError.message)
+    if (insertError) {
+      console.error('[ig-callback] DB insert failed:', insertError)
+      throw new Error(insertError.message)
     }
 
-    // Success — redirect to onboarding
     return NextResponse.redirect(new URL('/marca?onboarding=1', req.url))
   } catch (e: unknown) {
     console.error('[ig-callback] OAuth error:', e)
