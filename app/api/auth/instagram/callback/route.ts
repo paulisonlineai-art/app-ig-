@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
       code,
     })
 
-    const shortTokenRes = await fetch('https://api.instagram.com/oauth/access_token', {
+    const shortTokenRes = await fetch('https://graph.instagram.com/oauth/access_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: tokenFormData.toString(),

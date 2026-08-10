@@ -7,6 +7,8 @@ const REDIRECT_URI = process.env.INSTAGRAM_REDIRECT_URI || 'http://localhost:300
 const SCOPES = [
   'instagram_business_basic',
   'instagram_business_manage_insights',
+  'instagram_business_manage_comments',
+  'instagram_business_content_publish',
 ].join(',')
 
 /**
@@ -28,7 +30,9 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ error: 'META_APP_ID not configured' }, { status: 500 })
   }
 
-  const oauthUrl = new URL('https://api.instagram.com/oauth/authorize')
+  // Instagram Business Login — match Meta's own generated URL format
+  const oauthUrl = new URL('https://www.instagram.com/oauth/authorize')
+  oauthUrl.searchParams.set('force_reauth', 'true')
   oauthUrl.searchParams.set('client_id', META_APP_ID)
   oauthUrl.searchParams.set('redirect_uri', REDIRECT_URI)
   oauthUrl.searchParams.set('scope', SCOPES)
