@@ -63,7 +63,11 @@ export default function DashboardCharts({ recentReels, engagementAvg }: { recent
               <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.5} />
               <XAxis dataKey="date" tick={axisTickProps} tickLine={false} axisLine={false} interval="preserveStartEnd" />
               <YAxis hide />
-              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'var(--surface-2)' }} />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                cursor={{ fill: 'var(--surface-2)' }}
+                formatter={(value) => [Number(value).toLocaleString(), 'Views']}
+              />
               <Bar dataKey="views" radius={[4, 4, 0, 0]} maxBarSize={28}>
                 {performanceData.map((d, i) => (
                   <Cell key={i} fill={d.views >= avgViews ? 'var(--success)' : 'var(--danger)'} />
@@ -92,7 +96,12 @@ export default function DashboardCharts({ recentReels, engagementAvg }: { recent
                 axisLine={false}
                 width={80}
               />
-              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'var(--surface-2)' }} />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                cursor={{ fill: 'var(--surface-2)' }}
+                formatter={(value) => [`${Number(value).toFixed(1)} promedio por reel`, '']}
+                labelFormatter={(label) => label}
+              />
               <Bar dataKey="valor" fill="var(--primary)" radius={[0, 4, 4, 0]} maxBarSize={20} />
             </BarChart>
           </ResponsiveContainer>
