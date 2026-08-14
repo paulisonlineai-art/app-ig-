@@ -188,38 +188,58 @@ export async function getInstagramMedia(accessToken: string, limit = 50): Promis
  * Requires instagram_manage_insights permission.
  */
 export async function getMediaInsights(accessToken: string, mediaId: string): Promise<IGMediaInsights> {
-  try {
-    // IMPORTANT: Only request metrics valid for reels/video insights.
-    // "likes" and "comments" are NOT valid insight metrics — they're only
-    // available as basic fields (like_count, comments_count) on the media object.
-    // Including invalid metrics causes the entire API call to fail with an error.
-    const data = await graphFetch(`/${mediaId}/insights`, accessToken, {
-      metric: 'plays,reach,saved,shares,total_interactions',
-    })
+  // Try multiple metric name strategies — Meta has changed names across API versions.
+  // v21.0 uses ig_reels_video_view_total_count instead of deprecated "plays".
+  const metricSets = [
+    // Strategy 1: v21.0+ metric names for reels
+    'ig_reels_video_view_total_count,reach,saved,shares,total_interactions',
+    // Strategy 2: older metric names (fallback)
+    'plays,reach,saved,shares,total_interactions',
+  ]
 
-    const metrics: Record<string, number> = {}
-    for (const m of data.data ?? []) {
-      metrics[m.name] = m.values?.[0]?.value ?? m.value ?? 0
-    }
+  for (const metricSet of metricSets) {
+    try {
+      const data = await graphFetch(`/${mediaId}/insights`, accessToken, {
+        metric: metricSet,
+      })
 
-    return {
-      plays: metrics.plays ?? 0,
-      reach: metrics.reach ?? 0,
-      saved: metrics.saved ?? 0,
-      shares: metrics.shares ?? 0,
-      total_interactions: metrics.total_interactions ?? 0,
-      // likes and comments come from the media object's basic fields, not insights
-      likes: 0,
-      comments: 0,
+      const metrics: Record<string, number> = {}
+      for (const m of data.data ?? []) {
+        metrics[m.name] = m.values?.[0]?.value ?? m.value ?? 0
+      }
+
+      // Map the view count — could be under either name
+      const viewCount = metrics.ig_reels_video_view_total_count ?? metrics.plays ?? 0
+
+      console.log(`[instagram] insights OK for ${mediaId}: views=${viewCount}, saved=${metrics.saved ?? 0}, shares=${metrics.shares ?? 0}`)
+
+      return {
+        plays: viewCount,
+        reach: metrics.reach ?? 0,
+        saved: metrics.saved ?? 0,
+        shares: metrics.shares ?? 0,
+        total_interactions: metrics.total_interactions ?? 0,
+        likes: 0,
+        comments: 0,
+      }
+    } catch (e) {
+      // If this metric set failed with invalid parameter error, try the next one
+      if (e instanceof Error && (e.message.includes('(#100)') || e.message.includes('not supported') || e.message.includes('Invalid'))) {
+        console.warn(`[instagram] metric set "${metricSet}" failed for ${mediaId}, trying next...`)
+        continue
+      }
+      // For permission errors, return zeros
+      if (e instanceof IGPermissionError) {
+        console.warn(`[instagram] insights permission denied for ${mediaId}:`, e.message)
+        return { plays: 0, reach: 0, saved: 0, shares: 0, total_interactions: 0, likes: 0, comments: 0 }
+      }
+      throw e
     }
-  } catch (e) {
-    // Insights may not be available for older media or stories — return zeroed object
-    if (e instanceof IGPermissionError || (e instanceof Error && (e.message.includes('insights') || e.message.includes('not supported') || e.message.includes('(#100)')))) {
-      console.warn(`[instagram] insights not available for media ${mediaId}:`, e.message)
-      return { plays: 0, reach: 0, saved: 0, shares: 0, total_interactions: 0, likes: 0, comments: 0 }
-    }
-    throw e
   }
+
+  // All metric sets failed
+  console.warn(`[instagram] all insight metric sets failed for ${mediaId} — returning zeros`)
+  return { plays: 0, reach: 0, saved: 0, shares: 0, total_interactions: 0, likes: 0, comments: 0 }
 }
 
 /**
