@@ -28,14 +28,14 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ error: 'META_APP_ID not configured' }, { status: 500 })
   }
 
-  // Instagram Business Login — match Meta's own generated URL format
+  // Instagram Business Login
   const oauthUrl = new URL('https://www.instagram.com/oauth/authorize')
-  oauthUrl.searchParams.set('force_reauth', 'true')
+  oauthUrl.searchParams.set('enable_fb_login', '0')
+  oauthUrl.searchParams.set('force_authentication', '1')
   oauthUrl.searchParams.set('client_id', META_APP_ID)
   oauthUrl.searchParams.set('redirect_uri', REDIRECT_URI)
   oauthUrl.searchParams.set('scope', SCOPES)
   oauthUrl.searchParams.set('response_type', 'code')
-  // Pass Supabase user ID as state for CSRF protection
   oauthUrl.searchParams.set('state', user.id)
 
   return NextResponse.redirect(oauthUrl.toString())
