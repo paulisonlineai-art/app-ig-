@@ -86,36 +86,38 @@ export async function GET(req: NextRequest) {
     let { data: { user } } = await authClient.auth.getUser()
 
     if (!user) {
-      // Create a new user with IG username as email placeholder
       const fakeEmail = `${profile.username}@instagram.klar.app`
-      const { data: newUser, error: createErr } = await db.auth.admin.createUser({
-        email: fakeEmail,
-        email_confirm: true,
-        user_metadata: { ig_username: profile.username, full_name: profile.name },
-      })
-      if (createErr || !newUser.user) {
-        console.error('[ig-callback] user creation failed:', createErr)
-        throw new Error('No se pudo crear usuario')
-      }
-      user = newUser.user
+      const password = `ig_${igUserId}_${META_APP_SECRET.slice(0, 8)}`
 
-      // Sign the user in by setting session cookies
-      const { data: session, error: sessionErr } = await authClient.auth.signInWithPassword({
-        email: fakeEmail,
-        password: igUserId,
-      }).catch(() => ({ data: null, error: new Error('skip') }))
+      // Check if user already exists (returning user)
+      const { data: existingUsers } = await db.auth.admin.listUsers()
+      const existing = existingUsers?.users?.find(u => u.email === fakeEmail)
 
-      // Use admin to generate a session link instead
-      if (!session) {
-        // Set a password so we can sign in
-        await db.auth.admin.updateUser(user.id, { password: igUserId })
-        const { error: signInErr } = await authClient.auth.signInWithPassword({
+      if (existing) {
+        user = existing
+      } else {
+        const { data: newUser, error: createErr } = await db.auth.admin.createUser({
           email: fakeEmail,
-          password: igUserId,
+          password,
+          email_confirm: true,
+          user_metadata: { ig_username: profile.username, full_name: profile.name },
         })
-        if (signInErr) {
-          console.error('[ig-callback] sign-in failed:', signInErr)
+        if (createErr || !newUser.user) {
+          console.error('[ig-callback] user creation failed:', createErr)
+          throw new Error('No se pudo crear usuario')
         }
+        user = newUser.user
+      }
+
+      // Sign in to set session cookies
+      const { error: signInErr } = await authClient.auth.signInWithPassword({
+        email: fakeEmail,
+        password,
+      })
+      if (signInErr) {
+        // If password doesn't match (user existed with different password), reset it
+        await db.auth.admin.updateUserById(user.id, { password })
+        await authClient.auth.signInWithPassword({ email: fakeEmail, password })
       }
     }
 
