@@ -9,26 +9,15 @@ const SCOPES = [
   'instagram_business_manage_insights',
 ].join(',')
 
-/**
- * GET /api/auth/instagram
- * Initiates the Meta OAuth flow. User must already be signed in with Google/Supabase.
- * Redirects to Meta's OAuth dialog.
- */
 export async function GET(_req: NextRequest) {
-  const authClient = await createAuthServerClient()
-  const {
-    data: { user },
-  } = await authClient.auth.getUser()
-
-  if (!user) {
-    return NextResponse.redirect(new URL('/connect', _req.url))
-  }
-
   if (!META_APP_ID) {
     return NextResponse.json({ error: 'META_APP_ID not configured' }, { status: 500 })
   }
 
-  // Instagram Business Login
+  // Use a random state token for CSRF protection (no Supabase user needed yet)
+  const state = crypto.randomUUID()
+
+  // Store state in a cookie so the callback can verify it
   const oauthUrl = new URL('https://www.instagram.com/oauth/authorize')
   oauthUrl.searchParams.set('enable_fb_login', '0')
   oauthUrl.searchParams.set('force_authentication', '1')
@@ -36,7 +25,16 @@ export async function GET(_req: NextRequest) {
   oauthUrl.searchParams.set('redirect_uri', REDIRECT_URI)
   oauthUrl.searchParams.set('scope', SCOPES)
   oauthUrl.searchParams.set('response_type', 'code')
-  oauthUrl.searchParams.set('state', user.id)
+  oauthUrl.searchParams.set('state', state)
 
-  return NextResponse.redirect(oauthUrl.toString())
+  const response = NextResponse.redirect(oauthUrl.toString())
+  response.cookies.set('ig_oauth_state', state, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    maxAge: 600,
+    path: '/',
+  })
+
+  return response
 }

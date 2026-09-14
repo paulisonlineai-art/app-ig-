@@ -7,10 +7,6 @@ const META_APP_ID = process.env.META_APP_ID || ''
 const META_APP_SECRET = process.env.META_APP_SECRET || ''
 const REDIRECT_URI = process.env.INSTAGRAM_REDIRECT_URI || 'http://localhost:3000/api/auth/instagram/callback'
 
-/**
- * GET /api/auth/instagram/callback
- * Handles the Meta OAuth callback after user grants permissions.
- */
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
   const code = searchParams.get('code')
@@ -18,7 +14,6 @@ export async function GET(req: NextRequest) {
   const error = searchParams.get('error')
   const errorReason = searchParams.get('error_reason')
 
-  // User denied permissions
   if (error) {
     const reason = errorReason ?? error
     const redirectUrl = new URL('/connect', req.url)
@@ -30,17 +25,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing authorization code' }, { status: 400 })
   }
 
-  const authClient = await createAuthServerClient()
-  const {
-    data: { user },
-  } = await authClient.auth.getUser()
-
-  if (!user) {
-    return NextResponse.redirect(new URL('/connect', req.url))
-  }
-
-  if (state !== user.id) {
-    return NextResponse.json({ error: 'Invalid state parameter — possible CSRF attempt' }, { status: 403 })
+  // Verify CSRF state
+  const storedState = req.cookies.get('ig_oauth_state')?.value
+  if (!storedState || storedState !== state) {
+    return NextResponse.json({ error: 'Invalid state — posible CSRF' }, { status: 403 })
   }
 
   try {
@@ -92,9 +80,46 @@ export async function GET(req: NextRequest) {
     // Step 3: Fetch IG profile
     const profile = await getInstagramProfile(longLivedToken)
 
-    // Step 4: Upsert ig_accounts (update if same IG account reconnects, otherwise insert new)
+    // Step 4: Get or create Supabase user
     const db = createServerSupabase()
+    const authClient = await createAuthServerClient()
+    let { data: { user } } = await authClient.auth.getUser()
 
+    if (!user) {
+      // Create a new user with IG username as email placeholder
+      const fakeEmail = `${profile.username}@instagram.klar.app`
+      const { data: newUser, error: createErr } = await db.auth.admin.createUser({
+        email: fakeEmail,
+        email_confirm: true,
+        user_metadata: { ig_username: profile.username, full_name: profile.name },
+      })
+      if (createErr || !newUser.user) {
+        console.error('[ig-callback] user creation failed:', createErr)
+        throw new Error('No se pudo crear usuario')
+      }
+      user = newUser.user
+
+      // Sign the user in by setting session cookies
+      const { data: session, error: sessionErr } = await authClient.auth.signInWithPassword({
+        email: fakeEmail,
+        password: igUserId,
+      }).catch(() => ({ data: null, error: new Error('skip') }))
+
+      // Use admin to generate a session link instead
+      if (!session) {
+        // Set a password so we can sign in
+        await db.auth.admin.updateUser(user.id, { password: igUserId })
+        const { error: signInErr } = await authClient.auth.signInWithPassword({
+          email: fakeEmail,
+          password: igUserId,
+        })
+        if (signInErr) {
+          console.error('[ig-callback] sign-in failed:', signInErr)
+        }
+      }
+    }
+
+    // Step 5: Upsert ig_accounts
     const accountData = {
       user_id: user.id,
       ig_user_id: profile.id,
@@ -119,7 +144,10 @@ export async function GET(req: NextRequest) {
       throw new Error(insertError.message)
     }
 
-    return NextResponse.redirect(new URL('/marca?onboarding=1', req.url))
+    // Clear the OAuth state cookie
+    const response = NextResponse.redirect(new URL('/marca?onboarding=1', req.url))
+    response.cookies.delete('ig_oauth_state')
+    return response
   } catch (e: unknown) {
     console.error('[ig-callback] OAuth error:', e)
     const redirectUrl = new URL('/connect', req.url)
